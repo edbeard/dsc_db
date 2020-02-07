@@ -64,7 +64,6 @@ def create_dsscdb_from_file(path):
     # for record in pv_records:
     #     print(record.serialize())
 
-
 def get_compound_records(doc):
     """ Function to extract the compound records from the entire document.
         Returns a list of compound records, enriched with names and roles from the document...
@@ -116,7 +115,7 @@ def add_dye_information(pv_records):
     2) Check rest of document
 
     All these sections could begin with a search for compounds, and then follow this by a search for common dyes like N719...
-    :return:
+    :return: updated records
     """
 
     for pv_record in pv_records:
@@ -146,7 +145,8 @@ def add_dye_information(pv_records):
             doc = pv_record.doc
             doc.add_models([SentenceDye])
             paragraphs = doc.paragraphs
-            paragraph_records = [record.serialize() for paragraph in paragraphs for sentence in paragraph for record in sentence.records]
+            paragraph_records = [record.serialize() for paragraph in paragraphs for record in paragraph.records]
+            print(paragraph_records)
             for para_record in paragraph_records:
 
                 if 'SentenceDye' in para_record.keys() and pv_record.dye is None:
@@ -165,6 +165,6 @@ def add_dye_information(pv_records):
 
 
 if __name__ == '__main__':
-    create_dsscdb_from_file('/home/edward/pv/webscraping/rsc/articles/subset for development/C6RA14857C.html')
+    create_dsscdb_from_file('/home/edward/pv/webscraping/rsc/articles/subset for development/C8RA02668H.html')
 
     # /home/edward/pv/webscraping/elsevier/articles/failed_training_downloads/S1385894717300542.xml')

@@ -24,6 +24,11 @@ class PhotovoltaicRecord(object):
         missing_fields = [field for field in self._fields if field not in records.keys()]
         for field in missing_fields:
             setattr(self, field, None)
+
+        # Adjust dye field to be a list if not found
+        if self.dye is not None:
+            setattr(self, 'dye', [self.dye])
+
         # Set associated document
         self.doc = doc
 
@@ -69,12 +74,23 @@ class PhotovoltaicRecord(object):
         abbreviations = [(abbr, defs) for abbrs, defs, _ in self.doc.abbreviation_definitions for abbr in abbrs]
 
         field = getattr(self, fieldstr)
+
         for abbr, defs in abbreviations:
-            if field[model]['raw_value'] == abbr:
-                if 'abbreviations' not in field.keys():
-                    field[model].update({'abbreviations': [defs]})
-                else:
-                    field[model]['abbreviations'].append(defs)
+
+            # Check when the field is a list
+            if type(field[model]) == list:
+                for i, model_inst in enumerate(field[model]):
+                    if field[model][i]['raw_value'] == abbr and 'abbreviations' not in field.keys():
+                        field[model][i].update({'abbreviations': [defs]})
+                    elif field[model][i]['raw_value'] == abbr:
+                        field[model][i]['abbreviations'].append(defs)
+
+            # When not a list, update the abbreviations separately...
+            elif field[model]['raw_value'] == abbr and 'abbreviations' not in field.keys():
+                field[model].update({'abbreviations': [defs]})
+            elif field[model]['raw_value'] == abbr:
+                field[model]['abbreviations'].append(defs)
+
         setattr(self, fieldstr, field)
 
     def _substitute_compound(self, fieldstr, model):
@@ -88,15 +104,37 @@ class PhotovoltaicRecord(object):
 
         doc_records = [record.serialize() for record in self.doc.records]
         compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
-        compound_names = [(compound['names'], compound) for compound in compound_records if 'names' in compound.keys()]
 
         field = getattr(self, fieldstr)
-        for names, compound in compound_names:
-            if field[model]['raw_value'] in names:
-                if 'compound' not in field.keys():
-                    field[model].update({'compound': compound})
+
+        # Substitute values (different for list attributes)
+        for compound in compound_records:
+
+            # Check for matches to the chemical name
+            if 'names' in compound.keys():
+                names = compound['names']
+
+                # Check when the field is a list
+                if type(field[model]) == list:
+                    for i, model_inst in enumerate(field[model]):
+                        if model_inst['raw_value'] in names and 'compound' not in field.keys():
+                            field[model][i].update({'compound': compound})
+                # Check when the field is a single value
+                elif 'compound' not in field.keys() and field[model]['raw_value'] in names:
+                        field[model].update({'compound': compound})
+
+            # Check for matches to the chemical label
+            if 'labels' in compound.keys():
+                labels = compound['labels']
+
+                # Check when the field is a list
+                if type(field[model]) == list:
+                    for i, model_inst in enumerate(field[model]):
+                        if model_inst['raw_value'] in labels and 'compound' not in field.keys():
+                            field[model][i].update({'compound': compound})
+                # Check when the field is a single value
+                elif 'compound' not in field.keys() and field[model]['raw_value'] in labels:
+                        field[model].update({'compound': compound})
 
         setattr(self, fieldstr, field)
-
-
 

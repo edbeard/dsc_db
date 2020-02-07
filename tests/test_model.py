@@ -106,6 +106,5 @@ class TestModel(unittest.TestCase):
         self.assertEqual(pv_record.serialize(), expected)
 
 
-
 if __name__ == '__main__':
     unittest.main()
