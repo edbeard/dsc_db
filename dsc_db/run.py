@@ -29,7 +29,7 @@ def create_dsscdb_from_file(path):
         doc = Document.from_file(f)
 
     # Only add the photovoltaiccell and Compound models to the document
-    doc.add_models([PhotovoltaicCell, Compound])
+    doc.add_models([PhotovoltaicCell, Compound, SentenceDye])
 
 
     # Get all records from the table
@@ -56,12 +56,6 @@ def create_dsscdb_from_file(path):
     # print the output
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
-
-
-
-    # Substituting in the compound information for counter electrode
-    # for record in pv_records:
-    #     print(record.serialize())
 
 
 def get_compound_records(doc):
@@ -103,8 +97,6 @@ def get_table_records(doc):
         for record in records:
             tables_records.append((record, table))
 
-    # Remove results where the record is just one element long, or doesn't contain voc, jsc, ff or pce
-
     return tables_records
 
 
@@ -117,6 +109,10 @@ def add_dye_information(pv_records, doc):
     All these sections could begin with a search for compounds, and then follow this by a search for common dyes like N719...
     :return: updated records
     """
+
+    doc.add_models([SentenceDye])
+    paragraphs = doc.paragraphs
+    paragraph_records = [record.serialize() for paragraph in paragraphs for record in paragraph.records]
 
     for pv_record in pv_records:
         pv_record.table.add_models([SentenceDye])
@@ -142,11 +138,8 @@ def add_dye_information(pv_records, doc):
             # TODO: Extend this to check near vicinity first (ie areas in the doc that are nearby)
             # Then, look at the methods section
             # Then, if this fails, look at the most common specifier...?
-            doc.add_models([SentenceDye])
-            paragraphs = doc.paragraphs
-            paragraph_records = [record.serialize() for paragraph in paragraphs for record in paragraph.records]
-            print(paragraph_records)
             for para_record in paragraph_records:
+                print(para_record)
 
                 if 'SentenceDye' in para_record.keys() and pv_record.dye is None:
                     para_record['SentenceDye']['contextual'] = 'sentence'
@@ -157,10 +150,6 @@ def add_dye_information(pv_records, doc):
                     pv_record.dye['Dye'].append(para_record['SentenceDye'])
 
     return pv_records
-
-
-
-
 
 
 if __name__ == '__main__':

@@ -77,16 +77,18 @@ class PhotovoltaicRecord(object):
             # Check when the field is a list
             if type(field[model]) == list:
                 for i, model_inst in enumerate(field[model]):
-                    if field[model][i]['raw_value'] == abbr and 'abbreviations' not in field.keys():
-                        field[model][i].update({'abbreviations': [defs]})
-                    elif field[model][i]['raw_value'] == abbr:
-                        field[model][i]['abbreviations'].append(defs)
+                    if 'raw_value' in field[model][i]:
+                        if field[model][i]['raw_value'] == abbr and 'abbreviations' not in field.keys():
+                            field[model][i].update({'abbreviations': [defs]})
+                        elif field[model][i]['raw_value'] == abbr:
+                            field[model][i]['abbreviations'].append(defs)
 
             # When not a list, update the abbreviations separately...
-            elif field[model]['raw_value'] == abbr and 'abbreviations' not in field.keys():
-                field[model].update({'abbreviations': [defs]})
-            elif field[model]['raw_value'] == abbr:
-                field[model]['abbreviations'].append(defs)
+            elif 'raw_value' in field[model]:
+                if field[model]['raw_value'] == abbr and 'abbreviations' not in field.keys():
+                    field[model].update({'abbreviations': [defs]})
+                elif field[model]['raw_value'] == abbr:
+                    field[model]['abbreviations'].append(defs)
 
         setattr(self, fieldstr, field)
 
@@ -114,10 +116,12 @@ class PhotovoltaicRecord(object):
                 # Check when the field is a list
                 if type(field[model]) == list:
                     for i, model_inst in enumerate(field[model]):
-                        if model_inst['raw_value'] in names and 'compound' not in field.keys():
-                            field[model][i].update({'compound': compound})
+                        if 'raw_value' in model_inst.keys():
+                            if model_inst['raw_value'] in names and 'compound' not in field.keys():
+                                field[model][i].update({'compound': compound})
                 # Check when the field is a single value
-                elif 'compound' not in field.keys() and field[model]['raw_value'] in names:
+                elif 'raw_value' in field[model]:
+                    if 'compound' not in field.keys() and field[model]['raw_value'] in names:
                         field[model].update({'compound': compound})
 
             # Check for matches to the chemical label
@@ -127,10 +131,12 @@ class PhotovoltaicRecord(object):
                 # Check when the field is a list
                 if type(field[model]) == list:
                     for i, model_inst in enumerate(field[model]):
-                        if model_inst['raw_value'] in labels and 'compound' not in field.keys():
-                            field[model][i].update({'compound': compound})
+                        if 'raw_value' in model_inst.keys():
+                            if model_inst['raw_value'] in labels and 'compound' not in field.keys():
+                                field[model][i].update({'compound': compound})
                 # Check when the field is a single value
-                elif 'compound' not in field.keys() and field[model]['raw_value'] in labels:
+                elif 'raw_value' in field[model]:
+                    if 'compound' not in field.keys() and field[model]['raw_value'] in labels:
                         field[model].update({'compound': compound})
 
         setattr(self, fieldstr, field)
