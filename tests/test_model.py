@@ -77,7 +77,7 @@ class TestModel(unittest.TestCase):
             'exposure_time': None
         }
 
-        record = PhotovoltaicRecord(input, input_doc)
+        record = PhotovoltaicRecord(input)
         result = record.serialize(include_none=True)
         pprint(record)
         self.assertEqual(result, expected)
@@ -88,8 +88,8 @@ class TestModel(unittest.TestCase):
         doc = Document('Ternary nickel cobalt selenide (Ni-Co-Se) ')
         expected = {'counter_electrode': {'CounterElectrode': {'raw_value': 'Ni-Co-Se', 'specifier': 'CE', 'abbreviations': [['nickel', 'cobalt', 'selenide']]}}}
 
-        pv_record = PhotovoltaicRecord(input, doc, None)
-        pv_record._substitute_definitions('counter_electrode', 'CounterElectrode')
+        pv_record = PhotovoltaicRecord(input, None)
+        pv_record._substitute_definitions('counter_electrode', 'CounterElectrode', doc)
         self.assertEqual(pv_record.serialize(), expected)
 
     def test_substitute_compound_names(self):
@@ -101,8 +101,8 @@ class TestModel(unittest.TestCase):
         doc = Document('NiSe.')
         doc.add_models([PhotovoltaicCell, Compound])
 
-        pv_record = PhotovoltaicRecord(input, doc, None)
-        pv_record._substitute_compound('counter_electrode', 'CounterElectrode')
+        pv_record = PhotovoltaicRecord(input, None)
+        pv_record._substitute_compound('counter_electrode', 'CounterElectrode', doc)
         self.assertEqual(pv_record.serialize(), expected)
 
 

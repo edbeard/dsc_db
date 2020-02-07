@@ -16,7 +16,7 @@ class PhotovoltaicRecord(object):
                'semiconductor', 'active_area', 'solar_simulator', 'electrolyte', 'substrate',
                'charge_transfer_resistance', 'series_resistance', 'exposure_time']
 
-    def __init__(self, records, doc=None, table=None):
+    def __init__(self, records, table=None):
         # Initialize exisiting records
         for key, value in six.iteritems(records):
             setattr(self, key, value)
@@ -28,9 +28,6 @@ class PhotovoltaicRecord(object):
         # Adjust dye field to be a list if not found
         if self.dye is not None:
             setattr(self, 'dye', [self.dye])
-
-        # Set associated document
-        self.doc = doc
 
         # Set table that was extracted
         self.table = table
@@ -62,7 +59,7 @@ class PhotovoltaicRecord(object):
             data[field_name] = value
         return data
 
-    def _substitute_definitions(self, fieldstr, model):
+    def _substitute_definitions(self, fieldstr, model, doc):
         """ Generic function to substitute abbreviations into chemical records for a PhotovoltaicCell object.
                 NOTE: This logic compares the raw_value of a model to the abbreviations provided
 
@@ -71,7 +68,7 @@ class PhotovoltaicRecord(object):
         """
 
         # abbreviations = self.doc.abbreviation_definitions
-        abbreviations = [(abbr, defs) for abbrs, defs, _ in self.doc.abbreviation_definitions for abbr in abbrs]
+        abbreviations = [(abbr, defs) for abbrs, defs, _ in doc.abbreviation_definitions for abbr in abbrs]
 
         field = getattr(self, fieldstr)
 
@@ -93,7 +90,7 @@ class PhotovoltaicRecord(object):
 
         setattr(self, fieldstr, field)
 
-    def _substitute_compound(self, fieldstr, model):
+    def _substitute_compound(self, fieldstr, model, doc):
         """ Generic function to substitute compounds into chemical records for a PhotovoltaicCell object.
                 NOTE: This logic compares the raw_value of a model to the abbreviations provided
 
@@ -102,7 +99,7 @@ class PhotovoltaicRecord(object):
             :param field : String containing the name of the field to be replaced
         """
 
-        doc_records = [record.serialize() for record in self.doc.records]
+        doc_records = [record.serialize() for record in doc.records]
         compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
 
         field = getattr(self, fieldstr)
@@ -137,4 +134,3 @@ class PhotovoltaicRecord(object):
                         field[model].update({'compound': compound})
 
         setattr(self, fieldstr, field)
-

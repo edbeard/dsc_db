@@ -6,7 +6,6 @@ Valid results must include a dye and at least one photovoltaic property
 """
 
 import logging
-import os
 import pprint as pp
 
 log = logging.getLogger(__name__)
@@ -25,7 +24,7 @@ def create_dsscdb_from_file(path):
     This contains the main algorithm.
     """
 
-    # Load the doucment from the file
+    # Load the document from the file
     with open(path, 'rb') as f:
         doc = Document.from_file(f)
 
@@ -39,20 +38,20 @@ def create_dsscdb_from_file(path):
     table_records = get_table_records(doc)
 
     # Create PhotovoltaicRecord object
-    pv_records = [PhotovoltaicRecord(record, doc, table) for record, table in table_records]
+    pv_records = [PhotovoltaicRecord(record, table) for record, table in table_records]
 
     # When no Dye field is present, search contextually for it
-    pv_records = add_dye_information(pv_records)
+    pv_records = add_dye_information(pv_records, doc)
 
     # Merge other information from inside the document when appropriate
     for record in pv_records:
         # Substituting in the definitions from the entire document
         if record.dye is not None:
-            record._substitute_definitions('dye', 'Dye')
+            record._substitute_definitions('dye', 'Dye', doc)
 
         # Substituting the compound names for the dye
         if record.dye is not None:
-            record._substitute_compound('dye', 'Dye')
+            record._substitute_compound('dye', 'Dye', doc)
 
     # print the output
     for pv_record in pv_records:
@@ -63,6 +62,7 @@ def create_dsscdb_from_file(path):
     # Substituting in the compound information for counter electrode
     # for record in pv_records:
     #     print(record.serialize())
+
 
 def get_compound_records(doc):
     """ Function to extract the compound records from the entire document.
@@ -108,7 +108,7 @@ def get_table_records(doc):
     return tables_records
 
 
-def add_dye_information(pv_records):
+def add_dye_information(pv_records, doc):
     """
     Function to add dye information from document if possible, following this logic:
     1) Check the table caption, using DyeSentence
@@ -142,7 +142,6 @@ def add_dye_information(pv_records):
             # TODO: Extend this to check near vicinity first (ie areas in the doc that are nearby)
             # Then, look at the methods section
             # Then, if this fails, look at the most common specifier...?
-            doc = pv_record.doc
             doc.add_models([SentenceDye])
             paragraphs = doc.paragraphs
             paragraph_records = [record.serialize() for paragraph in paragraphs for record in paragraph.records]
