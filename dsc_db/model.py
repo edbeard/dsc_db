@@ -92,17 +92,15 @@ class PhotovoltaicRecord(object):
 
         setattr(self, fieldstr, field)
 
-    def _substitute_compound(self, fieldstr, model, doc):
+    def _substitute_compound(self, fieldstr, model, compound_records):
         """ Generic function to substitute compounds into chemical records for a PhotovoltaicCell object.
                 NOTE: This logic compares the raw_value of a model to the abbreviations provided
 
             :param abbreviations : List of chemical abbreviations
             :param Model : String containing the name of the model
             :param field : String containing the name of the field to be replaced
+            :param compound_records: Compound records for the entire document
         """
-
-        doc_records = [record.serialize() for record in doc.records]
-        compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
 
         field = getattr(self, fieldstr)
 

@@ -43,6 +43,10 @@ def create_dsscdb_from_file(path):
     # When no Dye field is present, search contextually for it
     pv_records = add_dye_information(pv_records, doc)
 
+    # Get the compound records for the next stage
+    doc_records = [record.serialize() for record in doc.records]
+    compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
+
     # Merge other information from inside the document when appropriate
     for record in pv_records:
         # Substituting in the definitions from the entire document
@@ -51,7 +55,7 @@ def create_dsscdb_from_file(path):
 
         # Substituting the compound names for the dye
         if record.dye is not None:
-            record._substitute_compound('dye', 'Dye', doc)
+            record._substitute_compound('dye', 'Dye', compound_records)
 
     # print the output
     for pv_record in pv_records:
@@ -69,15 +73,6 @@ def get_compound_records(doc):
     records = doc.records
     compounds = [record.serialize() for record in records]
     return compounds
-
-
-def get_compound_records_by_element(doc):
-    """ Same as above but with element (removes the document merging logic)"""
-
-    elements = doc.elements
-    for el in elements:
-        for record in el.records:
-            print(record.serialize())
 
 
 def get_table_records(doc):
@@ -110,12 +105,10 @@ def add_dye_information(pv_records, doc):
     :return: updated records
     """
 
-    doc.add_models([SentenceDye])
     paragraphs = doc.paragraphs
     paragraph_records = [record.serialize() for paragraph in paragraphs for record in paragraph.records]
 
     for pv_record in pv_records:
-        pv_record.table.add_models([SentenceDye])
 
         if pv_record.dye is None:
 
@@ -147,7 +140,10 @@ def add_dye_information(pv_records, doc):
 
                 elif 'SentenceDye' in para_record.keys():
                     para_record['SentenceDye']['contextual'] = 'sentence'
-                    pv_record.dye['Dye'].append(para_record['SentenceDye'])
+
+                    # Check this record hasn't already been added to the record
+                    if para_record['SentenceDye'] not in pv_record.dye['Dye'] and 'raw_value' in para_record['SentenceDye']:
+                        pv_record.dye['Dye'].append(para_record['SentenceDye'])
 
     return pv_records
 
