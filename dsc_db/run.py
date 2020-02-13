@@ -149,6 +149,6 @@ def add_dye_information(pv_records, doc):
 
 
 if __name__ == '__main__':
-    create_dsscdb_from_file('/home/edward/pv/webscraping/rsc/articles/subset for development/C8RA02668H.html')
+    create_dsscdb_from_file('/home/edward/pv/webscraping/rsc/articles/subset for development/C8TA01826J.html')
 
     # /home/edward/pv/webscraping/elsevier/articles/failed_training_downloads/S1385894717300542.xml')

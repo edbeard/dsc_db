@@ -25,9 +25,9 @@ class PhotovoltaicRecord(object):
         for field in missing_fields:
             setattr(self, field, None)
 
-        # Adjust dye field to be a list if not found
+        # Adjust dye field to be a value if found...
         if self.dye is not None:
-            setattr(self, 'dye', [self.dye])
+            setattr(self, 'dye', self.dye)
 
         # Set table that was extracted
         self.table = table
