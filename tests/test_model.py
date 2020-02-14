@@ -101,8 +101,11 @@ class TestModel(unittest.TestCase):
         doc = Document('NiSe.')
         doc.add_models([PhotovoltaicCell, Compound])
 
+        doc_records = [record.serialize() for record in doc.records]
+        compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
+
         pv_record = PhotovoltaicRecord(input, None)
-        pv_record._substitute_compound('counter_electrode', 'CounterElectrode', doc)
+        pv_record._substitute_compound('counter_electrode', 'CounterElectrode', compound_records)
         self.assertEqual(pv_record.serialize(), expected)
 
 

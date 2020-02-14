@@ -11,7 +11,7 @@ import pprint as pp
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-from chemdataextractor import Document
+from chemdataextractor.doc import Document, Table
 from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye
 from chemdataextractor.model import Compound
 
@@ -30,7 +30,6 @@ def create_dsscdb_from_file(path):
 
     # Only add the photovoltaiccell and Compound models to the document
     doc.add_models([PhotovoltaicCell, Compound, SentenceDye])
-
 
     # Get all records from the table
     # This returns a tuple of type (pv_record, table)
@@ -78,42 +77,72 @@ def get_compound_records(doc):
 def get_table_records(doc):
     """ Function to extract the photovoltaic device information from tables.
         Returns a tuple of (pv_record, table) for each PhotovoltaicCell records that is determined.
+        Note that each Table has its id set to the enumerated index, for later merging.
         :param chemdataextractor.Document doc : Document used to extract
         :return Tuple(pv_record, chemdataextractor.table) tables_record : All Photovoltaic records
 
     """
 
-    tables = doc.tables
-    tables_records = []
-
+    table_records = []
     # Obtain the PhotovoltaicCell records from each table
-    for table in tables:
+    for table in doc.tables:
         records = [record.serialize()['PhotovoltaicCell'] for record in table.records if 'PhotovoltaicCell' == record.__class__.__name__]
         for record in records:
-            tables_records.append((record, table))
+            table_records.append((record, table))
 
-    return tables_records
+    return table_records
+
+
+def add_contextual_dye_from_document(pv_records, elements):
+    """Merge contextually via a proximity based search for appropriate records"""
+
+    # Group the records by table
+    tables = {}
+    for pv_record in pv_records:
+        table = str(pv_record.table)
+        if table not in tables.keys():
+            tables[table] = [pv_record]
+        else:
+            tables[table].append(pv_record)
+
+    latest_dye = None
+
+    # Loop through elements, making note of surface dye instances
+    for el in elements:
+
+        # Add the latest dye information if detected...
+        if isinstance(el, Table) and str(el) in tables.keys() and latest_dye is not None:
+            print('Table detected: %s' % tables[str(el)])
+            for record in tables[str(el)]:
+                latest_dye['contextual'] = 'document'
+                record.dye = {'Dye': [latest_dye]}
+
+        # Update latest dye
+        else:
+            for record in el.records:
+                serialized_record = record.serialize()
+                if 'SentenceDye' in serialized_record.keys():
+                    if 'raw_value' in serialized_record['SentenceDye'].keys():
+                        latest_dye = serialized_record['SentenceDye']
+
+    return pv_records
 
 
 def add_dye_information(pv_records, doc):
     """
     Function to add dye information from document if possible, following this logic:
     1) Check the table caption, using DyeSentence
-    2) Check rest of document
+    2) Check rest of document via proximity
 
     All these sections could begin with a search for compounds, and then follow this by a search for common dyes like N719...
     :return: updated records
     """
 
-    paragraphs = doc.paragraphs
-    paragraph_records = [record.serialize() for paragraph in paragraphs for record in paragraph.records]
-
+    # Step 1: Check the caption using the DyeSentence parser
+    # If found, this record is set with a 'contextual' flag to show that it was not taken directly from the table
     for pv_record in pv_records:
-
         if pv_record.dye is None:
 
-            # Step 1: Check the caption using the DyeSentence parser
-            # If found, this record is set with a 'contextual' flag to show that it was not taken directly from the table
             caption = pv_record.table.caption
             caption_records = [record.serialize() for record in caption.records]
             for cap_record in caption_records:
@@ -127,28 +156,13 @@ def add_dye_information(pv_records, doc):
                     cap_record['SentenceDye']['contextual'] = 'table'
                     pv_record.dye['Dye'].append(cap_record['SentenceDye'])
 
-            # Step 2: Check the rest of the document with the SentenceDye parser.
-            # TODO: Extend this to check near vicinity first (ie areas in the doc that are nearby)
-            # Then, look at the methods section
-            # Then, if this fails, look at the most common specifier...?
-            for para_record in paragraph_records:
-                print(para_record)
-
-                if 'SentenceDye' in para_record.keys() and pv_record.dye is None:
-                    para_record['SentenceDye']['contextual'] = 'sentence'
-                    pv_record.dye = {'Dye': [para_record['SentenceDye']]}
-
-                elif 'SentenceDye' in para_record.keys():
-                    para_record['SentenceDye']['contextual'] = 'sentence'
-
-                    # Check this record hasn't already been added to the record
-                    if para_record['SentenceDye'] not in pv_record.dye['Dye'] and 'raw_value' in para_record['SentenceDye']:
-                        pv_record.dye['Dye'].append(para_record['SentenceDye'])
+    # Step 2: Where no success in the caption, try merging with the closest proximity mention of a Dye in prose.
+    pv_records = add_contextual_dye_from_document(pv_records, doc.elements)
 
     return pv_records
 
 
 if __name__ == '__main__':
-    create_dsscdb_from_file('/home/edward/pv/webscraping/rsc/articles/subset for development/C8TA01826J.html')
+    create_dsscdb_from_file('/home/edward/pv/webscraping/rsc/articles/subset for development/C6RA14857C.html')
 
     # /home/edward/pv/webscraping/elsevier/articles/failed_training_downloads/S1385894717300542.xml')
