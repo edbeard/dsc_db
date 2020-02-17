@@ -60,6 +60,37 @@ def create_dsscdb_from_file(path):
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
 
+    # Output sentence dye records for debugging
+    output_sentence_dyes(doc)
+
+    return pv_records
+
+
+def output_to_file(pv_records, output_path='/home/edward/pv/extractions/output'):
+    """
+    Outputs the pv_records to a file
+    :param pv_records:
+    :param output_path:
+    :return:
+    """
+
+    serialized_records = [record.serialize() for record in pv_records]
+
+    with open(output_path, 'wt') as outf:
+        for record in serialized_records:
+            pp.pprint(record, stream=outf)
+
+
+
+def output_sentence_dyes(doc):
+    """ Fucntion for outputting all detected sentence dyes. Used in debugging only"""
+    # Print all the sentence Dyes
+    print('The sentence dye records:')
+    for record in doc.records:
+        record_dict = record.serialize()
+        if 'SentenceDye' in record_dict.keys():
+            print(record_dict['SentenceDye'])
+
 
 def get_compound_records(doc):
     """ Function to extract the compound records from the entire document.
