@@ -206,16 +206,175 @@ dyenamo_dyes = {
                    "Di-tetrabutylammonium cis-bis(isothiocyanato)bis(2,2′-bipyridyl-4,4′-dicarboxylato)ruthenium(II)",
                    "Ruthenium(2+) N,N,N-tributyl-1-butanaminium 4'-carboxy-2,2'-bipyridine-4-carboxylate (thioxomethylene)azanide (1:2:2:2)",
                    "Ruthenium(2+)-N,N,N-tributyl-1-butanaminium-4'-carboxy-2,2'-bipyridin-4-carboxylat-(thioxomethylen)azanid (1:2:2:2)",
-                   "Ruthenizer 535-bisTBA"],
+                   "Ruthenizer 535-bisTBA",
+                   "cis-diisothiocyanato-bis(2,2’-bipyridyl-4,4’-dicarboxylato) ruthenium(II) bis(tetrabutylammonium)"],
         'name': "1-Butanaminium, N,N,N-tributyl-, hydrogen (OC-6-32)-[[2,2´:6´,2´´-terpyridine]-4,4´,4´´-tricarboxylato(3-)-κN1,κN1´,κN1´´]tris(thiocyanato-κN)ruthenate(4-) (2:2:1)",
-        'smiles': ''
+        'smiles': '[Ru++].CCCC[N+](CCCC)(CCCC)CCCC.CCCC[N+](CCCC)(CCCC)CCCC.OC(=O)c1ccnc(c1)c2cc(ccn2)C([O-])=O.OC(=O)c3ccnc(c3)c4cc(ccn4)C([O-])=O.[N-]=C=S.[N-]=C=S'
     },
 
     'DN-FR04': {
-        'labels': ['DN-FR04', 'C101', "Ruthenate(2-), [[2,2´-bipyridine]-4,4´-dicarboxylato(2-)-κN1,κN1´][4,4´-bis(5-hexyl-2-thienyl)-2,2´-bipyridine-κN1,κN1´]bis(thiocyanato-κN)-, hydrogen (1:2), (OC-6-32)-"],
+        'labels': ['DN-FR04', 'C101', 'C-101' "Ruthenate(2-), [[2,2´-bipyridine]-4,4´-dicarboxylato(2-)-κN1,κN1´][4,4´-bis(5-hexyl-2-thienyl)-2,2´-bipyridine-κN1,κN1´]bis(thiocyanato-κN)-, hydrogen (1:2), (OC-6-32)-"],
         'name': "Ruthenate(2-), [[2,2´-bipyridine]-4,4´-dicarboxylato(2-)-κN1,κN1´][4,4´-bis(5-hexyl-2-thienyl)-2,2´-bipyridine-κN1,κN1´]bis(thiocyanato-κN)-, hydrogen (1:2), (OC-6-32)-",
         'smiles': ''
     }
 }
 
-all_dyes = dyenamo_dyes
+solaronix_dyes = {
+
+    'Ruthenizer 535': {
+        'labels' : ['Ruthenizer 535', 'N3', 'N-3' "cis-diisothiocyanato-bis(2,2’-bipyridyl-4,4’-dicarboxylic acid) ruthenium(II)"],
+        'name': "cis-diisothiocyanato-bis(2,2’-bipyridyl-4,4’-dicarboxylic acid) ruthenium(II)",
+        'smiles': ""
+    },
+
+    'Ruthenizer 620-1H3TBA': {
+        'labels': ['Ruthenizer 620-1H3TBA', '620-1H3TBA', 'N749', "triisothiocyanato-(2,2’:6’,6”-terpyridyl-4,4’,4”-tricarboxylato) ruthenium(II) tris(tetra-butylammonium)"
+                   'Ruthenium 620', 'Greatcell Solar'],
+        'name': "triisothiocyanato-(2,2’:6’,6”-terpyridyl-4,4’,4”-tricarboxylato) ruthenium(II) tris(tetra-butylammonium)",
+        'smiles': ""
+    },
+
+    'Ruthenizer 520-DN': {
+        'labels': ['Ruthenizer 520-DN', 'Z907', 'Z-907', '520-DN', "cis-diisothiocyanato-(2,2’-bipyridyl-4,4’-dicarboxylic acid)-(2,2’-bipyridyl-4,4’-dinonyl) ruthenium(II)"],
+        'name': "cis-diisothiocyanato-(2,2’-bipyridyl-4,4’-dicarboxylic acid)-(2,2’-bipyridyl-4,4’-dinonyl) ruthenium(II)",
+        'smiles': "CCCCCCCCCC1=CC(=NC=C1)C2=NC=CC(=C2)CCCCCCCCC.C1=CN=C(C=C1C(=O)O)C2=NC=CC(=C2)C(=O)O.C(=[N-])=S.C(=[N-])=S.[Ru+2]"
+    },
+
+    'Ruthenizer 535-4TBA': {
+        'labels': ['Ruthenizer 535-4TBA', 'N712', '535-4TBA', "cis-diisothiocyanato-bis(2,2’-bipyridyl-4,4’-dicarboxylato) ruthenium(II) tetrakis(tetrabutylammonium)"],
+        'name': "cis-diisothiocyanato-bis(2,2’-bipyridyl-4,4’-dicarboxylato) ruthenium(II) tetrakis(tetrabutylammonium)",
+        'smiles': ""
+    },
+
+    'Ruthenizer 505': {
+        'labels': ['Ruthenizer 505', 'cis-dicyano-bis(2,2’-bipyridyl-4,4’-dicarboxylic acid) ruthenium(II)'],
+        'name': "cis-dicyano-bis(2,2’-bipyridyl-4,4’-dicarboxylic acid) ruthenium(II)",
+        'smiles': ""
+    },
+
+    'Sensidizer SQ2': {
+        'labels': ['Sensidizer SQ2', 'SQ2', "5-carboxy-2-[[3-[(2,3-dihydro-1,1-dimethyl-3-ethyl-1H-benzo[e]indol-2-ylidene)methyl]-2-hydroxy-4-oxo-2-cyclobuten-1-ylidene]methyl]-3,3-dimethyl-1-octyl-3H-indolium"],
+        'name': "5-carboxy-2-[[3-[(2,3-dihydro-1,1-dimethyl-3-ethyl-1H-benzo[e]indol-2-ylidene)methyl]-2-hydroxy-4-oxo-2-cyclobuten-1-ylidene]methyl]-3,3-dimethyl-1-octyl-3H-indolium",
+        'smiles': "CCCCCCCC[N+]1=C(C=C2C(=C(C=C3N(CC)c4ccc5ccccc5c4C3(C)C)C2=O)O)C(C)(C)c6cc(ccc16)C(O)=O"
+    },
+
+    'Sensidizer RK1': {
+        'labels': ['Sensidizer RK1', 'RK1', '2-cyano-3-(4-(7-(5-(4- (diphenylamino)phenyl)-4- octylthiophen-2-yl)benzo[c][1,2,5] thiadiazol-4-yl)phenyl) acrylic acid'],
+        'name': "2-cyano-3-(4-(7-(5-(4- (diphenylamino)phenyl)-4- octylthiophen-2-yl)benzo[c][1,2,5] thiadiazol-4-yl)phenyl) acrylic acid",
+        'smiles': "CCCCCCCCc1cc(sc1c2ccc(cc2)N(c3ccccc3)c4ccccc4)c5ccc(c6ccc(cc6)C=C(C#N)C(O)=O)c7nsnc57"
+    },
+
+    'Sensidizer BA741': {
+        'labels': ['Sensidizer BA741', 'BA741', "2-(6-(5'-(4-(bis(9,9-dimethyl-9H-fluoren-2-yl)amino) phenyl)-[2,2'-bithiophen]-5-yl)-1,3-dioxo-1H-benzo[d e]isoquinolin-2(3H)-yl)acetic acid "],
+        'name': "2-(6-(5'-(4-(bis(9,9-dimethyl-9H-fluoren-2-yl)amino) phenyl)-[2,2'-bithiophen]-5-yl)-1,3-dioxo-1H-benzo[d e]isoquinolin-2(3H)-yl)acetic acid ",
+        'smiles': "CC1(C)c2ccccc2c3ccc(cc13)N(c4ccc(cc4)c5sc(cc5)c6sc(cc6)c7ccc8C(=O)N(CC(O)=O)C(=O)c9cccc7c89)c%10ccc%11c%12ccccc%12C(C)(C)c%11c%10"
+    },
+
+    'Sensidizer BA504': {
+        'labels': ['Sensidizer BA504', 'BA504', "2-(9-(4-(bis(9,9-dimethyl-9H-fluoren-2-yl)amino)phe nyl)-1,3-dioxo-1H-benzo[5,10]anthra[2,1,9-def]isoqui nolin-2(3H,9H,13aH)-yl)acetic acid"],
+        'name': "2-(9-(4-(bis(9,9-dimethyl-9H-fluoren-2-yl)amino)phe nyl)-1,3-dioxo-1H-benzo[5,10]anthra[2,1,9-def]isoqui nolin-2(3H,9H,13aH)-yl)acetic acid",
+        'smiles': "CC1(C)c2ccccc2c3ccc(cc13)N(c4ccc(cc4)C5C=Cc6c7C=CC8C(=O)N(CC(O)=O)C(=O)c9ccc(c%10cccc5c6%10)c7c89)c%11ccc%12c%13ccccc%13C(C)(C)c%12c%11"
+    }
+}
+
+sigma_aldrich = {
+
+    'Squarylium dye III': {
+            'labels' : ['Squarylium dye III', "1,3-Bis[4-(dimethylamino)phenyl]-2,4-dihydroxycyclobutenediylium dihydroxide, bis(inner salt)", '149063'],
+            'name': "1,3-Bis[4-(dimethylamino)phenyl]-2,4-dihydroxycyclobutenediylium dihydroxide, bis(inner salt)",
+            'smiles': "CN(C)c1ccc(cc1)[C]2[C]([O-])[C]([C]2[O-])c3ccc(cc3)N(C)C"
+        },
+
+    'Coumarin 6': {
+        'labels': ['coumarin 6', 'coumarin-6', '3-(2-Benzothiazolyl)-N,N-diethylumbelliferylamine', '3-(2-Benzothiazolyl)-7-(diethylamino)coumarin'],
+        'name': "3-(2-Benzothiazolyl)-N,N-diethylumbelliferylamine",
+        'smiles': "CCN(CC)c1ccc2C=C(C(=O)Oc2c1)c3sc4ccccc4n3"
+    },
+
+    'Coumarin 30': {
+        'labels': ['coumarin 30', 'coumarin-30', 'coumarin 515', "3-(2-N-Methylbenzimidazolyl)-7-N,N-diethylaminocoumarin"],
+        'name': "3-(2-N-Methylbenzimidazolyl)-7-N,N-diethylaminocoumarin",
+        'smiles': "CCN(CC)c1ccc2C=C(C(=O)Oc2c1)c3nc4ccccc4n3C"
+    },
+
+    'Coumarin 102': {
+        'labels': ['coumarin 102', 'coumarin-102', 'coumarin 480', "2,3,6,7-Tetrahydro-9-methyl-1H,5H-quinolizino(9,1-gh)coumarin", "8-Methyl-2,3,5,6-tetrahydro-1H,4H-11-oxa-3a-aza-benzo(de)anthracen-10-one"],
+        'name': "2,3,6,7-Tetrahydro-9-methyl-1H,5H-quinolizino(9,1-gh)coumarin",
+        'smiles': "CC1=CC(=O)Oc2c3CCCN4CCCc(cc12)c34"
+    },
+
+    'Coumarin 153': {
+        'labels': ['coumarin 153', 'coumarin-153', '2,3,6,7-Tetrahydro-9-(trifluoromethyl)-1H,5H,11H-[1]benzopyrano(6,7,8-ij)quinolizin-11-one',
+                   '2,3,6,7-Tetrahydro-9-trifluoromethyl-1H,5H-quinolizino(9,1-gh)coumarin', '8-Trifluoromethyl-2,3,5,6-4H-1,H-11-oxa-3a-aza-benzo[de]anthracen-10-one',
+                   'coumarin 540A'],
+        'name': "2,3,6,7-Tetrahydro-9-(trifluoromethyl)-1H,5H,11H-[1]benzopyrano(6,7,8-ij)quinolizin-11-one",
+        'smiles': "FC(F)(F)C1=CC(=O)Oc2c3CCCN4CCCc(cc12)c34"
+    },
+
+    'D102': {
+        'labels': ['D102', "(5-{4-[4-(2,2-diphenyl-vinyl)phenyl]-1,2,3,3a,4,8b-hexahydrocyclopenta[b]indol-7-ylmethylene}-4-oxo-2-thioxo-thiazolidin-3-yl)acetic acid"],
+        'name': "(5-{4-[4-(2,2-diphenyl-vinyl)phenyl]-1,2,3,3a,4,8b-hexahydrocyclopenta[b]indol-7-ylmethylene}-4-oxo-2-thioxo-thiazolidin-3-yl)acetic acid",
+        'smiles': "OC(=O)CN1C(=S)SC(=C/c2ccc3N(C4CCCC4c3c2)c5ccc(cc5)C=C(c6ccccc6)c7ccccc7)\C1=O"
+    },
+
+    'D131': {
+        'labels': ['D131', "2-Cyano-3-[4-[4-(2,2-diphenylethenyl)phenyl]-1,2,3,3a,4,8b-hexahydrocyclopent[b]indol-7-yl]-2-propenoic acid"],
+        'name': "2-Cyano-3-[4-[4-(2,2-diphenylethenyl)phenyl]-1,2,3,3a,4,8b-hexahydrocyclopent[b]indol-7-yl]-2-propenoic acid",
+        'smiles': "OC(=O)C(=Cc1ccc2N(C3CCCC3c2c1)c4ccc(cc4)C=C(c5ccccc5)c6ccccc6)C#N"
+    },
+
+    'D149': {
+        'labels': ['D149', "5-[[4-[4-(2,2-Diphenylethenyl)phenyl]-1,2,3-3a,4,8b-hexahydrocyclopent[b]indol-7-yl]methylene]-2-(3-ethyl-4-oxo-2-thioxo-5-thiazolidinylidene)-4-oxo-3-thiazolidineacetic acid"
+                   'indoline dye D149', 'purple dye'],
+        'name': "5-[[4-[4-(2,2-Diphenylethenyl)phenyl]-1,2,3-3a,4,8b-hexahydrocyclopent[b]indol-7-yl]methylene]-2-(3-ethyl-4-oxo-2-thioxo-5-thiazolidinylidene)-4-oxo-3-thiazolidineacetic acid",
+        'smiles': "CCN1C(=S)SC(/C1=O)=C/2SC(=C/c3ccc4N([C@@H]5CCC[C@@H]5c4c3)c6ccc(cc6)C=C(c7ccccc7)c8ccccc8)/C(=O)N2CC(O)=O"
+    },
+
+    'D205': {
+        'labels': ['D205', "5-[[4-[4-(2,2-Diphenylethenyl)phenyl]-1,2,3,3a,4,8b-hexahydrocyclopent[b]indol-7-yl]methylene]-2-(3-octyl-4-oxo-2-thioxo-5-thiazolidinylidene)-4-oxo-3-thiazolidineacetic acid",
+                   'indoline dye D205', 'purple dye'],
+        'name': "5-[[4-[4-(2,2-Diphenylethenyl)phenyl]-1,2,3,3a,4,8b-hexahydrocyclopent[b]indol-7-yl]methylene]-2-(3-octyl-4-oxo-2-thioxo-5-thiazolidinylidene)-4-oxo-3-thiazolidineacetic acid",
+        'smiles': "CCCCCCCCN1C(=S)SC(C1=O)=C2SC(=Cc3ccc4N(C5CCCC5c4c3)c6ccc(cc6)C=C(c7ccccc7)c8ccccc8)C(=O)N2CC(O)=O"
+    },
+
+    'D358': {
+        'labels': ['D358', "5-[3-(Carboxymethyl)-5-[[4-[4-(2,2-diphenylethenyl)phenyl]-1,2,3,3a,4,8b-hexahydrocyclopent[b]indol-7-yl]methylene]-4-oxo-2-thiazoli dinylidene]-4-oxo-2-thioxo-3-thiazolidinedodecanoic acid"],
+        'name': "5-[3-(Carboxymethyl)-5-[[4-[4-(2,2-diphenylethenyl)phenyl]-1,2,3,3a,4,8b-hexahydrocyclopent[b]indol-7-yl]methylene]-4-oxo-2-thiazoli dinylidene]-4-oxo-2-thioxo-3-thiazolidinedodecanoic acid",
+        'smiles': "OC(=O)CCCCCCCCCCCN1C(=S)SC(C1=O)=C2SC(=Cc3ccc4N(C5CCCC5c4c3)c6ccc(cc6)C=C(c7ccccc7)c8ccccc8)C(=O)N2CC(O)=O"
+    },
+
+    'K19': {
+        'labels': ['K19', 'Ru(4,4-dicarboxylic acid-2,2′-bipyridine)(4,4′-bis(p-hexyloxystyryl)-2,2-bipyridine)(NCS)2'],
+        'name': "Ru(4,4-dicarboxylic acid-2,2′-bipyridine)(4,4′-bis(p-hexyloxystyryl)-2,2-bipyridine)(NCS)2",
+        'smiles': "CCCCCCOC1=CC=C(C=C1)C=CC2=CC(=NC=C2)C3=NC=CC(=C3)C=CC4=CC=C(C=C4)OCCCCCC.C1=CN=C(C=C1C(=O)O)C2=NC=CC(=C2)C(=O)O.C(=[N-])=S.C(=[N-])=S.[Ru+2]"
+    },
+
+    'Merocyanine 540': {
+        'labels': ['Merocyanine 540', '3(2H)-Benzoxazolepropanesulfonic acid, 2-[4-(1,3-dibutyltetrahydro-4,6-dioxo-2-thioxo-5(2H)-pyrimidinylidene)-2-butenylidene]-, sodium salt'],
+        'name': "3(2H)-Benzoxazolepropanesulfonic acid, 2-[4-(1,3-dibutyltetrahydro-4,6-dioxo-2-thioxo-5(2H)-pyrimidinylidene)-2-butenylidene]-, sodium salt",
+        'smiles': "[Na+].CCCCN1C(=O)C(=C/C=C\C=C2/Oc3ccccc3N2CCC[S]([O-])(=O)=O)C(=O)N(CCCC)C1=S"
+    }
+
+}
+
+greatcell_solar = {
+
+    'C106': {
+        'labels': ['C106', '2-(4-Carboxypyridin-2-yl)pyridine-4-carboxylic acid;4-(5-hexylsulfanylthiophen-2-yl)-2-[4-(5-hexylsulfanylthiophen-2-yl)pyridin-2-yl]pyridine;ruthenium(2+);diisothiocyanate'],
+        'name': "2-(4-Carboxypyridin-2-yl)pyridine-4-carboxylic acid;4-(5-hexylsulfanylthiophen-2-yl)-2-[4-(5-hexylsulfanylthiophen-2-yl)pyridin-2-yl]pyridine;ruthenium(2+);diisothiocyanate",
+        'smiles': "CCCCCCSC1=CC=C(S1)C2=CC(=NC=C2)C3=NC=CC(=C3)C4=CC=C(S4)SCCCCCC.C1=CN=C(C=C1C(=O)O)C2=NC=CC(=C2)C(=O)O.C(=[N-])=S.C(=[N-])=S.[Ru+2]"
+    },
+
+}
+
+
+template = {
+    'Ruthenizer 535': {
+        'labels' : [],
+        'name': "",
+        'smiles': ""
+    }
+}
+
+# Combine dictionaries
+all_dyes = {**dyenamo_dyes, **solaronix_dyes, **sigma_aldrich, **greatcell_solar}
