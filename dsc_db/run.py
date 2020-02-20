@@ -16,6 +16,7 @@ from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye
 from chemdataextractor.model import Compound
 
 from dsc_db.model import PhotovoltaicRecord
+from dsc_db.data import all_dyes
 
 
 def create_dsscdb_from_file(path):
@@ -56,12 +57,35 @@ def create_dsscdb_from_file(path):
         if record.dye is not None:
             record._substitute_compound('dye', 'Dye', compound_records)
 
+    # Contextual merging of dyes complete, filtering out results without dyes
+    pv_records = [pv_record for pv_record in pv_records if pv_record.dye is not None]
+
+    # Add chemical data from distributor of common dyes
+    pv_records = add_distributor_info(pv_records)
+
     # print the output
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
 
     # Output sentence dye records for debugging
     output_sentence_dyes(doc)
+
+    return pv_records
+
+
+def add_distributor_info(pv_records):
+    """
+    Adds useful information from dictionaries from various publishers
+    :param pv_records: List of PhotovoltaicRecords object
+    :return:pv_records: List of PhotovoltaicRecords object with dye information added
+    """
+
+    for key, dye in all_dyes.items():
+        for pv_record in pv_records:
+            if pv_record.dye['Dye']['raw_value'] in dye['labels']:
+                pv_record.dye['Dye']['smiles'] = all_dyes[key]['smiles']
+                pv_record.dye['Dye']['name'] = all_dyes[key]['name']
+                pv_record.dye['Dye']['labels'] = all_dyes[key]['labels']
 
     return pv_records
 
@@ -74,11 +98,11 @@ def output_to_file(pv_records, output_path='/home/edward/pv/extractions/output')
     :return:
     """
 
-    serialized_records = [record.serialize() for record in pv_records]
+    serialized_records = [pp.pformat(record.serialize()) + '\n' for record in pv_records]
 
-    with open(output_path, 'wt') as outf:
+    with open(output_path, 'w') as outf:
         for record in serialized_records:
-            pp.pprint(record, stream=outf)
+            outf.write(record + '\n')
 
 
 
@@ -194,6 +218,6 @@ def add_dye_information(pv_records, doc):
 
 
 if __name__ == '__main__':
-    create_dsscdb_from_file('/home/edward/pv/webscraping/rsc/articles/subset for development/C6RA14857C.html')
+    create_dsscdb_from_file('/home/edward/pv/webscraping/rsc/articles/subset for development/C5RA15184H.html')
 
     # /home/edward/pv/webscraping/elsevier/articles/failed_training_downloads/S1385894717300542.xml')
