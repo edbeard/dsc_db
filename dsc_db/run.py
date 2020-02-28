@@ -57,15 +57,15 @@ def create_dsscdb_from_file(path):
         if record.dye is not None:
             record._substitute_compound('dye', 'Dye', compound_records)
 
+    # print the output before dyes removed...
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
+
     # Contextual merging of dyes complete, filtering out results without dyes
     pv_records = [pv_record for pv_record in pv_records if pv_record.dye is not None]
 
     # Add chemical data from distributor of common dyes
     pv_records = add_distributor_info(pv_records)
-
-    # print the output
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
 
     # Output sentence dye records for debugging
     output_sentence_dyes(doc)
@@ -82,10 +82,11 @@ def add_distributor_info(pv_records):
 
     for key, dye in all_dyes.items():
         for pv_record in pv_records:
-            if pv_record.dye['Dye']['raw_value'] in dye['labels']:
-                pv_record.dye['Dye']['smiles'] = all_dyes[key]['smiles']
-                pv_record.dye['Dye']['name'] = all_dyes[key]['name']
-                pv_record.dye['Dye']['labels'] = all_dyes[key]['labels']
+            for pv_dye in pv_record.dye['Dye']:
+                if pv_dye['raw_value'] in dye['labels']:
+                    pv_dye['smiles'] = all_dyes[key]['smiles']
+                    pv_dye['name'] = all_dyes[key]['name']
+                    pv_dye['labels'] = all_dyes[key]['labels']
 
     return pv_records
 
@@ -218,6 +219,6 @@ def add_dye_information(pv_records, doc):
 
 
 if __name__ == '__main__':
-    create_dsscdb_from_file('/home/edward/pv/webscraping/rsc/articles/subset for development/C5RA15184H.html')
+    create_dsscdb_from_file('/home/edward/pv/extractions/input/10.1016:j.cap.2009.12.039.xml')
 
     # /home/edward/pv/webscraping/elsevier/articles/failed_training_downloads/S1385894717300542.xml')

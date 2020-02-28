@@ -363,17 +363,8 @@ greatcell_solar = {
         'labels': ['C106', '2-(4-Carboxypyridin-2-yl)pyridine-4-carboxylic acid;4-(5-hexylsulfanylthiophen-2-yl)-2-[4-(5-hexylsulfanylthiophen-2-yl)pyridin-2-yl]pyridine;ruthenium(2+);diisothiocyanate'],
         'name': "2-(4-Carboxypyridin-2-yl)pyridine-4-carboxylic acid;4-(5-hexylsulfanylthiophen-2-yl)-2-[4-(5-hexylsulfanylthiophen-2-yl)pyridin-2-yl]pyridine;ruthenium(2+);diisothiocyanate",
         'smiles': "CCCCCCSC1=CC=C(S1)C2=CC(=NC=C2)C3=NC=CC(=C3)C4=CC=C(S4)SCCCCCC.C1=CN=C(C=C1C(=O)O)C2=NC=CC(=C2)C(=O)O.C(=[N-])=S.C(=[N-])=S.[Ru+2]"
-    },
-
-}
-
-
-template = {
-    'Ruthenizer 535': {
-        'labels' : [],
-        'name': "",
-        'smiles': ""
     }
+
 }
 
 # Combine dictionaries
