@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 from chemdataextractor.doc import Document, Table
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye
 from chemdataextractor.model import Compound
 
 from dsc_db.model import PhotovoltaicRecord
@@ -30,7 +30,7 @@ def create_dsscdb_from_file(path):
         doc = Document.from_file(f)
 
     # Only add the photovoltaiccell and Compound models to the document
-    doc.add_models([PhotovoltaicCell, Compound, SentenceDye])
+    doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
 
     # Get all records from the table
     # This returns a tuple of type (pv_record, table)
@@ -109,8 +109,15 @@ def output_to_file(pv_records, output_path='/home/edward/pv/extractions/output')
 
 def output_sentence_dyes(doc):
     """ Fucntion for outputting all detected sentence dyes. Used in debugging only"""
+
     # Print all the sentence Dyes
-    print('The sentence dye records:')
+    print('The common sentence dye records:')
+    for record in doc.records:
+        record_dict = record.serialize()
+        if 'CommonSentenceDye' in record_dict.keys():
+            print(record_dict['CommonSentenceDye'])
+
+        print('The sentence dye records:')
     for record in doc.records:
         record_dict = record.serialize()
         if 'SentenceDye' in record_dict.keys():
@@ -149,8 +156,15 @@ def get_table_records(doc):
     return table_records
 
 
-def add_contextual_dye_from_document(pv_records, elements):
+def add_contextual_dye_from_document(pv_records, elements, permissive=True):
     """Merge contextually via a proximity based search for appropriate records"""
+
+    if permissive:
+        dye_key = 'SentenceDye'
+        context = 'document_permissive'
+    else:
+        dye_key = 'CommonSentenceDye'
+        context = 'document'
 
     # Group the records by table
     tables = {}
@@ -163,23 +177,24 @@ def add_contextual_dye_from_document(pv_records, elements):
 
     latest_dye = None
 
-    # Loop through elements, making note of surface dye instances
+    # Loop through elements, making note of sentence dye instances
     for el in elements:
 
         # Add the latest dye information if detected...
         if isinstance(el, Table) and str(el) in tables.keys() and latest_dye is not None:
             print('Table detected: %s' % tables[str(el)])
             for record in tables[str(el)]:
-                latest_dye['contextual'] = 'document'
-                record.dye = {'Dye': [latest_dye]}
+                if record.dye is None:
+                    latest_dye['contextual'] = context
+                    record.dye = {'Dye': [latest_dye]}
 
         # Update latest dye
         else:
             for record in el.records:
-                serialized_record = record.serialize()
-                if 'SentenceDye' in serialized_record.keys():
-                    if 'raw_value' in serialized_record['SentenceDye'].keys():
-                        latest_dye = serialized_record['SentenceDye']
+                if record.__class__.__name__ == dye_key:
+                    serialized_record = record.serialize()
+                    if 'raw_value' in serialized_record[dye_key].keys():
+                        latest_dye = serialized_record[dye_key]
 
     return pv_records
 
@@ -188,7 +203,8 @@ def add_dye_information(pv_records, doc):
     """
     Function to add dye information from document if possible, following this logic:
     1) Check the table caption, using DyeSentence
-    2) Check rest of document via proximity
+    2) Check rest of document for commonly distributed dyes, by proximity
+    3) Check rest of document with more permissive logic (alphanumic regex), by proximity
 
     All these sections could begin with a search for compounds, and then follow this by a search for common dyes like N719...
     :return: updated records
@@ -212,7 +228,10 @@ def add_dye_information(pv_records, doc):
                     cap_record['SentenceDye']['contextual'] = 'table'
                     pv_record.dye['Dye'].append(cap_record['SentenceDye'])
 
-    # Step 2: Where no success in the caption, try merging with the closest proximity mention of a Dye in prose.
+    # Step 2: Where no success in caption, try merging with closest mention of one of the common industrial dyes
+    pv_records = add_contextual_dye_from_document(pv_records, doc.elements, permissive=False)
+
+    # Step 3: Where no success in the caption and from common dyes, try merging with the closest proximity mention of a Dye in prose.
     pv_records = add_contextual_dye_from_document(pv_records, doc.elements)
 
     return pv_records
