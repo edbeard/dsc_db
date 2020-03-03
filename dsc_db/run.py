@@ -17,6 +17,7 @@ from chemdataextractor.model import Compound
 
 from dsc_db.model import PhotovoltaicRecord
 from dsc_db.data import all_dyes
+from dsc_db.smiles import add_smiles
 
 
 def create_dsscdb_from_file(path):
@@ -66,6 +67,13 @@ def create_dsscdb_from_file(path):
 
     # Add chemical data from distributor of common dyes
     pv_records = add_distributor_info(pv_records)
+
+    # Add SMILES through PubChem and ChemSpider where not added by distributor
+    pv_records = add_smiles(pv_records)
+
+    # print the output after dyes removed...
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # Output sentence dye records for debugging
     output_sentence_dyes(doc)
