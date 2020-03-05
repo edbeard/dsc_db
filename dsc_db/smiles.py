@@ -26,16 +26,6 @@ def get_smiles_pubchem(name):
     return smiles
 
 
-def get_smiles_cirpy(name):
-    """
-    Get the SMILES string for a compound by chemical name through the NCI CIR chemical resolver...
-
-    :param name: str containing the compound name
-    :return: List of valid SMILES strings.
-    """
-    pass
-
-
 def add_smiles(pv_records):
     """
     Add SMILES from publishers when possible.

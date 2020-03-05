@@ -369,3 +369,8 @@ greatcell_solar = {
 
 # Combine dictionaries
 all_dyes = {**dyenamo_dyes, **solaronix_dyes, **sigma_aldrich, **greatcell_solar}
+
+# List of disallowed tags for section headings
+blacklist_headings = [
+    'intro', 'introduction', 'background', 'theory', 'result', 'results', 'discussion', 'discussions', 'conclusion', 'conclusions', 'analysis'
+]
