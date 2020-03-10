@@ -27,8 +27,9 @@ class PhotovoltaicRecord(object):
 
         # Adjust dye field to be in a list format if found...
         if self.dye is not None:
-            dye_updated = {'Dye': [self.dye['Dye']]}
-            setattr(self, 'dye', dye_updated)
+            if type(self.dye['Dye']) is not list:
+                dye_updated = {'Dye': [self.dye['Dye']]}
+                setattr(self, 'dye', dye_updated)
 
         # Set table that was extracted
         self.table = table

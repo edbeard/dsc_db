@@ -246,6 +246,8 @@ def add_contextual_dye_from_document_by_multiplicity(pv_records, elements, permi
     altered = False # Boolean indicating whether the following logic altered the photovoltaic records
     sentence_dyes = []
     sentence_dye_records = [record.serialize() for el in filtered_elements for record in el.records if record.__class__.__name__ == dye_key]
+    if not sentence_dye_records:
+        return pv_records, altered
     for record in sentence_dye_records:
         if 'raw_value' in record[dye_key].keys():
             sentence_dyes.append(record[dye_key]['raw_value'])

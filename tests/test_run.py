@@ -18,7 +18,7 @@ class TestRun(unittest.TestCase):
     def test_dye_candidate_caption_substitution(self):
         """ Test the case where dye is specified in the caption"""
         table_input = [['CE',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Pt', '11.11', '22.22', '33.33', '44.44']]
-        input_table = Table(caption=Caption('Photovoltaic parameters for cells with the sensitizer N719.', table_data=table_input))
+        input_table = Table(caption=Caption('Photovoltaic parameters for cells with the sensitizer N719.'), table_data=table_input)
         input = {
             'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
                                        'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
