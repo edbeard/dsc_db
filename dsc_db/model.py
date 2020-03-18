@@ -34,13 +34,15 @@ class PhotovoltaicRecord(object):
         # Set table that was extracted
         self.table = table
 
-
     def __repr__(self):
-        return '<%s>' % (self.__class__.__name__,)
+        string = 'PV record with dye:' + str(self.dye) + ', '
+        string += 'and a Voc of ' + str(self.voc)
+        return string
 
     def __str__(self):
-        return '<%s>' % (self.__class__.__name__,)
-
+        string = 'PV record with dye:' + str(self.dye) + ', '
+        string += 'and a Voc of ' + str(self.voc)
+        return string
     def __contains__(self, name):
         try:
             val = getattr(self, name)

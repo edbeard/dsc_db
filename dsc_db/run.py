@@ -95,11 +95,10 @@ def add_distributor_info(pv_records):
     for key, dye in all_dyes.items():
         for pv_record in pv_records:
             for pv_dye in pv_record.dye['Dye']:
-                if 'raw_value' in pv_dye.keys():
-                    if pv_dye['raw_value'] in dye['labels']:
-                        pv_dye['smiles'] = all_dyes[key]['smiles']
-                        pv_dye['name'] = all_dyes[key]['name']
-                        pv_dye['labels'] = all_dyes[key]['labels']
+                if pv_dye.get('raw_value') in dye['labels'] and pv_dye.get('raw_value') is not None:
+                    pv_dye['smiles'] = all_dyes[key]['smiles']
+                    pv_dye['name'] = all_dyes[key]['name']
+                    pv_dye['labels'] = all_dyes[key]['labels']
 
     return pv_records
 
@@ -316,6 +315,6 @@ def add_dye_information(pv_records, doc):
 
 
 if __name__ == '__main__':
-    create_dsscdb_from_file('/home/edward/pv/extractions/input/10.1016:j.jelechem.2017.12.050.xml')
+    create_dsscdb_from_file('/home/edward/pv/extractions/input/C3CS60017C.html')
 
     # /home/edward/pv/webscraping/elsevier/articles/failed_training_downloads/S1385894717300542.xml')

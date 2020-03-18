@@ -17,7 +17,6 @@ def get_smiles_pubchem(name):
     smiles = []
     try:
         for compound in get_compounds(name, 'name'):
-            print(compound.isomeric_smiles)
             smiles.append(compound.isomeric_smiles)
     except URLError:
         print('Problem accessing API for Pubchem...')
@@ -49,11 +48,15 @@ def add_smiles(pv_records):
                     if smiles:
                         pv_record.dye['Dye'][i]['smiles'] = {'value': smiles[0], 'context':'abbreviation'}
             # Step 2 - check each compound name in turn
-            if 'compound' in dye.keys() and 'smiles' not in dye.keys():
-                for name in dye['compound']['names']:
-                    smiles = get_smiles_pubchem(name)
-                    if smiles:
-                        pv_record.dye['Dye'][i]['smiles'] = {'value': smiles[0], 'context':'compound'}
+            try:
+                if dye.get('compound') and 'smiles' not in dye.keys():
+                    for name in dye['compound']['names']:
+                        smiles = get_smiles_pubchem(name)
+                        if smiles:
+                            pv_record.dye['Dye'][i]['smiles'] = {'value': smiles[0], 'context':'compound'}
+            except KeyError:
+                pass
+
             # Step 3 - try using the raw value
             if 'smiles' not in dye.keys():
                 raw_value = dye['raw_value']
