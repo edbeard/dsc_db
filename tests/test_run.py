@@ -27,7 +27,7 @@ class TestRun(unittest.TestCase):
         doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
         pv_records = [PhotovoltaicRecord(input, input_table)]
         pv_records = add_dye_information(pv_records, doc)
-        self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table', 'raw_value': 'N719', 'specifier': 'sensitizer'}]})
+        self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table_caption', 'raw_value': 'N719'}]})
 
     def test_dye_candidate_document_substitution(self):
         """ Test the case where dye is specified in the document"""
@@ -80,9 +80,8 @@ class TestRun(unittest.TestCase):
                                        'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
         }
         expected = {'Dye': [   {   'abbreviations': [['not-my-real-name', '719']],
-                              'contextual': 'table',
-                              'raw_value': 'N719',
-                              'specifier': 'sensitizer'}]}
+                              'contextual': 'table_caption',
+                              'raw_value': 'N719'}]}
 
         pv_records = [PhotovoltaicRecord(input, input_table)]
         pv_records = add_dye_information(pv_records, input_doc)
@@ -189,3 +188,17 @@ class TestRun(unittest.TestCase):
         pv_records = [PhotovoltaicRecord(pv_input, Table(Caption('')))]
         pv_records = add_distributor_info(pv_records)
         self.assertEqual(expected, pv_records[0].dye)
+
+    def test_result_removed_when_no_voc_jsc_ff_and_pce(self):
+
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'dye': {'Dye': [{'contextual': 'document', 'raw_value': 'N719'}]}
+        }
+
+        expected = {}
+        pv_records = [PhotovoltaicRecord(pv_input, Table(Caption('')))]
+
+
+

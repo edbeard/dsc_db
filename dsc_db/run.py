@@ -44,6 +44,8 @@ def create_dsscdb_from_file(path):
     # When no Dye field is present, search contextually for it
     pv_records = add_dye_information(pv_records, doc)
 
+    print(str(pv_records))
+
     print('Printing the PV records after adding dyes contextually:')
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
@@ -51,6 +53,12 @@ def create_dsscdb_from_file(path):
     # Get the compound records for the next stage
     doc_records = [record.serialize() for record in doc.records]
     compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
+
+    # Filtering our results that don't contain voc, jsc, ff and PCE (if not running in debug mode)
+    debug = False
+    if not debug:
+        pv_records = [pv_record for pv_record in pv_records if getattr(pv_record, 'voc', 'None') and getattr(pv_record, 'jsc', 'None')
+                      and getattr(pv_record, 'ff', 'None') and getattr(pv_record, 'pce', 'None')]
 
     # Merge other information from inside the document when appropriate
     for record in pv_records:
@@ -210,7 +218,7 @@ def add_contextual_dye_from_document(pv_records, elements, permissive=True):
     return pv_records
 
 
-def add_contextual_dye_from_document_by_multiplicity(pv_records, elements, permissive=False):
+def add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=False):
     """
     Merge dye information contextually under assumption that the most common dye mentioned in the methods section
     :param pv_records:
@@ -224,22 +232,6 @@ def add_contextual_dye_from_document_by_multiplicity(pv_records, elements, permi
     else:
         dye_key = 'CommonSentenceDye'
         context = 'document'
-
-    # Obtain the methods section by removing any sections mentioning introduction or results
-    filtered_elements = []
-    allow_heading = True
-    for el in elements:
-        if el.__class__.__name__ == 'Heading':
-            allow_heading = True
-            # Check if any token matches the blacklist
-            for token_list in el.raw_tokens:
-                for token in token_list:
-                    if token.lower() in blacklist_headings:
-                        allow_heading = False
-                        break
-
-        if allow_heading:
-            filtered_elements.append(el)
 
     # Count occurrence in the filtered element list
     altered = False # Boolean indicating whether the following logic altered the photovoltaic records
@@ -255,15 +247,7 @@ def add_contextual_dye_from_document_by_multiplicity(pv_records, elements, permi
     if sentence_dyes:
         altered = True
 
-    # Obtain the most common dye, if one exists
-    dye_names = list(set(sentence_dyes))
-    dye_count = []
-    for dye in dye_names:
-        dye_count.append(sentence_dyes.count(dye))
-
-    if dye_count:
-        max_value = max(dye_count)
-    most_common_dyes = [dye for i, dye in enumerate(dye_names) if dye_count[i] == max_value]
+    most_common_dyes = get_most_common_dyes(sentence_dyes)
 
     # Substitute in the most common dye, if found
     if len(most_common_dyes) == 1:
@@ -273,6 +257,61 @@ def add_contextual_dye_from_document_by_multiplicity(pv_records, elements, permi
                 pv_record.dye = {'Dye': [dye]}
 
     return pv_records, altered
+
+
+def add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=False):
+    """Add contextual Dye information from the caption if possible """
+
+    # Use different parsing results for permissive and non-permissive approaches
+    if permissive:
+        dye_key = 'SentenceDye'
+        context = 'table_caption_permissive'
+    else:
+        dye_key = 'CommonSentenceDye'
+        context = 'table_caption'
+
+    altered = False
+    for pv_record in pv_records:
+        if pv_record.dye is None:
+            caption = pv_record.table.caption
+            common_dye_caption_records = [record.serialize() for record in caption.records if record.__class__.__name__ == dye_key]
+            caption_dyes = []
+            for cap_record in common_dye_caption_records:
+
+                if cap_record[dye_key].get('raw_value'):
+                    caption_dyes.append(cap_record[dye_key]['raw_value'])
+
+    # If a dye was found, output
+    if caption_dyes:
+        altered = True
+
+    most_common_dyes = get_most_common_dyes(caption_dyes)
+
+    # Substitute in the most common dye, if found
+    if len(most_common_dyes) == 1:
+        for pv_record in pv_records:
+            if pv_record.dye is None:
+                dye = {'contextual': context, 'raw_value': most_common_dyes[0]}
+                pv_record.dye = {'Dye': [dye]}
+
+    return pv_records, altered
+
+
+def get_most_common_dyes(sentence_dyes):
+    """ Takes a list of extracted dye names, and creates a list of the most common.
+     If list has a length greater than 1, there was an equal occurance of 2+ dyes.
+     Such cases are not added for higher precision."""
+
+    dye_names = list(set(sentence_dyes))
+    dye_count = []
+    for dye in dye_names:
+        dye_count.append(sentence_dyes.count(dye))
+
+    if dye_count:
+        max_value = max(dye_count)
+    most_common_dyes = [dye for i, dye in enumerate(dye_names) if dye_count[i] == max_value]
+
+    return most_common_dyes
 
 
 def add_dye_information(pv_records, doc):
@@ -286,35 +325,99 @@ def add_dye_information(pv_records, doc):
     :return: updated records
     """
 
-    # Step 1: Check the caption using the DyeSentence parser
+        # print('Dye record found! %s ' % cap_record['CommonSentenceDye'])
+                    # cap_record['CommonSentenceDye']['contextual'] = 'table'
+                    # pv_record.dye = {'Dye': [cap_record['CommonSentenceDye']]}
+
+    # Step 1b: Check the table caption using the more-permissive DyeSentence parser
+    # If found, this record is set with a contextual flag to show it was not taken from the table...
+
+            #
+            #
+            #
+            #
+            # permissive_dye_caption_records = [record.serialize() for record in caption.records if
+            #                                   record.__class__.__name__ == 'CommonSentenceDye']
+            #
+            #     if 'SentenceDye' in cap_record.keys() and pv_record.dye is None:
+            #         print('Dye record found! %s ' % cap_record['SentenceDye'])
+            #         cap_record['SentenceDye']['contextual'] = 'table_permissive'
+            #         pv_record.dye = {'Dye': [cap_record['SentenceDye']]}
+            #
+            #     elif 'SentenceDye' in cap_record.keys():
+            #         cap_record['SentenceDye']['contextual'] = 'table'
+            #         pv_record.dye['Dye'].append(cap_record['SentenceDye'])
+
+
+    # Step 1: Merge with available common industrial dyes by frequency of occurrence
+    # pv_records, altered = add_contextual_dye_from_document_by_multiplicity(pv_records, permissive=False)
+
+    # TODO: Delete the above when the logic below is working correctly
+
+    altered = False
+
+    # Step 1: Check the caption using the CommonDyeSentence parser
     # If found, this record is set with a 'contextual' flag to show that it was not taken directly from the table
-    for pv_record in pv_records:
-        if pv_record.dye is None:
+    pv_records, altered = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=False)
+    if altered:
+        return pv_records
 
-            caption = pv_record.table.caption
-            caption_records = [record.serialize() for record in caption.records]
-            for cap_record in caption_records:
+    # Step 1b: Check the caption using the more permissive DyeSentence parser
+    pv_records, altered = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=True)
+    if altered:
+        return pv_records
 
-                if 'SentenceDye' in cap_record.keys() and pv_record.dye is None:
-                    print('Dye record found! %s ' % cap_record['SentenceDye'])
-                    cap_record['SentenceDye']['contextual'] = 'table'
-                    pv_record.dye = {'Dye': [cap_record['SentenceDye']]}
+    # When no Dye found from the caption, attempt to find from the body of text for specific sections
 
-                elif 'SentenceDye' in cap_record.keys():
-                    cap_record['SentenceDye']['contextual'] = 'table'
-                    pv_record.dye['Dye'].append(cap_record['SentenceDye'])
+    # Filter through the document elements to only obtain those that are allowed in the merging algorithm
+    # (ie. removing any sections mentioning introduction or results)
+    filtered_elements = []
+    allow_heading = True
+    elements = doc.elements
+    for el in elements:
+        if el.__class__.__name__ == 'Heading':
+            allow_heading = True
+            # Check if any token matches the blacklist
+            for token_list in el.raw_tokens:
+                for token in token_list:
+                    if token.lower() in blacklist_headings:
+                        allow_heading = False
+                        break
+
+        if allow_heading:
+            filtered_elements.append(el)
 
     # Step 2: Merge with available common industrial dyes by frequency of occurrence
-    pv_records, altered = add_contextual_dye_from_document_by_multiplicity(pv_records, doc.elements, permissive=False)
+    pv_records, altered = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=False)
+    if altered:
+        return pv_records
 
     # Step 3: If no common industrial dye found, repeat with more lenient dye matching
-    if not altered:
-        pv_records, _ = add_contextual_dye_from_document_by_multiplicity(pv_records, doc.elements, permissive=True)
+    pv_records, _ = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=True)
 
     return pv_records
 
 
 if __name__ == '__main__':
-    create_dsscdb_from_file('/home/edward/pv/extractions/input/C3CS60017C.html')
+    import cProfile, pstats, io
+    path = "/home/edward/pv/extractions/input/10.1016:j.jelechem.2017.12.050.xml"
+    cProfile.runctx("create_dsscdb_from_file(path)", None, locals=locals())
+
+    # Create stream for progiler to write to
+    profiling_output = io.StringIO()
+    p = pstats.Stats('mainstats', stream=profiling_output)
+
+    # Print resilts to that stream
+    # This puts the top 30 functions, sorted by time spent in each
+    p.strip_dirs().sort_stats('cumulative').print_stats(30)
+
+    #Print the results to log
+    print('Profiling results: %s' % profiling_output.getvalue())
+    profiling_output.close()
+    print('Output ends')
+
+
+
+
 
     # /home/edward/pv/webscraping/elsevier/articles/failed_training_downloads/S1385894717300542.xml')
