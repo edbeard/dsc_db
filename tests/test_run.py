@@ -29,6 +29,35 @@ class TestRun(unittest.TestCase):
         pv_records = add_dye_information(pv_records, doc)
         self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table_caption', 'raw_value': 'N719'}]})
 
+    def test_dye_candidate_caption_substitution_common_sentence_dye(self):
+        """Test the case where the caption contains multiple dye candidates, but one is a common dye and the other is not."""
+        table_input = [['CE',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Pt', '11.11', '22.22', '33.33', '44.44']]
+        input_table = Table(caption=Caption('Photovoltaic parameters for cells with the sensitizer N719. The dye X23 was also mentioned, but this dye is not a common sentence dye.'), table_data=table_input)
+        input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                       'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
+        }
+        doc = Document('Null', input_table)
+        doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
+        pv_records = [PhotovoltaicRecord(input, input_table)]
+        pv_records = add_dye_information(pv_records, doc)
+        self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table_caption', 'raw_value': 'N719'}]})
+
+    def test_dye_candidate_caption_substitution_multiplicity_sentence_dye(self):
+        """Test the case where the caption contains multiple dye candidates, all of which are not common sentence dyes."""
+        table_input = [['CE',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Pt', '11.11', '22.22', '33.33', '44.44']]
+        input_table = Table(caption=Caption('Photovoltaic parameters for cells with the sensitizer X24. The dye X23 was also mentioned. But the main dye was X24.'), table_data=table_input)
+        input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                       'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
+        }
+        doc = Document('Null', input_table)
+        doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
+        pv_records = [PhotovoltaicRecord(input, input_table)]
+        pv_records = add_dye_information(pv_records, doc)
+        self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table_caption_permissive', 'raw_value': 'X24'}]})
+
+
     def test_dye_candidate_document_substitution(self):
         """ Test the case where dye is specified in the document"""
         table_input = [['CE',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Pt', '11.11', '22.22', '33.33', '44.44']]

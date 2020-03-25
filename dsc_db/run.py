@@ -44,7 +44,7 @@ def create_dsscdb_from_file(path):
     # When no Dye field is present, search contextually for it
     pv_records = add_dye_information(pv_records, doc)
 
-    print(str(pv_records))
+    # print(str(pv_records))
 
     print('Printing the PV records after adding dyes contextually:')
     for pv_record in pv_records:
@@ -88,7 +88,7 @@ def create_dsscdb_from_file(path):
         pp.pprint(pv_record.serialize())
 
     # Output sentence dye records for debugging
-    output_sentence_dyes(doc)
+    # output_sentence_dyes(doc)
 
     return pv_records
 
@@ -316,60 +316,28 @@ def get_most_common_dyes(sentence_dyes):
 
 def add_dye_information(pv_records, doc):
     """
-    Function to add dye information from document if possible, following this logic:
-    1) Check the table caption, using DyeSentence
-    2) Check rest of document for commonly distributed dyes, by proximity
-    3) Check rest of document with more permissive logic (alphanumic regex), by proximity
+    Function to add contextual dye information from document where possible, by doing the following
+    1) Search for common dyes in the table caption
+    2) Search for potential dyes in the table caption as alphanumerics
+    3) Search the methods section of the document for common dyes.
+    4) Search the methods section of the document for potential dyes as alphanumerics.
+    For each stage, if multiple results are returned the most common is assumed to be correct.
 
-    All these sections could begin with a search for compounds, and then follow this by a search for common dyes like N719...
     :return: updated records
     """
-
-        # print('Dye record found! %s ' % cap_record['CommonSentenceDye'])
-                    # cap_record['CommonSentenceDye']['contextual'] = 'table'
-                    # pv_record.dye = {'Dye': [cap_record['CommonSentenceDye']]}
-
-    # Step 1b: Check the table caption using the more-permissive DyeSentence parser
-    # If found, this record is set with a contextual flag to show it was not taken from the table...
-
-            #
-            #
-            #
-            #
-            # permissive_dye_caption_records = [record.serialize() for record in caption.records if
-            #                                   record.__class__.__name__ == 'CommonSentenceDye']
-            #
-            #     if 'SentenceDye' in cap_record.keys() and pv_record.dye is None:
-            #         print('Dye record found! %s ' % cap_record['SentenceDye'])
-            #         cap_record['SentenceDye']['contextual'] = 'table_permissive'
-            #         pv_record.dye = {'Dye': [cap_record['SentenceDye']]}
-            #
-            #     elif 'SentenceDye' in cap_record.keys():
-            #         cap_record['SentenceDye']['contextual'] = 'table'
-            #         pv_record.dye['Dye'].append(cap_record['SentenceDye'])
-
-
-    # Step 1: Merge with available common industrial dyes by frequency of occurrence
-    # pv_records, altered = add_contextual_dye_from_document_by_multiplicity(pv_records, permissive=False)
-
-    # TODO: Delete the above when the logic below is working correctly
-
     altered = False
 
-    # Step 1: Check the caption using the CommonDyeSentence parser
-    # If found, this record is set with a 'contextual' flag to show that it was not taken directly from the table
+    # Step 1: Check the table caption using the CommonDyeSentence parser
     pv_records, altered = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=False)
     if altered:
         return pv_records
 
-    # Step 1b: Check the caption using the more permissive DyeSentence parser
+    # Step 2: Check the table caption using the more permissive DyeSentence parser
     pv_records, altered = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=True)
     if altered:
         return pv_records
 
-    # When no Dye found from the caption, attempt to find from the body of text for specific sections
-
-    # Filter through the document elements to only obtain those that are allowed in the merging algorithm
+    # Filter through the document elements to obtain the 'methods' section
     # (ie. removing any sections mentioning introduction or results)
     filtered_elements = []
     allow_heading = True
@@ -387,12 +355,12 @@ def add_dye_information(pv_records, doc):
         if allow_heading:
             filtered_elements.append(el)
 
-    # Step 2: Merge with available common industrial dyes by frequency of occurrence
+    # Step 3: Check the Methods section using the CommonDyeSentence parser
     pv_records, altered = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=False)
     if altered:
         return pv_records
 
-    # Step 3: If no common industrial dye found, repeat with more lenient dye matching
+    # Step 4: Check the Methods section using the more permissive DyeSentence parser
     pv_records, _ = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=True)
 
     return pv_records
