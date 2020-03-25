@@ -84,8 +84,8 @@ def create_dsscdb_from_file(path):
     pv_records = add_smiles(pv_records)
 
     # print the output after dyes removed...
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Output sentence dye records for debugging
     # output_sentence_dyes(doc)
@@ -281,16 +281,11 @@ def add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive
                 if cap_record[dye_key].get('raw_value'):
                     caption_dyes.append(cap_record[dye_key]['raw_value'])
 
-    # If a dye was found, output
-    if caption_dyes:
-        altered = True
-
-    most_common_dyes = get_most_common_dyes(caption_dyes)
-
-    # Substitute in the most common dye, if found
-    if len(most_common_dyes) == 1:
-        for pv_record in pv_records:
-            if pv_record.dye is None:
+            # If a dye was found, output
+            if caption_dyes:
+                altered = True
+            most_common_dyes = get_most_common_dyes(caption_dyes)
+            if len(most_common_dyes) == 1:
                 dye = {'contextual': context, 'raw_value': most_common_dyes[0]}
                 pv_record.dye = {'Dye': [dye]}
 
