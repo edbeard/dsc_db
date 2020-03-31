@@ -46,16 +46,16 @@ def create_dsscdb_from_file(path):
 
     # print(str(pv_records))
 
-    print('Printing the PV records after adding dyes contextually:')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # print('Printing the PV records after adding dyes contextually:')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Get the compound records for the next stage
     doc_records = [record.serialize() for record in doc.records]
     compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
 
     # Filtering our results that don't contain voc, jsc, ff and PCE (if not running in debug mode)
-    debug = False
+    debug = True
     if not debug:
         pv_records = [pv_record for pv_record in pv_records if getattr(pv_record, 'voc', 'None') and getattr(pv_record, 'jsc', 'None')
                       and getattr(pv_record, 'ff', 'None') and getattr(pv_record, 'pce', 'None')]
@@ -75,13 +75,17 @@ def create_dsscdb_from_file(path):
         pp.pprint(pv_record.serialize())
 
     # Contextual merging of dyes complete, filtering out results without dyes
-    pv_records = [pv_record for pv_record in pv_records if pv_record.dye is not None]
+    if not debug:
+        pv_records = [pv_record for pv_record in pv_records if pv_record.dye is not None]
 
     # Add chemical data from distributor of common dyes
     pv_records = add_distributor_info(pv_records)
 
     # Add SMILES through PubChem and ChemSpider where not added by distributor
     pv_records = add_smiles(pv_records)
+
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # print the output after dyes removed...
     # for pv_record in pv_records:
@@ -363,7 +367,7 @@ def add_dye_information(pv_records, doc):
 
 if __name__ == '__main__':
     import cProfile, pstats, io
-    path = "/home/edward/pv/extractions/input/10.1016:j.jelechem.2017.12.050.xml"
+    path = "/home/edward/pv/extractions/input/C3TA11570D.html"
     cProfile.runctx("create_dsscdb_from_file(path)", None, locals=locals())
 
     # Create stream for progiler to write to

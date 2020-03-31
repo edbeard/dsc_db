@@ -374,3 +374,28 @@ all_dyes = {**dyenamo_dyes, **solaronix_dyes, **sigma_aldrich, **greatcell_solar
 blacklist_headings = [
     'intro', 'introduction', 'background', 'theory', 'result', 'results', 'discussion', 'discussions', 'conclusion', 'conclusions', 'analysis'
 ]
+
+
+common_quantum_dot_materials = [
+    'CdS',
+]
+
+# Lists of key terms for classification of different PV types...
+psc_indicators = [
+    'perovskite', 'perovskites', 'psc', 'pscs', 'spiro ometad'
+]
+
+qdsc_indicators = [
+    'quantum dot', 'qdsc', 'qdscs', 'qdssc', 'qdsscs'
+]
+
+dsc_indicators = [
+    'dye sensitized', 'dye sensitised', 'dsc', 'dscs', 'dssc', 'dsscs', 'n719', 'co sensitization', 'cosensitization',
+    'co sensitisation', 'cosensitisation'
+]
+
+# specific tokens that should be merged together in classification analysis
+token_tuples_to_merge = {
+    ('quantum', 'dot'), ('spiro', 'ometad'), ('dye', 'sensitized'), ('dye', 'sensitised'), ('co', 'sensitization'),
+    ('co', 'sensitisation')
+}
