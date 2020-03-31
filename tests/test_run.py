@@ -5,11 +5,11 @@
 import unittest
 
 from dsc_db.model import PhotovoltaicRecord
-from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info
+from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, add_contextual_info, get_filtered_elements
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity
 from chemdataextractor.doc import Table, Caption, Paragraph, Heading
 
 
@@ -26,7 +26,8 @@ class TestRun(unittest.TestCase):
         doc = Document('Null', input_table)
         doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
         pv_records = [PhotovoltaicRecord(input, input_table)]
-        pv_records = add_dye_information(pv_records, doc)
+        filtered_elements = []
+        pv_records = add_dye_information(pv_records, filtered_elements)
         self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table_caption', 'raw_value': 'N719'}]})
 
     def test_dye_candidate_caption_substitution_common_sentence_dye(self):
@@ -40,7 +41,8 @@ class TestRun(unittest.TestCase):
         doc = Document('Null', input_table)
         doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
         pv_records = [PhotovoltaicRecord(input, input_table)]
-        pv_records = add_dye_information(pv_records, doc)
+        filtered_elements = []
+        pv_records = add_dye_information(pv_records, filtered_elements)
         self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table_caption', 'raw_value': 'N719'}]})
 
     def test_dye_candidate_caption_substitution_multiplicity_sentence_dye(self):
@@ -54,9 +56,9 @@ class TestRun(unittest.TestCase):
         doc = Document('Null', input_table)
         doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
         pv_records = [PhotovoltaicRecord(input, input_table)]
-        pv_records = add_dye_information(pv_records, doc)
+        filtered_elements = []
+        pv_records = add_dye_information(pv_records, filtered_elements)
         self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table_caption_permissive', 'raw_value': 'X24'}]})
-
 
     def test_dye_candidate_document_substitution(self):
         """ Test the case where dye is specified in the document"""
@@ -68,8 +70,9 @@ class TestRun(unittest.TestCase):
             'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
                                        'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
         }
+        filtered_elements = get_filtered_elements(input_doc)
         pv_records = [PhotovoltaicRecord(input, table)]
-        pv_records = add_dye_information(pv_records, input_doc)
+        pv_records = add_dye_information(pv_records, filtered_elements)
         self.assertEqual({'Dye': [{'contextual': 'document_permissive', 'raw_value': 'X23'}]}, pv_records[0].dye)
 
     def test_dye_candidate_document_substitution_with_compound_substitution(self):
@@ -86,8 +89,10 @@ class TestRun(unittest.TestCase):
         expected = {'Dye': [{'raw_value': 'Y123', 'contextual': 'document',
                     'compound': {'names': ["3-{6-{4-[bis(2′,4′-dihexyloxybiphenyl-4-yl)amino-]phenyl}-4,4-dihexyl-cyclopenta-[2,1-b:3,4-b']dithiophene-2-yl}-2-cyanoacrylic acid"], 'labels': ['Y123']}}]}
 
+        filtered_elements = get_filtered_elements(input_doc)
+
         pv_records = [PhotovoltaicRecord(input, Table(caption=Caption('Null')))]
-        pv_records = add_dye_information(pv_records, input_doc)
+        pv_records = add_dye_information(pv_records, filtered_elements)
 
         doc_records = [record.serialize() for record in input_doc.records]
         compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
@@ -112,8 +117,10 @@ class TestRun(unittest.TestCase):
                               'contextual': 'table_caption',
                               'raw_value': 'N719'}]}
 
+        filtered_elements = get_filtered_elements(input_doc)
+
         pv_records = [PhotovoltaicRecord(input, input_table)]
-        pv_records = add_dye_information(pv_records, input_doc)
+        pv_records = add_dye_information(pv_records, filtered_elements)
 
         for pv_record in pv_records:
             if pv_record.dye is not None:
@@ -134,9 +141,10 @@ class TestRun(unittest.TestCase):
         expected = {'Dye': [{'contextual': 'document',
                               'raw_value': 'N719'}]
                     }
+        filtered_elements = get_filtered_elements(input_doc)
 
         pv_records = [PhotovoltaicRecord(input, input_table)]
-        pv_records = add_dye_information(pv_records, input_doc)
+        pv_records = add_dye_information(pv_records, filtered_elements)
 
         self.assertEqual(pv_records[0].dye, expected)
 
@@ -228,6 +236,64 @@ class TestRun(unittest.TestCase):
 
         expected = {}
         pv_records = [PhotovoltaicRecord(pv_input, Table(Caption('')))]
+
+    def test_contextual_solar_irradiance_merged_from_table_caption(self):
+
+        caption = Caption('Photovoltaic parameters of various SD/ERD systems measured under simulated AM 1.5G irradiance (100 mW cm−2)')
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
+        }
+        pv_records = [PhotovoltaicRecord(pv_input, Table(caption, models=[SimulatedSolarLightIntensity]))]
+        filtered_elements = []
+        pv_records = add_contextual_info(pv_records, filtered_elements)
+
+        expected = {'solar_simulator': {'SimulatedSolarLightIntensity': {'raw_units': 'mWcm−2)',
+                                                      'raw_value': '100',
+                                                      'specifier': 'irradiance',
+                                                      'spectra': 'AM 1.5G',
+                                                      'units': '(10^1.0) * '
+                                                               'Meter^(-2.0)  '
+                                                               'Watt^(1.0)',
+                                                      'value': [100.0]}},
+                                        'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                    'raw_value': '756',
+                                                    'specifier': 'Voc',
+                                                    'units': '(10^-3.0) * Volt^(1.0)',
+                                                    'value': [756.0]}}}
+        output = pv_records[0].serialize()
+        self.assertEqual(output, expected)
+
+    def test_contextual_solar_irradiance_merged_from_sentence(self):
+
+        filtered_elements = Paragraph('Detailed photovoltaic parameters of solar cells based on different TiO2 photoelectrodes under AM 1.5 illumination (100 mW cm−2).')
+        doc = Document(filtered_elements)
+        doc.add_models([SimulatedSolarLightIntensity])
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
+        }
+        pv_records = [PhotovoltaicRecord(pv_input, Table(Caption(''), models=[SimulatedSolarLightIntensity]))]
+        pv_records = add_contextual_info(pv_records, doc)
+        expected = {'solar_simulator': {'SimulatedSolarLightIntensity': {'raw_units': 'mWcm−2)',
+                                                      'raw_value': '100',
+                                                      'specifier': 'illumination',
+                                                      'spectra': 'AM 1.5',
+                                                      'units': '(10^1.0) * '
+                                                               'Meter^(-2.0)  '
+                                                               'Watt^(1.0)',
+                                                      'value': [100.0]}},
+                                         'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                                        'raw_value': '756',
+                                                                        'specifier': 'Voc',
+                                                                        'units': '(10^-3.0) * Volt^(1.0)',
+                                                                        'value': [756.0]}}}
+
+        output = pv_records[0].serialize()
+
+        self.assertEqual(output, expected)
+
+
 
 
 

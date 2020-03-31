@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 from chemdataextractor.doc import Document, Table
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity
 from chemdataextractor.model import Compound
 
 from dsc_db.model import PhotovoltaicRecord
@@ -31,7 +31,7 @@ def create_dsscdb_from_file(path):
         doc = Document.from_file(f)
 
     # Only add the photovoltaiccell and Compound models to the document
-    doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
+    doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity])
 
     # Get all records from the table
     # This returns a tuple of type (pv_record, table)
@@ -41,14 +41,19 @@ def create_dsscdb_from_file(path):
     # Create PhotovoltaicRecord object
     pv_records = [PhotovoltaicRecord(record, table) for record, table in table_records]
 
+    filtered_elements = get_filtered_elements(doc)
+
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
+
     # When no Dye field is present, search contextually for it
-    pv_records = add_dye_information(pv_records, doc)
+    pv_records = add_dye_information(pv_records, filtered_elements)
 
     # print(str(pv_records))
 
     # print('Printing the PV records after adding dyes contextually:')
-    # for pv_record in pv_records:
-    #     pp.pprint(pv_record.serialize())
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # Get the compound records for the next stage
     doc_records = [record.serialize() for record in doc.records]
@@ -78,6 +83,9 @@ def create_dsscdb_from_file(path):
     if not debug:
         pv_records = [pv_record for pv_record in pv_records if pv_record.dye is not None]
 
+    # Apply sentence parsers for contextual information (Irradiance etc)
+    pv_records = add_contextual_info(pv_records, filtered_elements)
+
     # Add chemical data from distributor of common dyes
     pv_records = add_distributor_info(pv_records)
 
@@ -93,6 +101,65 @@ def create_dsscdb_from_file(path):
 
     # Output sentence dye records for debugging
     # output_sentence_dyes(doc)
+
+    return pv_records
+
+
+def get_filtered_elements(doc):
+
+    # Filter through the document elements to obtain the 'methods' section
+    # (ie. removing any sections mentioning introduction or results)
+    filtered_elements = []
+    allow_heading = True
+    elements = doc.elements
+    for el in elements:
+        if el.__class__.__name__ == 'Heading':
+            allow_heading = True
+            # Check if any token matches the blacklist
+            for token_list in el.raw_tokens:
+                for token in token_list:
+                    if token.lower() in blacklist_headings:
+                        allow_heading = False
+                        break
+
+        if allow_heading:
+            filtered_elements.append(el)
+
+    return filtered_elements
+
+
+def add_contextual_info(pv_records, filtered_elements):
+    """ Add contextual information on dye extraction from the document using the specified sentence parsers
+    :param pv_records: List of PV record objects
+    :param filtered_elements: List of elements from the document that describe the experimental method.
+    """
+
+    properties = [('SimulatedSolarLightIntensity', 'solar_simulator')]
+
+    for pv_record in pv_records:
+        caption = pv_record.table.caption
+        for parser, field in properties:
+            if getattr(pv_record, field) is None:
+                # First, search the caption for this
+                caption_records = [record.serialize() for record in caption.records if
+                                              record.__class__.__name__ == parser]
+
+                # Then, count the occurrences. If there is only one result, merge (as we can assume this applies to all the
+                # results in the table.
+                caption_values = [rec[parser]['value'] for rec in caption_records]
+                if caption_values:
+                    all_equal = caption_values.count(caption_values[0]) == len(caption_values)
+                    if all_equal:
+                        setattr(pv_record, field, caption_records[0])
+                else:
+                    # Otherwise, extract from the filtered elements
+                    sentence_records = [record.serialize() for el in filtered_elements for record in el.records if
+                                              record.__class__.__name__ == parser]
+                    sentence_values = [rec[parser]['value'] for rec in sentence_records]
+                    if sentence_values:
+                        all_equal = sentence_values.count(sentence_values[0]) == len(sentence_values)
+                        if all_equal:
+                            setattr(pv_record, field, sentence_records[0])
 
     return pv_records
 
@@ -313,7 +380,7 @@ def get_most_common_dyes(sentence_dyes):
     return most_common_dyes
 
 
-def add_dye_information(pv_records, doc):
+def add_dye_information(pv_records, filtered_elements):
     """
     Function to add contextual dye information from document where possible, by doing the following
     1) Search for common dyes in the table caption
@@ -336,24 +403,6 @@ def add_dye_information(pv_records, doc):
     if altered:
         return pv_records
 
-    # Filter through the document elements to obtain the 'methods' section
-    # (ie. removing any sections mentioning introduction or results)
-    filtered_elements = []
-    allow_heading = True
-    elements = doc.elements
-    for el in elements:
-        if el.__class__.__name__ == 'Heading':
-            allow_heading = True
-            # Check if any token matches the blacklist
-            for token_list in el.raw_tokens:
-                for token in token_list:
-                    if token.lower() in blacklist_headings:
-                        allow_heading = False
-                        break
-
-        if allow_heading:
-            filtered_elements.append(el)
-
     # Step 3: Check the Methods section using the CommonDyeSentence parser
     pv_records, altered = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=False)
     if altered:
@@ -367,7 +416,7 @@ def add_dye_information(pv_records, doc):
 
 if __name__ == '__main__':
     import cProfile, pstats, io
-    path = "/home/edward/pv/extractions/input/C3TA11570D.html"
+    path = "/home/edward/pv/extractions/input/10.1016:j.electacta.2016.01.055.xml"
     cProfile.runctx("create_dsscdb_from_file(path)", None, locals=locals())
 
     # Create stream for progiler to write to
