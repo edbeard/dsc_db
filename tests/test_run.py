@@ -9,7 +9,7 @@ from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading
 from chemdataextractor.doc import Table, Caption, Paragraph, Heading
 
 
@@ -237,18 +237,37 @@ class TestRun(unittest.TestCase):
         expected = {}
         pv_records = [PhotovoltaicRecord(pv_input, Table(Caption('')))]
 
-    def test_contextual_solar_irradiance_merged_from_table_caption(self):
-
-        caption = Caption('Photovoltaic parameters of various SD/ERD systems measured under simulated AM 1.5G irradiance (100 mW cm−2)')
+    def do_contextual_table_caption_merging(self, caption_text, model, expected):
+        caption = Caption(caption_text)
         pv_input = {
             'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
                                            'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
         }
-        pv_records = [PhotovoltaicRecord(pv_input, Table(caption, models=[SimulatedSolarLightIntensity]))]
+        pv_records = [PhotovoltaicRecord(pv_input, Table(caption, models=[model]))]
         filtered_elements = []
         pv_records = add_contextual_info(pv_records, filtered_elements)
+        output = pv_records[0].serialize()
+        self.assertEqual(output, expected)
 
-        expected = {'solar_simulator': {'SimulatedSolarLightIntensity': {'raw_units': 'mWcm−2)',
+    def do_contextual_document_merging(self, text, model, expected):
+        filtered_elements = Paragraph(text)
+        doc = Document(filtered_elements)
+        doc.add_models([model])
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
+        }
+        pv_records = [PhotovoltaicRecord(pv_input, Table(Caption(''), models=[model]))]
+        pv_records = add_contextual_info(pv_records, doc)
+        output = pv_records[0].serialize()
+        self.assertEqual(output, expected)
+
+    def test_contextual_solar_irradiance_merged_from_table_caption(self):
+
+        caption = 'Photovoltaic parameters of various SD/ERD systems measured under simulated AM 1.5G irradiance (100 mW cm−2)'
+        model = SimulatedSolarLightIntensity
+        expected = {'solar_simulator': {'SimulatedSolarLightIntensity': {'contextual': 'table_caption',
+                                                      'raw_units': 'mWcm−2)',
                                                       'raw_value': '100',
                                                       'specifier': 'irradiance',
                                                       'spectra': 'AM 1.5G',
@@ -256,25 +275,17 @@ class TestRun(unittest.TestCase):
                                                                'Meter^(-2.0)  '
                                                                'Watt^(1.0)',
                                                       'value': [100.0]}},
-                                        'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                     'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
                                                     'raw_value': '756',
                                                     'specifier': 'Voc',
                                                     'units': '(10^-3.0) * Volt^(1.0)',
                                                     'value': [756.0]}}}
-        output = pv_records[0].serialize()
-        self.assertEqual(output, expected)
+        self.do_contextual_table_caption_merging(caption, model, expected)
 
     def test_contextual_solar_irradiance_merged_from_sentence(self):
 
-        filtered_elements = Paragraph('Detailed photovoltaic parameters of solar cells based on different TiO2 photoelectrodes under AM 1.5 illumination (100 mW cm−2).')
-        doc = Document(filtered_elements)
-        doc.add_models([SimulatedSolarLightIntensity])
-        pv_input = {
-            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
-                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
-        }
-        pv_records = [PhotovoltaicRecord(pv_input, Table(Caption(''), models=[SimulatedSolarLightIntensity]))]
-        pv_records = add_contextual_info(pv_records, doc)
+        text = 'Detailed photovoltaic parameters of solar cells based on different TiO2 photoelectrodes under AM 1.5 illumination (100 mW cm−2).'
+        model = SimulatedSolarLightIntensity
         expected = {'solar_simulator': {'SimulatedSolarLightIntensity': {'raw_units': 'mWcm−2)',
                                                       'raw_value': '100',
                                                       'specifier': 'illumination',
@@ -282,18 +293,119 @@ class TestRun(unittest.TestCase):
                                                       'units': '(10^1.0) * '
                                                                'Meter^(-2.0)  '
                                                                'Watt^(1.0)',
-                                                      'value': [100.0]}},
+                                                      'value': [100.0],
+                                                        'contextual': 'document'}},
                                          'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
                                                                         'raw_value': '756',
                                                                         'specifier': 'Voc',
                                                                         'units': '(10^-3.0) * Volt^(1.0)',
                                                                         'value': [756.0]}}}
 
-        output = pv_records[0].serialize()
+        self.do_contextual_document_merging(text, model, expected)
 
-        self.assertEqual(output, expected)
+    def test_contextual_substrate_merged_from_table_caption(self):
+        caption = 'PV parameters where the device had some other parameter set and a substrate of FTO.'
+        model = Substrate
+        expected = {'substrate': {'Substrate': {'raw_value': 'FTO',
+                                                'specifier': 'substrate',
+                                                'contextual': 'table_caption'}},
+                                         'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                                        'raw_value': '756',
+                                                                        'specifier': 'Voc',
+                                                                        'units': '(10^-3.0) * Volt^(1.0)',
+                                                                        'value': [756.0]}}}
 
+        self.do_contextual_table_caption_merging(caption, model, expected)
 
+    def test_contextual_substrate_merged_from_document(self):
+        text = 'The XRD patterns with the main peaks and the Miller indices of FTO substrate, FTO/TiO2 and FTO/TiO2/CdS electrodes are shown in Fig. 1 (e).'
+        model = Substrate
+        expected = {'substrate': {'Substrate': {'raw_value': 'FTO',
+                                                      'specifier': 'substrate',
+                                                'contextual': 'document'}},
+                                         'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                                        'raw_value': '756',
+                                                                        'specifier': 'Voc',
+                                                                        'units': '(10^-3.0) * Volt^(1.0)',
+                                                                        'value': [756.0]}}}
+        self.do_contextual_document_merging(text, model, expected)
 
+    def test_contextual_semiconductor_merged_from_table_caption(self):
+        caption = 'Photovoltaic parameters of the DSSCs sensitized with P1, P2 and P3 with 12 μm TiO2 photoanode'
+        model = Semiconductor
+        expected = {'semiconductor': {'Semiconductor': {'raw_value': 'TiO2',
+                                     'specifier': 'photoanode',
+                                     'thickness': {'SemiconductorThickness': {'raw_units': 'μm',
+                                                                              'raw_value': '12',
+                                                                              'specifier': 'photoanode',
+                                                                              'units': '(10^-6.0) '
+                                                                                       '* '
+                                                                                       'Meter^(1.0)',
+                                                                              'value': [12.0]}},
+                                      'contextual': 'table_caption'}},
+                     'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                    'raw_value': '756',
+                                                    'specifier': 'Voc',
+                                                    'units': '(10^-3.0) * Volt^(1.0)',
+                                                    'value': [756.0]}}}
 
+        self.do_contextual_table_caption_merging(caption, model, expected)
 
+    def test_contextual_semiconductor_merged_from_document(self):
+        text = 'The overall power conversion efficiencies (PCEs) of DSSCs based on these dyes lay in the range 2.46–3.9% using a 12 μm thick TiO2 photoanode.'
+        model = Semiconductor
+        expected = {'semiconductor': {'Semiconductor': {'contextual': 'document',
+                                     'raw_value': 'TiO2',
+                                     'specifier': 'photoanode',
+                                     'thickness': {'SemiconductorThickness': {'raw_units': 'μm',
+                                                                              'raw_value': '12',
+                                                                              'specifier': 'photoanode',
+                                                                              'units': '(10^-6.0) '
+                                                                                       '* '
+                                                                                       'Meter^(1.0)',
+                                                                              'value': [12.0]}}}},
+                                     'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                                    'raw_value': '756',
+                                                                    'specifier': 'Voc',
+                                                                    'units': '(10^-3.0) * Volt^(1.0)',
+                                                                    'value': [756.0]}}}
+        self.do_contextual_document_merging(text, model, expected)
+
+    def test_contextual_semiconductor_merged_from_table_caption(self):
+        caption = 'Photovoltaic parameters of the DSSCs sensitized with P1, P2 and P3 with 12 μm TiO2 photoanode'
+        model = Semiconductor
+        expected = {'semiconductor': {'Semiconductor': {'raw_value': 'TiO2',
+                                     'specifier': 'photoanode',
+                                     'thickness': {'SemiconductorThickness': {'raw_units': 'μm',
+                                                                              'raw_value': '12',
+                                                                              'specifier': 'photoanode',
+                                                                              'units': '(10^-6.0) '
+                                                                                       '* '
+                                                                                       'Meter^(1.0)',
+                                                                              'value': [12.0]}},
+                                      'contextual': 'table_caption'}},
+                     'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                    'raw_value': '756',
+                                                    'specifier': 'Voc',
+                                                    'units': '(10^-3.0) * Volt^(1.0)',
+                                                    'value': [756.0]}}}
+
+        self.do_contextual_table_caption_merging(caption, model, expected)
+
+    def test_contextual_dye_loading_merged_from_document(self):
+        text = 'with a dye-loading capacity of two working electrodes: 2.601×10−7 mol cm−2'
+        model = SentenceDyeLoading
+        expected = {'dye_loading': {'SentenceDyeLoading': {'contextual': 'document',
+                                        'exponent': [-7.0],
+                                        'raw_units': 'molcm−2',
+                                        'raw_value': '2.601',
+                                        'specifier': 'loading',
+                                        'units': '(10^4.0) * Meter^(-2.0)  '
+                                                 'Mol^(1.0)',
+                                        'value': [2.601]}},
+                            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+        self.do_contextual_document_merging(text, model, expected)

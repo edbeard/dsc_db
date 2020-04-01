@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 from chemdataextractor.doc import Document, Table
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, SentenceDyeLoading, SentenceSemiconductor
 from chemdataextractor.model import Compound
 
 from dsc_db.model import PhotovoltaicRecord
@@ -31,7 +31,7 @@ def create_dsscdb_from_file(path):
         doc = Document.from_file(f)
 
     # Only add the photovoltaiccell and Compound models to the document
-    doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity])
+    doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, SentenceSemiconductor, SentenceDyeLoading])# Substrate, SentenceSemiconductor, DyeLoading])
 
     # Get all records from the table
     # This returns a tuple of type (pv_record, table)
@@ -134,11 +134,22 @@ def add_contextual_info(pv_records, filtered_elements):
     :param filtered_elements: List of elements from the document that describe the experimental method.
     """
 
-    properties = [('SimulatedSolarLightIntensity', 'solar_simulator')]
+    properties = [('SimulatedSolarLightIntensity', 'solar_simulator'),
+                  ('Semiconductor', 'semiconductor'),
+                  ('SentenceDyeLoading', 'dye_loading'),
+                  ('Substrate', 'substrate')]
+
+    # Create a list containing document records for each property:
+    sentence_records = []
+    for parser, field in properties:
+        filtered_record = [record.serialize() for el in filtered_elements for record in el.records if
+                                              record.__class__.__name__ == parser]
+        sentence_records.append([record for record in filtered_record if record[parser].get('raw_value')])
 
     for pv_record in pv_records:
         caption = pv_record.table.caption
-        for parser, field in properties:
+        for i, props in enumerate(properties):
+            parser, field = props[0], props[1]
             if getattr(pv_record, field) is None:
                 # First, search the caption for this
                 caption_records = [record.serialize() for record in caption.records if
@@ -146,20 +157,29 @@ def add_contextual_info(pv_records, filtered_elements):
 
                 # Then, count the occurrences. If there is only one result, merge (as we can assume this applies to all the
                 # results in the table.
-                caption_values = [rec[parser]['value'] for rec in caption_records]
+                try:
+                    caption_values = [rec[parser]['value'] for rec in caption_records]
+                except:
+                    caption_values = [rec[parser]['raw_value'] for rec in caption_records]
+
                 if caption_values:
                     all_equal = caption_values.count(caption_values[0]) == len(caption_values)
                     if all_equal:
+                        caption_records[0][parser]['contextual'] = 'table_caption'
                         setattr(pv_record, field, caption_records[0])
                 else:
                     # Otherwise, extract from the filtered elements
-                    sentence_records = [record.serialize() for el in filtered_elements for record in el.records if
-                                              record.__class__.__name__ == parser]
-                    sentence_values = [rec[parser]['value'] for rec in sentence_records]
+                    records_for_this_field = sentence_records[i]
+                    try:
+                        sentence_values = [rec[parser]['value'] for rec in records_for_this_field]
+                    except:
+                        sentence_values = [rec[parser]['raw_value'] for rec in records_for_this_field]
+                        # print(sentence_records[0][parser])
                     if sentence_values:
                         all_equal = sentence_values.count(sentence_values[0]) == len(sentence_values)
                         if all_equal:
-                            setattr(pv_record, field, sentence_records[0])
+                            records_for_this_field[0][parser]['contextual'] = 'document'
+                            setattr(pv_record, field, records_for_this_field[0])
 
     return pv_records
 
@@ -173,11 +193,12 @@ def add_distributor_info(pv_records):
 
     for key, dye in all_dyes.items():
         for pv_record in pv_records:
-            for pv_dye in pv_record.dye['Dye']:
-                if pv_dye.get('raw_value') in dye['labels'] and pv_dye.get('raw_value') is not None:
-                    pv_dye['smiles'] = all_dyes[key]['smiles']
-                    pv_dye['name'] = all_dyes[key]['name']
-                    pv_dye['labels'] = all_dyes[key]['labels']
+            if pv_record.dye:
+                for pv_dye in pv_record.dye['Dye']:
+                    if pv_dye.get('raw_value') in dye['labels'] and pv_dye.get('raw_value') is not None:
+                        pv_dye['smiles'] = all_dyes[key]['smiles']
+                        pv_dye['name'] = all_dyes[key]['name']
+                        pv_dye['labels'] = all_dyes[key]['labels']
 
     return pv_records
 
@@ -416,7 +437,7 @@ def add_dye_information(pv_records, filtered_elements):
 
 if __name__ == '__main__':
     import cProfile, pstats, io
-    path = "/home/edward/pv/extractions/input/10.1016:j.electacta.2016.01.055.xml"
+    path = "/home/edward/pv/extractions/input/C2RA22129B.html"
     cProfile.runctx("create_dsscdb_from_file(path)", None, locals=locals())
 
     # Create stream for progiler to write to

@@ -39,29 +39,30 @@ def add_smiles(pv_records):
     # Currently we are taking the first returned SMILES string
 
     for pv_record in pv_records:
-        for i, dye in enumerate(pv_record.dye['Dye']):
-            # Step 1 - check each abbreviation name in turn
-            if 'abbreviations' in dye.keys():
-                for abbr_list in dye['abbreviations']:
-                    abbr = ' '.join(abbr_list)
-                    smiles = get_smiles_pubchem(abbr)
-                    if smiles:
-                        pv_record.dye['Dye'][i]['smiles'] = {'value': smiles[0], 'context':'abbreviation'}
-            # Step 2 - check each compound name in turn
-            try:
-                if dye.get('compound') and 'smiles' not in dye.keys():
-                    for name in dye['compound']['names']:
-                        smiles = get_smiles_pubchem(name)
+        if pv_record.dye:
+            for i, dye in enumerate(pv_record.dye['Dye']):
+                # Step 1 - check each abbreviation name in turn
+                if 'abbreviations' in dye.keys():
+                    for abbr_list in dye['abbreviations']:
+                        abbr = ' '.join(abbr_list)
+                        smiles = get_smiles_pubchem(abbr)
                         if smiles:
-                            pv_record.dye['Dye'][i]['smiles'] = {'value': smiles[0], 'context':'compound'}
-            except KeyError:
-                pass
+                            pv_record.dye['Dye'][i]['smiles'] = {'value': smiles[0], 'context':'abbreviation'}
+                # Step 2 - check each compound name in turn
+                try:
+                    if dye.get('compound') and 'smiles' not in dye.keys():
+                        for name in dye['compound']['names']:
+                            smiles = get_smiles_pubchem(name)
+                            if smiles:
+                                pv_record.dye['Dye'][i]['smiles'] = {'value': smiles[0], 'context':'compound'}
+                except KeyError:
+                    pass
 
-            # Step 3 - try using the raw value
-            if 'smiles' not in dye.keys():
-                raw_value = dye['raw_value']
-                smiles = get_smiles_pubchem(raw_value)
-                if smiles:
-                    pv_record.dye['Dye'][i]['smiles'] = {'value': smiles[0], 'context': 'raw_value'}
+                # Step 3 - try using the raw value
+                if 'smiles' not in dye.keys():
+                    raw_value = dye['raw_value']
+                    smiles = get_smiles_pubchem(raw_value)
+                    if smiles:
+                        pv_record.dye['Dye'][i]['smiles'] = {'value': smiles[0], 'context': 'raw_value'}
 
     return pv_records
