@@ -374,7 +374,7 @@ class TestRun(unittest.TestCase):
                                      'specifier': 'photoanode',
                                      'thickness': {'SemiconductorThickness': {'raw_units': 'μm',
                                                                               'raw_value': '12',
-                                                                              'specifier': 'photoanode',
+                                                                              'specifier': 'thick',
                                                                               'units': '(10^-6.0) '
                                                                                        '* '
                                                                                        'Meter^(1.0)',
@@ -387,27 +387,24 @@ class TestRun(unittest.TestCase):
         self.do_contextual_document_merging(text, model, expected)
 
     def test_contextual_dye_loading_merged_from_table_caption(self):
-        #TODO
-        pass
-        # caption = 'Photovoltaic parameters of the DSSCs sensitized with P1, P2 and P3 with 12 μm TiO2 photoanode'
-        # model = Semiconductor
-        # expected = {'semiconductor': {'Semiconductor': {'raw_value': 'TiO2',
-        #                              'specifier': 'photoanode',
-        #                              'thickness': {'SemiconductorThickness': {'raw_units': 'μm',
-        #                                                                       'raw_value': '12',
-        #                                                                       'specifier': 'photoanode',
-        #                                                                       'units': '(10^-6.0) '
-        #                                                                                '* '
-        #                                                                                'Meter^(1.0)',
-        #                                                                       'value': [12.0]}},
-        #                               'contextual': 'table_caption'}},
-        #              'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
-        #                                             'raw_value': '756',
-        #                                             'specifier': 'Voc',
-        #                                             'units': '(10^-3.0) * Volt^(1.0)',
-        #                                             'value': [756.0]}}}
-        #
-        # self.do_contextual_table_caption_merging(caption, model, expected)
+
+        caption = 'with a dye-loading capacity of two working electrodes: 2.601×10−7 mol cm−2'
+        model = SentenceDyeLoading
+        expected = {'dye_loading': {'SentenceDyeLoading': {'contextual': 'table_caption',
+                                        'exponent': [-7.0],
+                                        'raw_units': 'molcm−2',
+                                        'raw_value': '2.601',
+                                        'specifier': 'loading',
+                                        'units': '(10^4.0) * Meter^(-2.0)  '
+                                                 'Mol^(1.0)',
+                                        'value': [2.601]}},
+                            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+
+        self.do_contextual_table_caption_merging(caption, model, expected)
 
     def test_contextual_dye_loading_merged_from_document(self):
         text = 'with a dye-loading capacity of two working electrodes: 2.601×10−7 mol cm−2'

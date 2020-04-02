@@ -438,7 +438,7 @@ def add_dye_information(pv_records, filtered_elements):
 
 if __name__ == '__main__':
     import cProfile, pstats, io
-    path = "/home/edward/pv/extractions/input/10.1016:j.jelechem.2017.12.050.xml"
+    path = "/home/edward/pv/extractions/input/C3TA11527E.html"
     cProfile.runctx("create_dsscdb_from_file(path)", None, locals=locals())
 
     # Create stream for progiler to write to
