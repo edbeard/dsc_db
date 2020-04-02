@@ -60,7 +60,7 @@ def create_dsscdb_from_file(path):
     compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
 
     # Filtering our results that don't contain voc, jsc, ff and PCE (if not running in debug mode)
-    debug = True
+    debug = False
     if not debug:
         pv_records = [pv_record for pv_record in pv_records if getattr(pv_record, 'voc', 'None') and getattr(pv_record, 'jsc', 'None')
                       and getattr(pv_record, 'ff', 'None') and getattr(pv_record, 'pce', 'None')]
@@ -154,6 +154,7 @@ def add_contextual_info(pv_records, filtered_elements):
                 # First, search the caption for this
                 caption_records = [record.serialize() for record in caption.records if
                                               record.__class__.__name__ == parser]
+                caption_records = [record for record in caption_records if record[parser].get('raw_value')]
 
                 # Then, count the occurrences. If there is only one result, merge (as we can assume this applies to all the
                 # results in the table.
@@ -437,7 +438,7 @@ def add_dye_information(pv_records, filtered_elements):
 
 if __name__ == '__main__':
     import cProfile, pstats, io
-    path = "/home/edward/pv/extractions/input/C2RA22129B.html"
+    path = "/home/edward/pv/extractions/input/10.1016:j.jelechem.2017.12.050.xml"
     cProfile.runctx("create_dsscdb_from_file(path)", None, locals=locals())
 
     # Create stream for progiler to write to
