@@ -370,6 +370,75 @@ greatcell_solar = {
 # Combine dictionaries
 all_dyes = {**dyenamo_dyes, **solaronix_dyes, **sigma_aldrich, **greatcell_solar}
 
+#### Common Perovskite Materials ####
+
+solaronix_htms = {
+
+    'Spiro-OMeTAD': {
+        'labels': ['Spiro-OMeTAD',
+                   "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
+                   'C81H68N4O8',
+                   'Spiro-MeOTAD',
+                   'N7′-octakis(4-methoxyphenyl)-9,9′-spirobi[9H-fluorene]-2,2′,7,7′-tetramine'
+                   ],
+        'name': "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
+        'smiles': "COC1=CC=C(C=C1)N(C2=CC=C(C=C2)OC)C3=CC4=C(C=C3)C5=C(C46C7=C(C=CC(=C7)N(C8=CC=C(C=C8)OC)C9=CC=C(C=C9)OC)C1=C6C=C(C=C1)N(C1=CC=C(C=C1)OC)C1=CC=C(C=C1)OC)C=C(C=C5)N(C1=CC=C(C=C1)OC)C1=CC=C(C=C1)OC"
+    }
+}
+
+sigma_aldrich_htms = {
+    'Cuprous thiocyanate': {
+        'labels': ['Cuprous thiocyanate',
+                   'Copper(I) thiocyanate',
+                   "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
+                   'CCuNS'
+                   ],
+        'name': "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
+        'smiles': "C(#N)[S-].[Cu+]"
+    },
+
+    'EH44': {
+        'labels': ['EH44',
+                   "9-(2-Ethylhexyl)-N,N,N,N-tetrakis(4-methoxyphenyl)- 9H-carbazole-2,7-diamine)",
+                   'C48H51N3O4'
+                   ],
+        'name': "9-(2-Ethylhexyl)-N,N,N,N-tetrakis(4-methoxyphenyl)- 9H-carbazole-2,7-diamine)",
+        'smiles': ""
+    },
+
+    'Poly-TPD': {
+        'labels': ['Poly-TPD',
+                   "4-butyl-N,N-diphenylaniline",
+                   'C22H23N'
+                   ],
+        'name': "4-butyl-N,N-diphenylaniline",
+        'smiles': "CCCCC1=CC=C(C=C1)N(C2=CC=CC=C2)C3=CC=CC=C3"
+    },
+
+    'X59': {
+        'labels': ['X59',
+                   'Spiro[9H-fluorene-9,9′-[9H]xanthene]-2,7-diamine',
+                   "N,N,N′,N′-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9′-xanthene]-2,7-diamine",
+                   "2-N,2-N,7-N,7-N-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9'-xanthene]-2,7-diamine"
+                   'C53H42N2O5'
+                   ],
+        'name': "2-N,2-N,7-N,7-N-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9'-xanthene]-2,7-diamine",
+        'smiles': "COC1=CC=C(C=C1)N(C2=CC=C(C=C2)OC)C3=CC4=C(C=C3)C5=C(C46C7=CC=CC=C7OC8=CC=CC=C68)C=C(C=C5)N(C9=CC=C(C=C9)OC)C1=CC=C(C=C1)OC"
+    },
+
+    'TFB': {
+        'labels': ['TFB',
+                   "N-(4-Butan-2-ylphenyl)-4-methyl-N-[4-(7-methyl-9,9-dioctylfluoren-2-yl)phenyl]aniline",
+                   'C53H67N'
+                   ],
+        'name': "N-(4-Butan-2-ylphenyl)-4-methyl-N-[4-(7-methyl-9,9-dioctylfluoren-2-yl)phenyl]aniline",
+        'smiles': "CCCCCCCCC1(C2=C(C=CC(=C2)C)C3=C1C=C(C=C3)C4=CC=C(C=C4)N(C5=CC=C(C=C5)C)C6=CC=C(C=C6)C(C)CC)CCCCCCCC"
+    },
+}
+
+all_htms = {**solaronix_htms, **sigma_aldrich_htms}
+
+
 # List of disallowed tags for section headings
 blacklist_headings = [
     'intro', 'introduction', 'background', 'theory', 'result', 'results', 'discussion', 'discussions', 'conclusion', 'conclusions', 'analysis'

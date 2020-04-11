@@ -19,6 +19,12 @@ from dsc_db.model import PhotovoltaicRecord
 from dsc_db.data import all_dyes, blacklist_headings
 from dsc_db.smiles import add_smiles
 
+# Properties to be merged from contextual sentences
+dsc_properties = [('SimulatedSolarLightIntensity', 'solar_simulator'),
+              ('Semiconductor', 'semiconductor'),
+              ('SentenceDyeLoading', 'dye_loading'),
+              ('Substrate', 'substrate')]
+
 
 def create_dsscdb_from_file(path):
     """
@@ -36,7 +42,7 @@ def create_dsscdb_from_file(path):
     # Get all records from the table
     # This returns a tuple of type (pv_record, table)
     # The table object contains all the other records that were extracted
-    table_records = get_table_records(doc)
+    table_records = get_table_records(doc, 'PhotovoltaicCell')
 
     # Create PhotovoltaicRecord object
     pv_records = [PhotovoltaicRecord(record, table) for record, table in table_records]
@@ -59,11 +65,11 @@ def create_dsscdb_from_file(path):
     doc_records = [record.serialize() for record in doc.records]
     compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
 
-    # Filtering our results that don't contain voc, jsc, ff and PCE (if not running in debug mode)
+    # Filtering our results that don't contain the variables voc, jsc, ff and PCE (if not running in debug mode)
     debug = False
     if not debug:
-        pv_records = [pv_record for pv_record in pv_records if getattr(pv_record, 'voc', 'None') and getattr(pv_record, 'jsc', 'None')
-                      and getattr(pv_record, 'ff', 'None') and getattr(pv_record, 'pce', 'None')]
+        pv_records = [pv_record for pv_record in [pv_records] if any([getattr(pv_record, 'voc', 'None'), getattr(pv_record, 'jsc', 'None'),
+                                                 getattr(pv_record, 'ff', 'None'), getattr(pv_record, 'pce', 'None')])]
 
     # Merge other information from inside the document when appropriate
     for record in pv_records:
@@ -84,7 +90,7 @@ def create_dsscdb_from_file(path):
         pv_records = [pv_record for pv_record in pv_records if pv_record.dye is not None]
 
     # Apply sentence parsers for contextual information (Irradiance etc)
-    pv_records = add_contextual_info(pv_records, filtered_elements)
+    pv_records = add_contextual_info(pv_records, filtered_elements, dsc_properties)
 
     # Add chemical data from distributor of common dyes
     pv_records = add_distributor_info(pv_records)
@@ -128,16 +134,12 @@ def get_filtered_elements(doc):
     return filtered_elements
 
 
-def add_contextual_info(pv_records, filtered_elements):
+def add_contextual_info(pv_records, filtered_elements, properties):
     """ Add contextual information on dye extraction from the document using the specified sentence parsers
     :param pv_records: List of PV record objects
+    :param properties: List of tuples containing the field and model names to be merged contextually.
     :param filtered_elements: List of elements from the document that describe the experimental method.
     """
-
-    properties = [('SimulatedSolarLightIntensity', 'solar_simulator'),
-                  ('Semiconductor', 'semiconductor'),
-                  ('SentenceDyeLoading', 'dye_loading'),
-                  ('Substrate', 'substrate')]
 
     # Create a list containing document records for each property:
     sentence_records = []
@@ -249,7 +251,7 @@ def get_compound_records(doc):
     return compounds
 
 
-def get_table_records(doc):
+def get_table_records(doc, record_type):
     """ Function to extract the photovoltaic device information from tables.
         Returns a tuple of (pv_record, table) for each PhotovoltaicCell records that is determined.
         Note that each Table has its id set to the enumerated index, for later merging.
@@ -261,7 +263,7 @@ def get_table_records(doc):
     table_records = []
     # Obtain the PhotovoltaicCell records from each table
     for table in doc.tables:
-        records = [record.serialize()['PhotovoltaicCell'] for record in table.records if 'PhotovoltaicCell' == record.__class__.__name__]
+        records = [record.serialize()[record_type] for record in table.records if record_type == record.__class__.__name__]
         for record in records:
             table_records.append((record, table))
 

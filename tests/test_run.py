@@ -5,7 +5,7 @@
 import unittest
 
 from dsc_db.model import PhotovoltaicRecord
-from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, add_contextual_info, get_filtered_elements
+from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, add_contextual_info, get_filtered_elements, dsc_properties
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
@@ -260,7 +260,7 @@ class TestRun(unittest.TestCase):
         }
         pv_records = [PhotovoltaicRecord(pv_input, Table(caption, models=[model]))]
         filtered_elements = []
-        pv_records = add_contextual_info(pv_records, filtered_elements)
+        pv_records = add_contextual_info(pv_records, filtered_elements, dsc_properties)
         output = pv_records[0].serialize()
         self.assertEqual(output, expected)
 
@@ -273,7 +273,7 @@ class TestRun(unittest.TestCase):
                                            'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
         }
         pv_records = [PhotovoltaicRecord(pv_input, Table(Caption(''), models=[model]))]
-        pv_records = add_contextual_info(pv_records, doc)
+        pv_records = add_contextual_info(pv_records, doc, dsc_properties)
         output = pv_records[0].serialize()
         self.assertEqual(output, expected)
 
@@ -423,3 +423,28 @@ class TestRun(unittest.TestCase):
                                 'units': '(10^-3.0) * Volt^(1.0)',
                                 'value': [756.0]}}}
         self.do_contextual_document_merging(text, model, expected)
+
+    def test_filtering_logic(self):
+
+        pv_record1 = PhotovoltaicRecord({})
+        pv_record1.voc, pv_record1.jsc, pv_record1.ff, pv_record1.pce = 'a', 'b', 'c', 'd'
+
+        pv_records = [pv_record for pv_record in [pv_record1] if any([getattr(pv_record, 'voc', 'None'), getattr(pv_record, 'jsc', 'None'),
+                                                 getattr(pv_record, 'ff', 'None'), getattr(pv_record, 'pce', 'None')])]
+
+        self.assertEqual(pv_records[0].serialize(), {'jsc': 'b', 'voc': 'a', 'pce': 'd', 'ff': 'c'})
+
+        pv_record2 = PhotovoltaicRecord({})
+        pv_record2.voc, pv_record2.jsc, pv_record2.ff = 'a', 'b', 'c'
+
+        pv_records = [pv_record for pv_record in [pv_record2] if any([getattr(pv_record, 'voc', 'None'), getattr(pv_record, 'jsc', 'None'),
+                                                 getattr(pv_record, 'ff', 'None'), getattr(pv_record, 'pce', 'None')])]
+
+        self.assertEqual(pv_records[0].serialize(), {'jsc': 'b', 'voc': 'a', 'ff': 'c'})
+
+        pv_record3 = PhotovoltaicRecord({})
+
+        pv_records = [pv_record for pv_record in [pv_record3] if any([getattr(pv_record, 'voc', 'None'), getattr(pv_record, 'jsc', 'None'),
+                                                 getattr(pv_record, 'ff', 'None'), getattr(pv_record, 'pce', 'None')])]
+
+        self.assertEqual(pv_records, [])

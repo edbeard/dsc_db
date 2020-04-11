@@ -142,3 +142,38 @@ class PhotovoltaicRecord(object):
                         field[model].update({'compound': compound})
 
         setattr(self, fieldstr, field)
+
+
+class PerovskiteRecord(PhotovoltaicRecord):
+
+    _fields = ['jsc', 'voc', 'pce', 'ff', 'ref', 'perovskite', 'etl', 'htl',
+               'counter_electrode', 'active_area', 'solar_simulator', 'substrate',
+               'charge_transfer_resistance', 'series_resistance', 'exposure_time']
+
+    def __init__(self, records, table=None):
+        # Initialize exisiting records
+        for key, value in six.iteritems(records):
+            setattr(self, key, value)
+        # Set default values to None
+        missing_fields = [field for field in self._fields if field not in records.keys()]
+        for field in missing_fields:
+            setattr(self, field, None)
+
+        # Adjust dye field to be in a list format if found...
+        # if self.dye is not None:
+        #     if type(self.dye['Dye']) is not list:
+        #         dye_updated = {'Dye': [self.dye['Dye']]}
+        #         setattr(self, 'dye', dye_updated)
+
+        # Set table that was extracted
+        self.table = table
+
+    def __repr__(self):
+        string = 'PV record with perovskite:' + str(self.perovskite) + ', '
+        string += 'and a Voc of ' + str(self.voc)
+        return string
+
+    def __str__(self):
+        string = 'PV record with perovskite:' + str(self.perovskite) + ', '
+        string += 'and a Voc of ' + str(self.voc)
+        return string

@@ -28,7 +28,7 @@ class TestSystem(unittest.TestCase):
         doc = Document(text_input, input_table)
         doc.add_models([PhotovoltaicCell, CommonSentenceDye])
 
-        table_records = get_table_records(doc)
+        table_records = get_table_records(doc, 'PhotovoltaicCell')
         pv_records = [PhotovoltaicRecord(record, table) for record, table in table_records]
         pv_records = add_dye_information(pv_records, doc)
 
