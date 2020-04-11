@@ -27,7 +27,8 @@ perovskite_properties = [
 
 peroskite_material_properties = [
     ('Perovskite', 'perovskite'),
-    ('HoleTransportLayer', 'htl')
+    ('HoleTransportLayer', 'htl'),
+    ('ElectronTransportLayer', 'etl')
 ]
 
 
@@ -56,9 +57,6 @@ def create_pdb_from_file(path):
 
     # And contextual information from perovskites
     pv_records = add_contextual_info(pv_records, filtered_elements, peroskite_material_properties)
-
-    # When no Perovskite field is present, search contextually for it
-    pv_records = add_perovskite_information(pv_records, filtered_elements)
 
     # Get all compound records for the next stage
     doc_records = [record.serialize() for record in doc.records]
@@ -106,9 +104,6 @@ def create_pdb_from_file(path):
 
     return pv_records
 
-
-def add_perovskite_information():
-    pass
 
 def add_distributor_info():
     # Will have to be done for HTM and perovskite

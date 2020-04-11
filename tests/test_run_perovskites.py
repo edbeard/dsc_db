@@ -88,7 +88,7 @@ class TestRunPerovskites(unittest.TestCase):
 
         self.do_contextual_table_caption_merging(caption, HoleTransportLayer, expected)
 
-    def test_add_contextual_htc_from_context(self):
+    def test_add_contextual_htc_from_document(self):
         caption = "Device parameters for MAPbI3 solar cells prepared on an identical TiO2 ETL and capped with a spiro-MeOTAD HTL."
         expected = {'htl': {'HoleTransportLayer': {'contextual': 'table_caption',
                                                    'raw_value': 'spiro - MeOTAD',
@@ -100,16 +100,33 @@ class TestRunPerovskites(unittest.TestCase):
                                                    'value': [756.0]}}}
         self.do_contextual_table_caption_merging(caption, HoleTransportLayer, expected)
 
+    def test_add_contextual_etc_from_document(self):
+        text = "The device used c-TiO2 in the electron transport layer."
+        expected = {'etl': {'ElectronTransportLayer': {'contextual': 'document',
+                                    'raw_value': 'c-TiO2',
+                                    'specifier': 'electron transport layer'}},
+                'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+        self.do_contextual_document_merging(text, ElectronTransportLayer, expected)
+
+
+
     def test_multiple_params_from_caption(self):
         caption = "Device parameters for MAPbI3 solar cells prepared on an identical TiO2 ETL and capped with a spiro-MeOTAD HTL."
-        expected = {'htl': {'HoleTransportLayer': {'contextual': 'table_caption',
-                                                   'raw_value': 'spiro - MeOTAD',
-                                                   'specifier': 'HTL'}},
-                    'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
-                                                   'raw_value': '756',
-                                                   'specifier': 'Voc',
-                                                   'units': '(10^-3.0) * Volt^(1.0)',
-                                                   'value': [756.0]}}}
+        expected = {'etl': {'ElectronTransportLayer': {'contextual': 'table_caption',
+                                    'raw_value': 'TiO2',
+                                    'specifier': 'ETL'}},
+                     'htl': {'HoleTransportLayer': {'contextual': 'table_caption',
+                                                    'raw_value': 'spiro - MeOTAD',
+                                                    'specifier': 'HTL'}},
+                     'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                'raw_value': '756',
+                                                'specifier': 'Voc',
+                                                'units': '(10^-3.0) * Volt^(1.0)',
+                                                'value': [756.0]}}}
         self.do_contextual_table_caption_merging(caption, PerovskiteSolarCell, expected)
 
 
