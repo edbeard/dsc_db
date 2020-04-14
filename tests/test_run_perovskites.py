@@ -2,7 +2,7 @@
 .. codeauthor: Ed Beard <ed.beard94@gmail.com>
 """
 import unittest
-from dsc_db.run_perovskites import add_contextual_info, PerovskiteRecord, peroskite_material_properties
+from dsc_db.run_perovskites import add_contextual_info, PerovskiteRecord, peroskite_material_properties, add_distributor_info
 
 from chemdataextractor.doc.text import Caption, Paragraph
 from chemdataextractor.doc import Document
@@ -128,6 +128,84 @@ class TestRunPerovskites(unittest.TestCase):
                                                 'units': '(10^-3.0) * Volt^(1.0)',
                                                 'value': [756.0]}}}
         self.do_contextual_table_caption_merging(caption, PerovskiteSolarCell, expected)
+
+
+    ### Testing the addition of information for common Perovskites
+
+    def test_add_distributer_info_perovskite(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'perovskite': {'Perovskite': {'contextual': 'document', 'raw_value': 'methylammonium lead triiodide'}}
+        }
+
+        expected = {'Perovskite': {'contextual': 'document',
+                'formula': 'CH3NH3PbI3',
+                'labels': ['Methanaminium triiodoplumbate(1-)',
+                            'CH3NH3PbI3',
+                           'CH6I3NPb',
+                           'methylammonium lead triiodide'],
+                'name': 'methylammonium lead triiodide',
+                'raw_value': 'methylammonium lead triiodide'}}
+
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = add_distributor_info(pv_records)
+        self.assertEqual(pv_records[0].perovskite, expected)
+
+    def test_add_distributer_info_hole_transporting_layer(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'htl': {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'EH44'}}
+        }
+
+        expected = {'HoleTransportLayer': {'contextual': 'document',
+                        'labels': ['EH44',
+                                   '9-(2-Ethylhexyl)-N,N,N,N-tetrakis(4-methoxyphenyl)- '
+                                   '9H-carbazole-2,7-diamine)',
+                                   'C48H51N3O4'],
+                        'name': '9-(2-Ethylhexyl)-N,N,N,N-tetrakis(4-methoxyphenyl)- '
+                                '9H-carbazole-2,7-diamine)',
+                        'raw_value': 'EH44',
+                        'smiles': ''}}
+
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = add_distributor_info(pv_records)
+        self.assertEqual(pv_records[0].htl, expected)
+
+    def test_add_distributer_info_electron_transporting_layer(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'etl': {'ElectronTransportLayer': {'contextual': 'document', 'raw_value': 'PCBM'}}
+        }
+
+        expected = {'ElectronTransportLayer': {'contextual': 'document',
+                            'labels': ['phenyl-C61-butyric acid methyl ester',
+                                       'PCBM'],
+                            'name': 'phenyl-C61-butyric acid methyl ester',
+                            'raw_value': 'PCBM'}}
+
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = add_distributor_info(pv_records)
+        self.assertEqual(pv_records[0].etl, expected)
+
+    def test_add_distributer_info_electron_transporting_layer_with_structure_field(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'etl': {'ElectronTransportLayer': {'contextual': 'document', 'raw_value': 'c-TiO2'}}
+        }
+
+        expected = {'ElectronTransportLayer': {'contextual': 'document',
+                            'labels': ['c-TiO2', 'compact titanium dioxide'],
+                            'name': 'titanium dioxide',
+                            'raw_value': 'c-TiO2',
+                            'structure': 'compact'}}
+
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = add_distributor_info(pv_records)
+        self.assertEqual(pv_records[0].etl, expected)
 
 
 

@@ -18,7 +18,7 @@ from chemdataextractor.model import Compound
 
 from dsc_db.run import get_table_records, get_filtered_elements, add_contextual_info
 from dsc_db.model import PhotovoltaicRecord, PerovskiteRecord
-from dsc_db.data import all_dyes, blacklist_headings
+from dsc_db.data import  blacklist_headings, all_perovskites, all_htls, all_etls
 from dsc_db.smiles import add_smiles
 
 perovskite_properties = [
@@ -105,9 +105,42 @@ def create_pdb_from_file(path):
     return pv_records
 
 
-def add_distributor_info():
-    # Will have to be done for HTM and perovskite
-    pass
+def add_distributor_info(pv_records):
+    """
+    Adds useful information from dictionaries for common values of perovskites, HTLs and ETLs.
+    :param pv_records: List of PhotovoltaicRecords object
+    :return:pv_records: List of PhotovoltaicRecords object with dye information added
+    """
+
+    for pv_record in pv_records:
+        # Add perovskite info
+        if getattr(pv_record, 'perovskite', 'None'):
+            for key, perovskite in all_perovskites.items():
+                if pv_record.perovskite['Perovskite'].get('raw_value') in perovskite['labels'] and getattr(pv_record.perovskite['Perovskite'], 'raw_value', 'None'):
+                    pv_record.perovskite['Perovskite']['formula'] = all_perovskites[key]['formula']
+                    pv_record.perovskite['Perovskite']['name'] = all_perovskites[key]['name']
+                    pv_record.perovskite['Perovskite']['labels'] = all_perovskites[key]['labels']
+
+        # Add info on the hole transport layer
+        if getattr(pv_record, 'htl', 'None'):
+            for key, htl in all_htls.items():
+                if pv_record.htl['HoleTransportLayer'].get('raw_value') in htl['labels'] and getattr(pv_record.htl['HoleTransportLayer'], 'raw_value', 'None'):
+                    pv_record.htl['HoleTransportLayer']['smiles'] = all_htls[key]['smiles']
+                    pv_record.htl['HoleTransportLayer']['name'] = all_htls[key]['name']
+                    pv_record.htl['HoleTransportLayer']['labels'] = all_htls[key]['labels']
+
+        # Add info on the electron transport layer
+        if getattr(pv_record, 'etl', 'None'):
+            for key, etl in all_etls.items():
+                if pv_record.etl['ElectronTransportLayer'].get('raw_value') in etl['labels'] and getattr(pv_record.etl['ElectronTransportLayer'], 'raw_value', 'None'):
+                    if 'structure' in all_etls[key].keys():
+                       pv_record.etl['ElectronTransportLayer']['structure'] = all_etls[key]['structure']
+                    pv_record.etl['ElectronTransportLayer']['name'] = all_etls[key]['name']
+                    pv_record.etl['ElectronTransportLayer']['labels'] = all_etls[key]['labels']
+
+    return pv_records
+
 
 def add_smiles():
+    # TODO: Add SMILES logic after determining which properties will require it.
     pass

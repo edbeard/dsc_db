@@ -372,7 +372,24 @@ all_dyes = {**dyenamo_dyes, **solaronix_dyes, **sigma_aldrich, **greatcell_solar
 
 #### Common Perovskite Materials ####
 
-solaronix_htms = {
+## Perovskite Materials
+all_perovskites = {
+    'CH3NH3PbI3' : {
+        'labels': ['Methanaminium triiodoplumbate(1-)',
+                   'CH3NH3PbI3',
+                   'CH6I3NPb',
+                   'methylammonium lead triiodide'
+                   ],
+        'formula': "CH3NH3PbI3",
+        'name': 'methylammonium lead triiodide'
+
+    }
+}
+
+
+## Hole Transport Materials
+
+solaronix_htls = {
 
     'Spiro-OMeTAD': {
         'labels': ['Spiro-OMeTAD',
@@ -386,7 +403,7 @@ solaronix_htms = {
     }
 }
 
-sigma_aldrich_htms = {
+sigma_aldrich_htls = {
     'Cuprous thiocyanate': {
         'labels': ['Cuprous thiocyanate',
                    'Copper(I) thiocyanate',
@@ -436,8 +453,37 @@ sigma_aldrich_htms = {
     },
 }
 
-all_htms = {**solaronix_htms, **sigma_aldrich_htms}
+all_htls = {**solaronix_htls, **sigma_aldrich_htls}
 
+all_etls = {
+    'TiO2': { 'labels': [ 'titanium dioxide', 'TiO2'], 'name': 'titanium dioxide' },
+'ZnO':{ 'labels':	['zinc oxide', 'ZnO'], 'name':'zinc oxide' },
+'SnO2':{'labels': 	['tin dioxide', 'stannic oxide', 'SnO2'], 'name': 'tin dioxide' },
+'SiO2': { 'labels':	['silicon dioxide', 'SiO2'], 'name': 'silicon dioxide'},
+'NiO': { 'labels':	['nickel oxide', 'NiO'], 'name':'nickel oxide'},
+'ZrO2': {	'labels':['zirconium dioxide', 'ZrO2'], 'name': 'zirconium dioxide'},
+'PTAA': {	'labels':['poly(triarylamine)', 'PTAA'], 'name':'poly(triarylamine)'},
+'PCBM' :{'labels': ['phenyl-C61-butyric acid methyl ester', 'PCBM'], 'name':'phenyl-C61-butyric acid methyl ester'},
+'m-TiO2':{ 'labels':	['m-TiO2', 'mesoporous titanium dioxide'], 'structure': 'mesoporous', 'name':'titanium dioxide'},
+'c-TiO2' :{'labels':	['c-TiO2', 'compact titanium dioxide' ], 'structure': 'compact', 'name': 'titanium dioxide'},
+'MgO/TiO2':{ 'labels':['MgO/TiO2'], 'structure': 'core-shell', 'name': 'magnesium oxide / titanium dioxide'},
+'Al2O3/TiO2':{'labels':	[ 'Al2O3/TiO2'],	'structure': 'core-shell', 'name': 'aluminium oxide / titanium dioxide'},
+'ZnO/TiO2': { 'labels':	['ZnO/TiO2'],	'structure': 'core-shell', 'name': 'zinc oxide / titanium dioxide'},
+'TiO2/MgO':	{ 'labels':	[ 'TiO2/MgO'], 'structure': 'core-shell', 'name': 'titanium dioxide / magnesium oxide'},
+'WO3/TiO2' : { 'labels': ['WO3/TiO2'], 'structure': 'core-shell', 'name': 'tungsten trioxide / titanium dioxide'},
+'np-TiO2' 	: { 'structure': 'nanoparticle', 'labels': ['np-TiO2', 'titanium dioxide nanoparticles', 'TiO2 nanoparticles'], 'name': 'titanium dioxide nanoparticles'},
+'Al2O3/ZnO' : { 'labels':	['Al2O3/ZnO'],	'structure': 'core-shell', 'name': 'aluminium oxide / zinc oxide'},
+'ITO/ZnO' 	:{ 'labels':['ITO/ZnO'],	'structure': 'core-shell', 'name': 'indium tin oxide / zinc oxide'},
+'ITO/Al2O3' :{ 'labels':['ITO/Al2O3'],	 'structure': 'core-shell', 'name': 'indium tin oxide / aluminium oxide'},
+'ITO/V2O5' 	:{ 'labels':['ITO/V2O5'],	'structure': 'core-shell', 'name': 'indium tin oxide / vanadium(V) oxide'},
+'ITO/TiO2' 	:{ 'labels':['ITO/TiO2'], 'structure': 'core-shell', 'name': 'indium tin oxide / titanium dioxide'},
+'AZO':{ 'labels':	['aluminum doped zinc oxide', 'AZO'], 'name': 'aluminium doped zinc oxide'},
+'HfO2':{ 	'labels':	['hafnium(IV) oxide', 'HfO2'], 'name':' hafnium(IV) oxide'},
+'PEI/TiO2':{ 	'labels':	['polyethyleneimine / titanium dioxide', 'PEI/TiO2'], 'structure' : 'polyethyleneimine (PEI) thin layer on Titanium dioxide',
+                'name': 'polyethyleneimine / titanium dioxide '},
+'PEI/ZnO' :	{'labels':	['polyethyleneimine / zinc oxide', 'PEI/ZnO' ] ,'structure': 'polyethyleneimine (PEI) thin layer on zinc oxide',
+                'name': 'polyethyleneimine / zinc oxide'}
+}
 
 # List of disallowed tags for section headings
 blacklist_headings = [
