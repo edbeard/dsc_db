@@ -26,15 +26,12 @@ dsc_properties = [('SimulatedSolarLightIntensity', 'solar_simulator'),
               ('Substrate', 'substrate')]
 
 
-def create_dsscdb_from_file(path):
+def create_dsscdb_from_file(doc):
     """
     Extract records from specific files tables.
     This contains the main algorithm.
+    :param doc = CDE Document object
     """
-
-    # Load the document from the file
-    with open(path, 'rb') as f:
-        doc = Document.from_file(f)
 
     # Only add the photovoltaiccell and Compound models to the document
     doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, SentenceSemiconductor, SentenceDyeLoading])# Substrate, SentenceSemiconductor, DyeLoading])
