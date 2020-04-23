@@ -8,6 +8,7 @@ from chemdataextractor import Document
 
 root_dir = '/home/edward/pv/extractions/input'
 output_path = '/home/edward/pv/extractions/input_filtered'
+output_table_path = '/home/edward/pv/extractions/input_filtered_tables' # Pathto papers after removing results without tables
 
 
 if __name__ == '__main__':
@@ -21,6 +22,7 @@ if __name__ == '__main__':
                 doc = Document.from_file(f)
 
             classification = classify_document(doc)
+            tables = doc.tables
 
             # Try obtaining metadata to trigger html exception
             meta = doc.metadata
@@ -29,12 +31,22 @@ if __name__ == '__main__':
 
         if classification == 'dsc':
             copy(paper, os.path.join(output_path, 'dsc'))
+            if tables:
+                copy(paper, os.path.join(output_table_path, 'dsc'))
+
         elif classification == 'psc':
             copy(paper, os.path.join(output_path, 'psc'))
+            if tables:
+                copy(paper, os.path.join(output_table_path, 'psc'))
+
         elif classification == 'qdsc':
             copy(paper, os.path.join(output_path, 'qdsc'))
+            if tables:
+                copy(paper, os.path.join(output_table_path, 'qdsc'))
+
         elif classification == 'format_error':
-            copy(paper, os.path.join(output_path, 'qdsc'))
+            copy(paper, os.path.join(output_path, 'format_error'))
+
         else:
             copy(paper, os.path.join(output_path, 'algorithm_failures'))
 

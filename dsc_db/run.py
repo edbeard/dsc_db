@@ -65,8 +65,8 @@ def create_dsscdb_from_file(doc):
     # Filtering our results that don't contain the variables voc, jsc, ff and PCE (if not running in debug mode)
     debug = False
     if not debug:
-        pv_records = [pv_record for pv_record in [pv_records] if any([getattr(pv_record, 'voc', 'None'), getattr(pv_record, 'jsc', 'None'),
-                                                 getattr(pv_record, 'ff', 'None'), getattr(pv_record, 'pce', 'None')])]
+        pv_records = [pv_record for pv_record in pv_records if any([getattr(pv_record, 'voc', False), getattr(pv_record, 'jsc', False),
+                                                 getattr(pv_record, 'ff', False), getattr(pv_record, 'pce', False)])]
 
     # Merge other information from inside the document when appropriate
     for record in pv_records:
@@ -95,8 +95,8 @@ def create_dsscdb_from_file(doc):
     # Add SMILES through PubChem and ChemSpider where not added by distributor
     pv_records = add_smiles(pv_records)
 
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # print the output after dyes removed...
     # for pv_record in pv_records:
@@ -438,7 +438,9 @@ def add_dye_information(pv_records, filtered_elements):
 if __name__ == '__main__':
     import cProfile, pstats, io
     path = "/home/edward/pv/extractions/input/C3TA11527E.html"
-    cProfile.runctx("create_dsscdb_from_file(path)", None, locals=locals())
+    with open(path, 'rb') as f:
+        doc = Document.from_file(f)
+    cProfile.runctx("create_dsscdb_from_file(doc)", None, locals=locals())
 
     # Create stream for progiler to write to
     profiling_output = io.StringIO()
