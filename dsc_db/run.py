@@ -260,7 +260,15 @@ def get_table_records(doc, record_type):
     table_records = []
     # Obtain the PhotovoltaicCell records from each table
     for table in doc.tables:
-        records = [record.serialize()[record_type] for record in table.records if record_type == record.__class__.__name__]
+        records = []
+        for record in table.records:
+            if record_type == record.__class__.__name__:
+                serialized_record = record.serialize()[record_type]
+                serialized_record['table_row_categories'] = record.table_row_categories
+                records.append(serialized_record)
+                # records.append(record.seriaize()[record_type])
+
+        # records = [record.serialize()[record_type] for record in table.records if record_type == record.__class__.__name__]
         for record in records:
             table_records.append((record, table))
 
@@ -437,7 +445,7 @@ def add_dye_information(pv_records, filtered_elements):
 
 if __name__ == '__main__':
     import cProfile, pstats, io
-    path = "/home/edward/pv/extractions/input/C3TA11527E.html"
+    path = "/home/edward/pv/extractions/input_filtered_tables/dsc/10.1016:j.solmat.2019.109918.xml"
     with open(path, 'rb') as f:
         doc = Document.from_file(f)
     cProfile.runctx("create_dsscdb_from_file(doc)", None, locals=locals())
@@ -446,14 +454,6 @@ if __name__ == '__main__':
     profiling_output = io.StringIO()
     p = pstats.Stats('mainstats', stream=profiling_output)
 
-    # Print resilts to that stream
-    # This puts the top 30 functions, sorted by time spent in each
-    p.strip_dirs().sort_stats('cumulative').print_stats(30)
-
-    #Print the results to log
-    print('Profiling results: %s' % profiling_output.getvalue())
-    profiling_output.close()
-    print('Output ends')
 
 
 

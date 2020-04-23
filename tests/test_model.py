@@ -74,7 +74,8 @@ class TestModel(unittest.TestCase):
             'substrate': None,
             'charge_transfer_resistance': None,
             'series_resistance': None,
-            'exposure_time': None
+            'exposure_time': None,
+            'table_row_categories': None
         }
 
         record = PhotovoltaicRecord(input)

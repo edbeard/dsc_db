@@ -14,7 +14,7 @@ class PhotovoltaicRecord(object):
     """
     _fields = ['jsc', 'voc', 'pce', 'ff', 'dye', 'ref', 'redox_couple', 'dye_loading', 'counter_electrode',
                'semiconductor', 'active_area', 'solar_simulator', 'electrolyte', 'substrate',
-               'charge_transfer_resistance', 'series_resistance', 'exposure_time']
+               'charge_transfer_resistance', 'series_resistance', 'exposure_time', 'table_row_categories']
 
     def __init__(self, records, table=None):
         # Initialize exisiting records
