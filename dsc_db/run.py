@@ -18,6 +18,7 @@ from chemdataextractor.model import Compound
 from dsc_db.model import PhotovoltaicRecord
 from dsc_db.data import all_dyes, blacklist_headings
 from dsc_db.smiles import add_smiles
+from dsc_db.calculate import calculate_metrics
 
 # Properties to be merged from contextual sentences
 dsc_properties = [('SimulatedSolarLightIntensity', 'solar_simulator'),
@@ -95,8 +96,10 @@ def create_dsscdb_from_file(doc):
     # Add SMILES through PubChem and ChemSpider where not added by distributor
     pv_records = add_smiles(pv_records)
 
-    # for pv_record in pv_records:
-    #     pp.pprint(pv_record.serialize())
+    # Merge calculated properties
+    pv_records = add_calculated_properties(pv_records)
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # print the output after dyes removed...
     # for pv_record in pv_records:
@@ -104,6 +107,22 @@ def create_dsscdb_from_file(doc):
 
     # Output sentence dye records for debugging
     # output_sentence_dyes(doc)
+
+    return pv_records
+
+
+def add_calculated_properties(pv_records):
+    """
+    Uses the calculated_properties field to add data
+    """
+    for pv_record in pv_records:
+        if 'solar_simulator' in pv_record.calculated_properties.keys():
+            if pv_record.solar_simulator is not None:
+                pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_value'] = pv_record.calculated_properties['solar_simulator']['value']
+            else:
+                pv_record.solar_simulator = {'SimulatedSolarLightIntensity': {'calculated_value': pv_record.calculated_properties['solar_simulator']['value']}}
+
+            pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_units'] = pv_record.calculated_properties['solar_simulator']['units']
 
     return pv_records
 
@@ -263,12 +282,21 @@ def get_table_records(doc, record_type):
         records = []
         for record in table.records:
             if record_type == record.__class__.__name__:
+                record = calculate_metrics(record)
                 serialized_record = record.serialize()[record_type]
-                serialized_record['table_row_categories'] = record.table_row_categories
-                records.append(serialized_record)
-                # records.append(record.seriaize()[record_type])
 
-        # records = [record.serialize()[record_type] for record in table.records if record_type == record.__class__.__name__]
+                # Add calculated properties to the pv_records
+                if record.calculated_properties:
+                    serialized_record['calculated_properties'] = {}
+                for key, data in record.calculated_properties.items():
+                    serialized_data = data.serialize()
+                    calc_props = {'value': serialized_data['SimulatedSolarLightIntensity']['value'], 'units': serialized_data['SimulatedSolarLightIntensity']['units']}
+                    serialized_record['calculated_properties'][key] = calc_props
+
+                serialized_record['table_row_categories'] = record.table_row_categories
+
+                records.append(serialized_record)
+
         for record in records:
             table_records.append((record, table))
 
@@ -445,10 +473,11 @@ def add_dye_information(pv_records, filtered_elements):
 
 if __name__ == '__main__':
     import cProfile, pstats, io
-    path = "/home/edward/pv/extractions/input_filtered_tables/dsc/10.1016:j.solmat.2019.109918.xml"
+    path = "/home/edward/pv/extractions/input_filtered_tables/dsc/C3TA11527E.html"
     with open(path, 'rb') as f:
         doc = Document.from_file(f)
     cProfile.runctx("create_dsscdb_from_file(doc)", None, locals=locals())
+
 
     # Create stream for progiler to write to
     profiling_output = io.StringIO()
