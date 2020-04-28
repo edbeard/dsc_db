@@ -8,6 +8,8 @@ from chemdataextractor.model.pv_model import SimulatedSolarLightIntensity
 
 from statistics import mean
 
+import copy
+
 
 def calculate_metrics(record):
     """
@@ -25,7 +27,7 @@ def calculate_irradiance(record):
     is taken.
     :param: List : records. List of chemical records from ChemDataExtractor
     """
-
+    new_record = copy.deepcopy(record)
     if all([record.voc, record.jsc, record.ff, record.pce]):
         if all([record.voc.value, record.voc.units, record.jsc.value, record.jsc.units, record.ff.value, record.pce.value]):
 
@@ -47,11 +49,10 @@ def calculate_irradiance(record):
                 pce = pce_mean
 
             irr = calculate_irradiance_value(voc, jsc, ff, pce)
-            record.calculated_properties['solar_simulator'] = SimulatedSolarLightIntensity(value=[round(irr, 1)], units=WattPerMeterSquared())
-            print('voc value: %s, jsc value: %s, ff value: %s, pce value: %s' % (voc, jsc, ff, pce))
-            print('calculated irradiance: %s' % irr)
+            solar_sim = SimulatedSolarLightIntensity(value=[round(irr, 1)], units=WattPerMeterSquared())
+            new_record.set_calculated_properties('solar_simulator', solar_sim)
 
-    return record
+    return new_record
 
 
 def calculate_irradiance_value(voc, jsc, ff, pce):

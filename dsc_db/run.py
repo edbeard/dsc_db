@@ -13,7 +13,8 @@ log.setLevel(logging.INFO)
 
 from chemdataextractor.doc import Document, Table
 from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, SentenceDyeLoading, SentenceSemiconductor
-from chemdataextractor.model import Compound
+from chemdataextractor.model import Compound, ListType, FloatType
+from chemdataextractor.model.units.unit import UnitType
 
 from dsc_db.model import PhotovoltaicRecord
 from dsc_db.data import all_dyes, blacklist_headings
@@ -56,8 +57,8 @@ def create_dsscdb_from_file(doc):
     # print(str(pv_records))
 
     # print('Printing the PV records after adding dyes contextually:')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Get the compound records for the next stage
     doc_records = [record.serialize() for record in doc.records]
@@ -80,8 +81,8 @@ def create_dsscdb_from_file(doc):
             record._substitute_compound('dye', 'Dye', compound_records)
 
     # print the output before dyes removed...
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Contextual merging of dyes complete, filtering out results without dyes
     if not debug:
@@ -98,8 +99,8 @@ def create_dsscdb_from_file(doc):
 
     # Merge calculated properties
     pv_records = add_calculated_properties(pv_records)
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # print the output after dyes removed...
     # for pv_record in pv_records:
@@ -282,10 +283,16 @@ def get_table_records(doc, record_type):
         records = []
         for record in table.records:
             if record_type == record.__class__.__name__:
-                record = calculate_metrics(record)
+                # Create dictionary of record data
+                record = get_standardized_values(record)
                 serialized_record = record.serialize()[record_type]
 
+                # Enhance dictionary with standard data when possible
+                # serialized_record = get_standardized_values(serialized_record)
+                # standardized_values = get_standardized_values_cde(record)
+
                 # Add calculated properties to the pv_records
+                record = calculate_metrics(record)
                 if record.calculated_properties:
                     serialized_record['calculated_properties'] = {}
                 for key, data in record.calculated_properties.items():
@@ -301,6 +308,39 @@ def get_table_records(doc, record_type):
             table_records.append((record, table))
 
     return table_records
+
+
+def get_standardized_values(record):
+    """
+    Automatically get the standardized values for a record where possible.
+    """
+
+    for field in record.fields:
+        sub_record = getattr(record, field)
+        if sub_record:
+            if getattr(sub_record, 'value', None) is not None and getattr(sub_record, 'units', None) is not None:
+                # Standardize and add the units information
+                setattr(sub_record, 'std_units', sub_record.units.dimensions.standard_units)
+                sub_record._values['std_units'] = sub_record.units.dimensions.standard_units
+                sub_record.fields['std_units'] = UnitType()
+                sub_record.fields['std_units'].name = 'std_units'
+
+                # Standardize the value information
+                std_value = [sub_record.units.convert_value_to_standard(val) for val in sub_record.value]
+                setattr(sub_record, 'std_value', std_value)
+                sub_record._values['std_value'] = std_value
+                sub_record.fields['std_value'] = ListType(FloatType())
+                sub_record.fields['std_value'].name = 'std_value'
+
+                # Standardize the error information if present
+                if getattr(sub_record, 'error', None) is not None:
+                    std_error = sub_record.units.convert_error_to_standard(sub_record.error)
+                    setattr(sub_record, 'std_error', std_error)
+                    sub_record._values['std_error'] = std_value
+                    sub_record.fields['std_error'] = FloatType()
+                    sub_record.fields['std_error'].name = 'std_error'
+
+    return record
 
 
 def add_contextual_dye_from_document(pv_records, elements, permissive=True):

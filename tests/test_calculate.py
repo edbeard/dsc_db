@@ -14,6 +14,7 @@ from chemdataextractor.model.pv_model import PhotovoltaicCell, OpenCircuitVoltag
 from chemdataextractor.model.units import Volt, Percent
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
 
+
 class TestCalculate(unittest.TestCase):
 
     def test_calculate_irradiance(self):
@@ -31,9 +32,7 @@ class TestCalculate(unittest.TestCase):
     def test_calculate_irradiance_no_unit_jsc(self):
         voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.))
         jsc = ShortCircuitCurrentDensity(value=[15.49])
-        input_record = PhotovoltaicCell(voc=voc, jsc=jsc)
-        output_records = calculate_irradiance(input_record)
-        expected = None
-        irradiance = output_records.calculated_properties['solar_simulator']
-        self.assertEqual(irradiance, expected)
+        input_record2 = PhotovoltaicCell(voc=voc, jsc=jsc)
+        output_record2 = calculate_irradiance(input_record2)
+        self.assertFalse(output_record2.calculated_properties)
 

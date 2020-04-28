@@ -5,11 +5,13 @@
 import unittest
 
 from dsc_db.model import PhotovoltaicRecord
-from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, add_contextual_info, get_filtered_elements, dsc_properties
+from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, add_contextual_info, get_filtered_elements, dsc_properties, get_standardized_values, get_standardized_values
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading
+from chemdataextractor.model.units import Volt
+from chemdataextractor.model.units.current_density import AmpPerMeterSquared
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading, OpenCircuitVoltage, ShortCircuitCurrentDensity
 from chemdataextractor.doc import Table, Caption, Paragraph, Heading
 
 
@@ -448,3 +450,22 @@ class TestRun(unittest.TestCase):
                                                  getattr(pv_record, 'ff', 'None'), getattr(pv_record, 'pce', 'None')])]
 
         self.assertEqual(pv_records, [])
+
+    def test_get_standardized_values(self):
+
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.))
+        jsc = ShortCircuitCurrentDensity(value=[15.49])
+        input_record = PhotovoltaicCell(voc=voc, jsc=jsc)
+        output_record = get_standardized_values(input_record)
+        expected = {'PhotovoltaicCell': {'voc': {'OpenCircuitVoltage': {'value': [756.0], 'units': '(10^-3.0) * Volt^(1.0)', 'std_units': 'Volt^(1.0)', 'std_value': [0.756]}},
+                                         'jsc': {'ShortCircuitCurrentDensity': {'value': [15.49]}}}}
+        self.assertEqual(output_record.serialize(), expected)
+
+    def test_get_standardized_values_with_error(self):
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.))
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1), error=0.05)
+        input_record = PhotovoltaicCell(voc=voc, jsc=jsc)
+        output_record = get_standardized_values(input_record)
+        expected = {'PhotovoltaicCell': {'voc': {'OpenCircuitVoltage': {'value': [756.0], 'units': '(10^-3.0) * Volt^(1.0)', 'std_units': 'Volt^(1.0)', 'std_value': [0.756]}}, 'jsc': {'ShortCircuitCurrentDensity': {'value': [15.49], 'units': '(10^1.0) * AmpPerMeterSquared^(1.0)', 'error': 0.05, 'std_units': 'Ampere^(1.0)  Meter^(-2.0)', 'std_value': [154.9], 'std_error': 0.5}}}}
+        self.assertEqual(output_record.serialize(), expected)
+
