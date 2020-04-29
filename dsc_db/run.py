@@ -161,7 +161,7 @@ def add_contextual_info(pv_records, filtered_elements, properties):
     # Create a list containing document records for each property:
     sentence_records = []
     for parser, field in properties:
-        filtered_record = [record.serialize() for el in filtered_elements for record in el.records if
+        filtered_record = [get_standardized_values_single_property(record).serialize() for el in filtered_elements for record in el.records if
                                               record.__class__.__name__ == parser]
         sentence_records.append([record for record in filtered_record if record[parser].get('raw_value')])
 
@@ -171,7 +171,7 @@ def add_contextual_info(pv_records, filtered_elements, properties):
             parser, field = props[0], props[1]
             if getattr(pv_record, field) is None:
                 # First, search the caption for this
-                caption_records = [record.serialize() for record in caption.records if
+                caption_records = [get_standardized_values_single_property(record).serialize() for record in caption.records if
                                               record.__class__.__name__ == parser]
                 caption_records = [record for record in caption_records if record[parser].get('raw_value')]
 
@@ -312,7 +312,8 @@ def get_table_records(doc, record_type):
 
 def get_standardized_values(record):
     """
-    Automatically get the standardized values for a record where possible.
+    Automatically get the standardized values for a record containing fields of other record objects.
+    :param record : cde record object
     """
 
     for field in record.fields:
@@ -327,6 +328,8 @@ def get_standardized_values(record):
 
                 # Standardize the value information
                 std_value = [sub_record.units.convert_value_to_standard(val) for val in sub_record.value]
+                if getattr(sub_record, 'exponent', None) is not None and getattr(sub_record, 'exponent', None) != []:
+                    std_value = [value * pow(10, int(sub_record.exponent[0])) for value in std_value]
                 setattr(sub_record, 'std_value', std_value)
                 sub_record._values['std_value'] = std_value
                 sub_record.fields['std_value'] = ListType(FloatType())
@@ -335,10 +338,46 @@ def get_standardized_values(record):
                 # Standardize the error information if present
                 if getattr(sub_record, 'error', None) is not None:
                     std_error = sub_record.units.convert_error_to_standard(sub_record.error)
+                    if getattr(sub_record, 'exponent', None) is not None and getattr(sub_record, 'exponent', None) != []:
+                        # Assumes that the error is also expressed as part of this exponent
+                        std_error = std_error * pow(10, int(sub_record.exponent[0]))
                     setattr(sub_record, 'std_error', std_error)
                     sub_record._values['std_error'] = std_value
                     sub_record.fields['std_error'] = FloatType()
                     sub_record.fields['std_error'].name = 'std_error'
+
+    return record
+
+
+def get_standardized_values_single_property(record):
+    """
+    Automatically get the standardized values for a single record where possible
+    """
+    if getattr(record, 'value', None) is not None and getattr(record, 'units', None) is not None:
+        # Standardize and add the units information
+        setattr(record, 'std_units', record.units.dimensions.standard_units)
+        record._values['std_units'] = record.units.dimensions.standard_units
+        record.fields['std_units'] = UnitType()
+        record.fields['std_units'].name = 'std_units'
+
+        # Standardize the value information
+        std_value = [record.units.convert_value_to_standard(val) for val in record.value]
+        if getattr(record, 'exponent', None) is not None and getattr(record, 'exponent', None) != []:
+            std_value = [value * pow(10, int(record.exponent[0])) for value in std_value]
+        setattr(record, 'std_value', std_value)
+        record._values['std_value'] = std_value
+        record.fields['std_value'] = ListType(FloatType())
+        record.fields['std_value'].name = 'std_value'
+
+        # Standardize the error information if present
+        if getattr(record, 'error', None) is not None:
+            std_error = record.units.convert_error_to_standard(record.error)
+            if getattr(record, 'exponent', None) is not None and getattr(record, 'exponent', None) != []:
+                std_error = std_error * pow(10, int(record.exponent[0]))
+            setattr(record, 'std_error', std_error)
+            record._values['std_error'] = std_value
+            record.fields['std_error'] = FloatType()
+            record.fields['std_error'].name = 'std_error'
 
     return record
 

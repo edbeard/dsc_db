@@ -5,12 +5,13 @@
 import unittest
 
 from dsc_db.model import PhotovoltaicRecord
-from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, add_contextual_info, get_filtered_elements, dsc_properties, get_standardized_values, get_standardized_values
+from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, add_contextual_info, get_filtered_elements, dsc_properties, get_standardized_values, get_standardized_values_single_property
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
 from chemdataextractor.model.units import Volt
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
+from chemdataextractor.model.units.substance_amount_density import MolPerMeterSquared
 from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading, OpenCircuitVoltage, ShortCircuitCurrentDensity
 from chemdataextractor.doc import Table, Caption, Paragraph, Heading
 
@@ -287,6 +288,9 @@ class TestRun(unittest.TestCase):
                                                       'raw_units': 'mWcm−2)',
                                                       'raw_value': '100',
                                                       'specifier': 'irradiance',
+                                                      'std_units': 'Meter^(-2.0)  '
+                                                                  'Watt^(1.0)',
+                                                      'std_value': [1000.0000000000001],
                                                       'spectra': 'AM 1.5G',
                                                       'units': '(10^1.0) * '
                                                                'Meter^(-2.0)  '
@@ -310,6 +314,9 @@ class TestRun(unittest.TestCase):
                                                       'units': '(10^1.0) * '
                                                                'Meter^(-2.0)  '
                                                                'Watt^(1.0)',
+                                                      'std_units': 'Meter^(-2.0)  '
+                                                                  'Watt^(1.0)',
+                                                      'std_value': [1000.0000000000001],
                                                       'value': [100.0],
                                                         'contextual': 'document'}},
                                          'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
@@ -396,6 +403,8 @@ class TestRun(unittest.TestCase):
                                         'exponent': [-7.0],
                                         'raw_units': 'molcm−2',
                                         'raw_value': '2.601',
+                                        'std_units': 'Meter^(-2.0)  Mol^(1.0)',
+                                        'std_value': [0.002601],
                                         'specifier': 'loading',
                                         'units': '(10^4.0) * Meter^(-2.0)  '
                                                  'Mol^(1.0)',
@@ -415,6 +424,8 @@ class TestRun(unittest.TestCase):
                                         'exponent': [-7.0],
                                         'raw_units': 'molcm−2',
                                         'raw_value': '2.601',
+                                        'std_units': 'Meter^(-2.0)  Mol^(1.0)',
+                                        'std_value': [0.002601],
                                         'specifier': 'loading',
                                         'units': '(10^4.0) * Meter^(-2.0)  '
                                                  'Mol^(1.0)',
@@ -469,3 +480,26 @@ class TestRun(unittest.TestCase):
         expected = {'PhotovoltaicCell': {'voc': {'OpenCircuitVoltage': {'value': [756.0], 'units': '(10^-3.0) * Volt^(1.0)', 'std_units': 'Volt^(1.0)', 'std_value': [0.756]}}, 'jsc': {'ShortCircuitCurrentDensity': {'value': [15.49], 'units': '(10^1.0) * AmpPerMeterSquared^(1.0)', 'error': 0.05, 'std_units': 'Ampere^(1.0)  Meter^(-2.0)', 'std_value': [154.9], 'std_error': 0.5}}}}
         self.assertEqual(output_record.serialize(), expected)
 
+    def test_get_standardized_values_with_exponent(self):
+        dye_loading = DyeLoading(value=[2.601], units=MolPerMeterSquared(magnitude=4), exponent=[-7])
+        input_record = PhotovoltaicCell(dye_loading=dye_loading)
+        output_record = get_standardized_values(input_record)
+        expected = {'PhotovoltaicCell': {'dye_loading': {'DyeLoading': {'value': [2.601], 'units': '(10^4.0) * MolPerMeterSquared^(1.0)', 'exponent': [-7.0], 'std_units': 'MolPerMeterSquared^(1.0)', 'std_value': [0.002601]}}}}
+        self.assertEqual(output_record.serialize(), expected)
+
+    def test_get_standard_values_with_exponent_error(self):
+        dye_loading = DyeLoading(value=[2.601], units=MolPerMeterSquared(magnitude=4), exponent=[-7], error=0.005)
+        input_record = PhotovoltaicCell(dye_loading=dye_loading)
+        output_record = get_standardized_values(input_record)
+        expected = {'PhotovoltaicCell': {'dye_loading': {
+            'DyeLoading': {'value': [2.601], 'units': '(10^4.0) * MolPerMeterSquared^(1.0)', 'exponent': [-7.0],
+                           'std_units': 'MolPerMeterSquared^(1.0)', 'std_value': [0.002601], 'std_error':4.9999999999999996e-06, 'error': 0.005 }}}}
+        self.assertEqual(output_record.serialize(), expected)
+
+    def test_get_standardized_values_single_property(self):
+        dye_loading = DyeLoading(value=[2.601], units=MolPerMeterSquared(magnitude=4), exponent=[-7], error=0.005)
+        output = get_standardized_values_single_property(dye_loading)
+        expected = {'DyeLoading': {'value': [2.601], 'units': '(10^4.0) * MolPerMeterSquared^(1.0)', 'exponent': [-7.0],
+                           'std_units': 'MolPerMeterSquared^(1.0)', 'std_value': [0.002601], 'std_error':4.9999999999999996e-06, 'error': 0.005 }}
+
+        self.assertEqual(output.serialize(), expected)
