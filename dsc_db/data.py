@@ -501,7 +501,7 @@ psc_indicators = [
 ]
 
 qdsc_indicators = [
-    'quantum dot', 'qdsc', 'qdscs', 'qdssc', 'qdsscs'
+    'quantum dot', 'qdsc', 'qdscs', 'qdssc', 'qdsscs', 'quantum dots', 'cds', 'cdse'
 ]
 
 dsc_indicators = [
@@ -511,6 +511,6 @@ dsc_indicators = [
 
 # specific tokens that should be merged together in classification analysis
 token_tuples_to_merge = {
-    ('quantum', 'dot'), ('spiro', 'ometad'), ('dye', 'sensitized'), ('dye', 'sensitised'), ('co', 'sensitization'),
+    ('quantum', 'dot'), ('quantum', 'dots'), ('spiro', 'ometad'), ('dye', 'sensitized'), ('dye', 'sensitised'), ('co', 'sensitization'),
     ('co', 'sensitisation')
 }

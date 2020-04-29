@@ -139,11 +139,11 @@ def count_occurances(filtered_tokens, paired_tokens, indicator):
 
 if __name__ == '__main__':
     path = '/home/edward/pv/webscraping/rsc/articles/dye%20sensitized%20solar%20cell/C5RA10148D.html' # PSC
-    elsevier_path = '/home/edward/pv/webscraping/elsevier/articles/dye%20sensitized%20solar%20cell_250220/10.1016:j.cap.2009.12.039.xml'
+    elsevier_path = '/home/edward/pv/webscraping/elsevier/articles/dye%20sensitized%20solar%20cell_250220/10.1016:j.tsf.2015.08.006.xml'
     document = Document.from_file(elsevier_path, readers=[ElsevierXmlReader(), RscHtmlReader()])
 
     # Altering the doc title to check the abstract logic works...
-    document.titles[0] = Title('nothing to see here.')
+    # document.titles[0] = Title('nothing to see here.')
 
     classification = classify_document(document)
     print('Document %s classified as %s' % (path, classification))
