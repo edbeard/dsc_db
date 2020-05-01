@@ -43,7 +43,7 @@ def calculate_irradiance(record):
                 ff = ff_mean
 
             # Calculate PCE (use the unit where given)
-            if record.pce.units or pce_mean > 1:
+            if record.pce.units or pce_mean > 0.35:
                 pce = pce_mean / 100
             else:
                 pce = pce_mean

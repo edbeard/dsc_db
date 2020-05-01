@@ -25,7 +25,8 @@ from dsc_db.calculate import calculate_metrics
 dsc_properties = [('SimulatedSolarLightIntensity', 'solar_simulator'),
               ('Semiconductor', 'semiconductor'),
               ('SentenceDyeLoading', 'dye_loading'),
-              ('Substrate', 'substrate')]
+              ('Substrate', 'substrate'),
+                ('ActiveArea', 'active_area')]
 
 
 def create_dsscdb_from_file(doc):
@@ -48,6 +49,7 @@ def create_dsscdb_from_file(doc):
 
     filtered_elements = get_filtered_elements(doc)
 
+    # print('Printing the results after table extraction only')
     # for pv_record in pv_records:
     #     pp.pprint(pv_record.serialize())
 
@@ -81,24 +83,34 @@ def create_dsscdb_from_file(doc):
             record._substitute_compound('dye', 'Dye', compound_records)
 
     # print the output before dyes removed...
+    # print('Printing output after the contextual Dye information is added...')
     # for pv_record in pv_records:
     #     pp.pprint(pv_record.serialize())
 
     # Contextual merging of dyes complete, filtering out results without dyes
     if not debug:
+        # Remove results without a dye
         pv_records = [pv_record for pv_record in pv_records if pv_record.dye is not None]
 
     # Apply sentence parsers for contextual information (Irradiance etc)
     pv_records = add_contextual_info(pv_records, filtered_elements, dsc_properties)
+    # print('Printing output after contextual info is added from the caption and document body...')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
+
 
     # Add chemical data from distributor of common dyes
     pv_records = add_distributor_info(pv_records)
 
     # Add SMILES through PubChem and ChemSpider where not added by distributor
     pv_records = add_smiles(pv_records)
+    # print('Printing output after smiles are added ...')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Merge calculated properties
     pv_records = add_calculated_properties(pv_records)
+    # print('Printing output after extra properties are calculated...')
     # for pv_record in pv_records:
     #     pp.pprint(pv_record.serialize())
 
@@ -117,13 +129,17 @@ def add_calculated_properties(pv_records):
     Uses the calculated_properties field to add data
     """
     for pv_record in pv_records:
-        if 'solar_simulator' in pv_record.calculated_properties.keys():
-            if pv_record.solar_simulator is not None:
-                pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_value'] = pv_record.calculated_properties['solar_simulator']['value']
-            else:
-                pv_record.solar_simulator = {'SimulatedSolarLightIntensity': {'calculated_value': pv_record.calculated_properties['solar_simulator']['value']}}
+        if pv_record.calculated_properties is not None:
+            if 'solar_simulator' in pv_record.calculated_properties.keys():
+                if pv_record.solar_simulator is not None:
+                    pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_value'] = pv_record.calculated_properties['solar_simulator']['value']
+                else:
+                    pv_record.solar_simulator = {'SimulatedSolarLightIntensity': {'calculated_value': pv_record.calculated_properties['solar_simulator']['value']}}
 
-            pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_units'] = pv_record.calculated_properties['solar_simulator']['units']
+                pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_units'] = pv_record.calculated_properties['solar_simulator']['units']
+                
+        else:
+            pp.pprint(pv_record.serialize())
 
     return pv_records
 
@@ -283,13 +299,13 @@ def get_table_records(doc, record_type):
         records = []
         for record in table.records:
             if record_type == record.__class__.__name__:
+                # Remove sub_records that only contain a specifier
+                record = remove_specifiers_only(record)
+
                 # Create dictionary of record data
                 record = get_standardized_values(record)
                 serialized_record = record.serialize()[record_type]
 
-                # Enhance dictionary with standard data when possible
-                # serialized_record = get_standardized_values(serialized_record)
-                # standardized_values = get_standardized_values_cde(record)
 
                 # Add calculated properties to the pv_records
                 record = calculate_metrics(record)
@@ -308,6 +324,25 @@ def get_table_records(doc, record_type):
             table_records.append((record, table))
 
     return table_records
+
+
+def remove_specifiers_only(record):
+    """
+    Automatically remove any records that only contain a specifier.
+    As the specifier is always required, this is done by testing the length of the sub_records 'field' object
+    :param record : cde record object
+    """
+
+    for field in record.fields:
+        sub_record = getattr(record, field)
+        if sub_record:
+            # Get the values that were populated
+            populated_fields = [getattr(sub_record, sub_field) for sub_field in sub_record.fields if hasattr(sub_record, sub_field)]
+            no_pop_fields = sum(field is not None for field in populated_fields)
+            if no_pop_fields == 1:
+                setattr(record, field, None)
+
+    return record
 
 
 def get_standardized_values(record):
@@ -552,7 +587,7 @@ def add_dye_information(pv_records, filtered_elements):
 
 if __name__ == '__main__':
     import cProfile, pstats, io
-    path = "/home/edward/pv/extractions/input_filtered_tables/dsc/C3TA11527E.html"
+    path = "/home/edward/pv/extractions/input_filtered_tables/dsc/C3CS60449G.html"
     with open(path, 'rb') as f:
         doc = Document.from_file(f)
     cProfile.runctx("create_dsscdb_from_file(doc)", None, locals=locals())

@@ -12,7 +12,7 @@ from chemdataextractor.model import Compound
 from chemdataextractor.model.units import Volt
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
 from chemdataextractor.model.units.substance_amount_density import MolPerMeterSquared
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading, OpenCircuitVoltage, ShortCircuitCurrentDensity
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading, OpenCircuitVoltage, ShortCircuitCurrentDensity, ActiveArea
 from chemdataextractor.doc import Table, Caption, Paragraph, Heading
 
 
@@ -430,6 +430,24 @@ class TestRun(unittest.TestCase):
                                         'units': '(10^4.0) * Meter^(-2.0)  '
                                                  'Mol^(1.0)',
                                         'value': [2.601]}},
+                            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+        self.do_contextual_document_merging(text, model, expected)
+
+    def test_contextual_active_area_merged_from_document(self):
+        text = 'The sealed cells were used for the photocurrent–voltage test with an active area of 0.16 cm2.'
+        model = ActiveArea
+        expected = {'active_area': {'ActiveArea': {'contextual': 'document',
+                                        'raw_units': 'cm2',
+                                        'raw_value': '0.16',
+                                        'std_units': 'Meter^(2.0)',
+                                        'std_value': [0.000016],
+                                        'specifier': 'active area',
+                                        'units': '(10^-4.0) * Meter^(2.0)',
+                                        'value': [0.16]}},
                             'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
                                 'raw_value': '756',
                                 'specifier': 'Voc',
