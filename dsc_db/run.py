@@ -19,7 +19,7 @@ from chemdataextractor.model.units.unit import UnitType
 from dsc_db.model import PhotovoltaicRecord
 from dsc_db.data import all_dyes, blacklist_headings
 from dsc_db.smiles import add_smiles
-from dsc_db.calculate import calculate_metrics
+from dsc_db.calculate import calculate_metrics, calculate_relative_metrics
 
 # Properties to be merged from contextual sentences
 dsc_properties = [('SimulatedSolarLightIntensity', 'solar_simulator'),
@@ -306,7 +306,6 @@ def get_table_records(doc, record_type):
                 record = get_standardized_values(record)
                 serialized_record = record.serialize()[record_type]
 
-
                 # Add calculated properties to the pv_records
                 record = calculate_metrics(record)
                 if record.calculated_properties:
@@ -319,6 +318,9 @@ def get_table_records(doc, record_type):
                 serialized_record['table_row_categories'] = record.table_row_categories
 
                 records.append(serialized_record)
+
+        # Add calculation of standardised properties
+        # records = calculate_relative_metrics(records)
 
         for record in records:
             table_records.append((record, table))
@@ -360,7 +362,6 @@ def get_standardized_values(record):
                 sub_record._values['std_units'] = sub_record.units.dimensions.standard_units
                 sub_record.fields['std_units'] = UnitType()
                 sub_record.fields['std_units'].name = 'std_units'
-
                 # Standardize the value information
                 std_value = [sub_record.units.convert_value_to_standard(val) for val in sub_record.value]
                 if getattr(sub_record, 'exponent', None) is not None and getattr(sub_record, 'exponent', None) != []:
