@@ -17,6 +17,27 @@ from chemdataextractor.model.pv_model import PhotovoltaicCell, OpenCircuitVoltag
 from chemdataextractor.model.units import Volt, Percent
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
 
+test_records_pt = [{'voc': {'OpenCircuitVoltage': {'raw_value': '22.22', 'raw_units': '(V)', 'value': [22.22],
+                                                     'units': 'Volt^(1.0)', 'specifier': 'Voc', 'std_units': 'Volt^(1.0)', 'std_value': [22.22]}},
+                      'ff': {'FillFactor': {'raw_value': '33.33', 'value': [33.33], 'specifier': 'FF'}},
+                      'pce': {'PowerConversionEfficiency': {'raw_value': '44.44', 'value': [44.44], 'specifier': 'PCE'}},
+                      'jsc': {'ShortCircuitCurrentDensity': {'raw_value': '11.11', 'raw_units': '(mAcm−2)', 'value': [11.11], 'units': '(10^1.0) * Ampere^(1.0)  Meter^(-2.0)',
+                                                             'specifier': 'Jsc', 'std_units': 'Ampere^(1.0)  Meter^(-2.0)', 'std_value': [111.1]}},
+                      'counter_electrode': {'CounterElectrode': {'specifier': 'CE', 'raw_value': 'Novel electrode'}},
+                      'calculated_properties': {'solar_simulator': {'value': [1851.5], 'units': 'WattPerMeterSquared^(1.0)'}},
+                      'table_row_categories': 'Pt'},
+
+                      {'voc': {'OpenCircuitVoltage': {'raw_value': '66.66', 'raw_units': '(V)', 'value': [66.66],
+                                                      'units': 'Volt^(1.0)', 'specifier': 'Voc', 'std_units': 'Volt^(1.0)',
+                                                      'std_value': [66.66]}},
+                       'ff': {'FillFactor': {'raw_value': '77.77', 'value': [77.77], 'specifier': 'FF'}},
+                       'pce': {'PowerConversionEfficiency': {'raw_value': '88.88', 'value': [88.88], 'specifier': 'PCE'}},
+                       'jsc': {'ShortCircuitCurrentDensity': {'raw_value': '55.55', 'raw_units': '(mAcm−2)',
+                                                              'value': [55.55], 'units': '(10^1.0) * Ampere^(1.0)  Meter^(-2.0)',
+                                                              'specifier': 'Jsc', 'std_units': 'Ampere^(1.0)  Meter^(-2.0)', 'std_value': [555.5]}},
+                       'counter_electrode': {'CounterElectrode': {'specifier': 'CE', 'raw_value': ' Pt '}},
+                       'calculated_properties': {'solar_simulator': {'value': [32400.9], 'units': 'WattPerMeterSquared^(1.0)'}},
+                       'table_row_categories': 'Novel electrode'}]
 
 class TestCalculate(unittest.TestCase):
 
@@ -50,35 +71,41 @@ class TestCalculate(unittest.TestCase):
         for record in records:
             print(record[0])
 
+
     def test_classify_table_counter_electrode_2(self):
 
-        records = [{'voc': {'OpenCircuitVoltage': {'raw_value': '22.22', 'raw_units': '(V)', 'value': [22.22],
-                                                     'units': 'Volt^(1.0)', 'specifier': 'Voc', 'std_units': 'Volt^(1.0)', 'std_value': [22.22]}},
-                      'ff': {'FillFactor': {'raw_value': '33.33', 'value': [33.33], 'specifier': 'FF'}},
-                      'pce': {'PowerConversionEfficiency': {'raw_value': '44.44', 'value': [44.44], 'specifier': 'PCE'}},
-                      'jsc': {'ShortCircuitCurrentDensity': {'raw_value': '11.11', 'raw_units': '(mAcm−2)', 'value': [11.11], 'units': '(10^1.0) * Ampere^(1.0)  Meter^(-2.0)',
-                                                             'specifier': 'Jsc', 'std_units': 'Ampere^(1.0)  Meter^(-2.0)', 'std_value': [111.1]}},
-                      'counter_electrode': {'CounterElectrode': {'specifier': 'CE', 'raw_value': 'Novel electrode'}},
-                      'calculated_properties': {'solar_simulator': {'value': [1851.5], 'units': 'WattPerMeterSquared^(1.0)'}},
-                      'table_row_categories': 'Pt'},
-
-                      {'voc': {'OpenCircuitVoltage': {'raw_value': '66.66', 'raw_units': '(V)', 'value': [66.66],
-                                                      'units': 'Volt^(1.0)', 'specifier': 'Voc', 'std_units': 'Volt^(1.0)',
-                                                      'std_value': [66.66]}},
-                       'ff': {'FillFactor': {'raw_value': '77.77', 'value': [77.77], 'specifier': 'FF'}},
-                       'pce': {'PowerConversionEfficiency': {'raw_value': '88.88', 'value': [88.88], 'specifier': 'PCE'}},
-                       'jsc': {'ShortCircuitCurrentDensity': {'raw_value': '55.55', 'raw_units': '(mAcm−2)',
-                                                              'value': [55.55], 'units': '(10^1.0) * Ampere^(1.0)  Meter^(-2.0)',
-                                                              'specifier': 'Jsc', 'std_units': 'Ampere^(1.0)  Meter^(-2.0)', 'std_value': [555.5]}},
-                       'counter_electrode': {'CounterElectrode': {'specifier': 'CE', 'raw_value': ' Pt '}},
-                       'calculated_properties': {'solar_simulator': {'value': [32400.9], 'units': 'WattPerMeterSquared^(1.0)'}},
-                       'table_row_categories': 'Novel electrode'}]
+        records = test_records_pt
 
         records = calculate_relative_metrics(records)
         self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized_value'], 0.5)
         self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized_value'], 1.0)
 
+    def test_classify_table_counter_electrode_one_without_ce_field(self):
 
+        altered_record = test_records_pt[0]
+        del(altered_record['counter_electrode'])
+        records = [altered_record, test_records_pt[1]]
+
+        records = calculate_relative_metrics(records)
+        self.assertTrue('normalized_value' not in records[1]['pce']['PowerConversionEfficiency'].keys())
+
+    def test_classify_table_counter_electrode_has_no_name(self):
+
+        altered_record = test_records_pt[0]
+        del(altered_record['counter_electrode']['CounterElectrode']['raw_value'])
+        records = [altered_record, test_records_pt[1]]
+
+        records = calculate_relative_metrics(records)
+        self.assertTrue('normalized_value' not in records[1]['pce']['PowerConversionEfficiency'].keys())
+
+    def test_classify_table_counter_electrode_has_no_platinum_record(self):
+
+        altered_record = test_records_pt[1]
+        altered_record['counter_electrode']['CounterElectrode']['raw_value'] = 'Not platinum'
+        records = [test_records_pt[0], altered_record]
+
+        records = calculate_relative_metrics(records)
+        self.assertTrue('normalized_value' not in records[1]['pce']['PowerConversionEfficiency'].keys())
 
 
 

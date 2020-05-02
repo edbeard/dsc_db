@@ -81,7 +81,6 @@ def calculate_relative_metrics(records):
     return records
 
 
-
 def classify_table(records):
     """
     Classify the table by looking at variables
@@ -90,6 +89,7 @@ def classify_table(records):
     # If all records have a counter electrode property
         # If all records are unique
 
+    # Counter Electrode
     # Determine if all records have a counter electrode and pce field.
     if all([field in record.keys() for record in records for field in ('counter_electrode', 'pce')]):
         print('all records have a counter electrode property and a pce value.')
