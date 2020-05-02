@@ -320,7 +320,7 @@ def get_table_records(doc, record_type):
                 records.append(serialized_record)
 
         # Add calculation of standardised properties
-        # records = calculate_relative_metrics(records)
+        records = calculate_relative_metrics(records)
 
         for record in records:
             table_records.append((record, table))

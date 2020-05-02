@@ -73,11 +73,8 @@ def calculate_relative_metrics(records):
     # Start by classifying the table
     classification, relative_record = classify_table(records)
 
-    if classification == 'counter_electrode':
-        records = calculate_relative_efficiencies_counter_electrodes(records, relative_record)
-    elif classification == 'dye':
-        # Add logic for relative dye values...
-        pass
+    if classification != 'None':
+        records = calculate_relative_efficiencies(records, relative_record, classification )
     return records
 
 
@@ -86,52 +83,68 @@ def classify_table(records):
     Classify the table by looking at variables
     """
 
-    # If all records have a counter electrode property
-        # If all records are unique
+    # Test for counter electrode
+    classification, ref_record = do_classification(records, 'counter_electrode', 'CounterElectrode', 'Pt')
+    if classification == 'None':
+        # Test for DSC
+        classification, ref_record = do_classification(records, 'dye', 'Dye', 'N719')
+        if classification == 'None':
+            # Test for semiconductor
+            classification, ref_record = do_classification(records, 'semiconductor', 'Semiconductor', 'TiO2')
 
-    # Counter Electrode
-    # Determine if all records have a counter electrode and pce field.
-    if all([field in record.keys() for record in records for field in ('counter_electrode', 'pce')]):
-        print('all records have a counter electrode property and a pce value.')
+    return classification, ref_record
 
-        # Check that these values have names for the counter electrode and a value for the pce field
-        if all(['raw_value' in record['counter_electrode']['CounterElectrode'].keys() for record in records]) and \
+
+def do_classification(records, field_name, model_name, ref_value):
+    """
+    Identify candidates for referencing
+    """
+
+    if all([field in record.keys() for record in records for field in (field_name, 'pce')]):
+
+        # Check that these values have names for the counter electrode and a value for the pce field_name
+        if all(['raw_value' in record[field_name][model_name].keys() for record in records]) and \
                 all(['value' in record['pce']['PowerConversionEfficiency'].keys() for record in records]):
-            print('All records have a raw_value and value property for ce and pce respectively.')
 
             # Determine if all the counter electrode values are unique, and which is the reference result.
             unique_counter_electrodes = set()
-            pt_record = None
+            ref_record = None
             for record in records:
-                unique_counter_electrodes.add(record['counter_electrode']['CounterElectrode']['raw_value'])
-                if record['counter_electrode']['CounterElectrode']['raw_value'].strip(' ') == 'Pt':
-                    pt_record = record
+                unique_counter_electrodes.add(record[field_name][model_name]['raw_value'])
+                if record[field_name][model_name]['raw_value'].strip(' ') == ref_value:
+                    ref_record = record
 
             #
-            if len(unique_counter_electrodes) == len(records) and pt_record is not None:
-                print('Every CE result is unique and the reference value has been found.')
-                return ('counter_electrode', pt_record)
+            if len(unique_counter_electrodes) == len(records) and ref_record is not None:
+                return (field_name, ref_record)
 
-    # Add an elif here to classify by dye etc.
-    return 'None', None
+    return ('None', None)
 
 
-def calculate_relative_efficiencies_counter_electrodes(records, pt_record):
+def calculate_relative_efficiencies(records, pt_record, classification):
     """
-    Calculate the relative efficiencies for a table that contains counter electrode information.
+    Calculate the relative efficiencies for an appropriate table
     Assumes that the units of the PCE will be consistent throughout the table.
     """
 
-    baseline_efficiency = mean(pt_record['pce']['PowerConversionEfficiency']['value'])
-    print('The baseline efficiency is: %s' % baseline_efficiency)
+    # Determine the standard component
+    if classification == 'counter_electrode':
+        std_component = 'Pt'
+    elif classification == 'dye':
+        std_component = 'N719'
+    elif classification == 'semiconductor':
+        std_component = 'TiO2'
+    else:
+        raise Exception
 
-    # Add a field to each record for
+    baseline_efficiency = mean(pt_record['pce']['PowerConversionEfficiency']['value'])
+
+    # Add a field to each record for efficiency
     for record in records:
         rec_efficiency = mean(record['pce']['PowerConversionEfficiency']['value'])
         relative_efficiency = rec_efficiency / baseline_efficiency
-        print('The record efficiency is found to be: %s ' % rec_efficiency)
-        print('This relative efficiency was found to be: %s' % relative_efficiency)
-        record['pce']['PowerConversionEfficiency']['normalized_value'] = relative_efficiency
+        normalized_data = {'value': relative_efficiency, 'component_name': classification, 'std_component': std_component}
+        record['pce']['PowerConversionEfficiency']['normalized'] = normalized_data
 
     return records
 
