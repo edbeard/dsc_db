@@ -7,6 +7,7 @@ from chemdataextractor.model.units.irradiance import WattPerMeterSquared
 from chemdataextractor.model.pv_model import SimulatedSolarLightIntensity
 
 from statistics import mean
+from math import sqrt
 
 import copy
 
@@ -49,13 +50,78 @@ def calculate_irradiance(record):
                 pce = pce_mean
 
             irr = calculate_irradiance_value(voc, jsc, ff, pce)
-            solar_sim = SimulatedSolarLightIntensity(value=[round(irr, 1)], units=WattPerMeterSquared())
+            irr_err = calculate_irradiance_error(record, voc, jsc, ff, pce, irr)
+            irr = round_to_sig_figs(irr, irr_err)
+
+            solar_sim = SimulatedSolarLightIntensity(value=[irr], units=WattPerMeterSquared(), error=irr_err)
             new_record.set_calculated_properties('solar_simulator', solar_sim)
 
     return new_record
 
 
+def round_to_sig_figs(irr, irr_err):
+    """
+    Round the irradiance to the appropriate number of significant figures
+    """
+
+    sig_fig_number = len(str(irr_err).replace('.', ''))
+    return float(format(irr, '.' + str(sig_fig_number) + 'g'))
+
+
+def calculate_irradiance_error(record, voc, jsc, ff, pce, irr):
+    """
+    Estimate the accuracy of the calculated data
+    """
+
+    # Estimate the errors based on significant figure information
+    voc_err = calc_error_quantity(record, 'voc')
+    jsc_err = calc_error_quantity(record, 'jsc')
+    ff_err = calc_error_quantity(record, 'ff')
+    pce_err = calc_error_quantity(record, 'pce')
+
+    # Calculate the irradiance error
+    irr_err = irr * sqrt( ((voc_err / voc) ** 2) +  ((jsc_err / jsc) ** 2) + ((ff_err / ff) ** 2 + ((pce_err / pce) ** 2)))
+
+    # Round to one s.f
+    return float(format(irr_err, '.1g'))
+
+
+def calc_error_quantity(record, field):
+    """
+    Calculate the error for a quantity that has dimensions but no given error.
+    This is done by looking at the significant figures
+    """
+
+    raw_value = getattr(record, field).raw_value
+    error_string = ''
+    for char in raw_value[:-1]:
+        if char != '.':
+            error_string += '0'
+        else:
+            error_string += '.'
+    error_string += '1'
+    prop_calc_raw_error = float(error_string)
+    if field in ['voc', 'jsc']:
+        prop_calc_error = getattr(record, field).units.convert_value_to_standard(prop_calc_raw_error)
+    elif field == 'ff':
+        if mean(record.ff.value) > 1:
+            prop_calc_error = prop_calc_raw_error / 100
+        else:
+            prop_calc_error = prop_calc_raw_error
+    elif field == 'pce':
+        if record.pce.units or mean(record.pce.value) > 0.35:
+            prop_calc_error = prop_calc_raw_error / 100
+        else:
+            prop_calc_error = prop_calc_raw_error
+    else:
+        print('Unrecognized quantity.')
+        raise Exception
+
+    return prop_calc_error
+
+
 def calculate_irradiance_value(voc, jsc, ff, pce):
+    # Calculate the irradiance taking into account the errors
     return (voc * jsc * ff) / pce
 
 

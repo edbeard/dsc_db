@@ -137,7 +137,8 @@ def add_calculated_properties(pv_records):
                     pv_record.solar_simulator = {'SimulatedSolarLightIntensity': {'calculated_value': pv_record.calculated_properties['solar_simulator']['value']}}
 
                 pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_units'] = pv_record.calculated_properties['solar_simulator']['units']
-                
+                pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_error'] = pv_record.calculated_properties['solar_simulator']['error']
+
         else:
             pp.pprint(pv_record.serialize())
 
@@ -312,7 +313,9 @@ def get_table_records(doc, record_type):
                     serialized_record['calculated_properties'] = {}
                 for key, data in record.calculated_properties.items():
                     serialized_data = data.serialize()
-                    calc_props = {'value': serialized_data['SimulatedSolarLightIntensity']['value'], 'units': serialized_data['SimulatedSolarLightIntensity']['units']}
+                    calc_props = {'value': serialized_data['SimulatedSolarLightIntensity']['value'],
+                                  'units': serialized_data['SimulatedSolarLightIntensity']['units'],
+                                  'error': serialized_data['SimulatedSolarLightIntensity']['error']}
                     serialized_record['calculated_properties'][key] = calc_props
 
                 serialized_record['table_row_categories'] = record.table_row_categories
