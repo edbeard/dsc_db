@@ -521,3 +521,11 @@ class TestRun(unittest.TestCase):
                            'std_units': 'MolPerMeterSquared^(1.0)', 'std_value': [0.002601], 'std_error':4.9999999999999996e-06, 'error': 0.005 }}
 
         self.assertEqual(output.serialize(), expected)
+
+    def test_rounding_of_standardized_values(self):
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49')
+        record = PhotovoltaicCell(voc=voc, jsc=jsc)
+        out_rec = get_standardized_values(record)
+        self.assertEqual(out_rec.voc.std_value[0], 0.756)
+        self.assertEqual(out_rec.jsc.std_value[0], 154.9)
