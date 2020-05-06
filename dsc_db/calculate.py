@@ -2,7 +2,6 @@
 Functionality to calculate properties from extracted data
 """
 
-from chemdataextractor.model.units.current_density import CurrentDensityModel, CurrentDensityUnit
 from chemdataextractor.model.units.irradiance import WattPerMeterSquared
 from chemdataextractor.model.pv_model import SimulatedSolarLightIntensity
 
@@ -10,6 +9,7 @@ from statistics import mean
 from math import sqrt
 
 import copy
+import sigfig
 
 
 def calculate_metrics(record):
@@ -63,14 +63,13 @@ def round_to_sig_figs(irr, irr_err):
     """
     Round the irradiance to the appropriate number of significant figures
     """
-
-    sig_fig_number = len(str(irr_err).replace('.', ''))
-    return float(format(irr, '.' + str(sig_fig_number) + 'g'))
+    return sigfig.round(irr, uncertainty=irr_err)
 
 
 def calculate_irradiance_error(record, voc, jsc, ff, pce, irr):
     """
-    Estimate the accuracy of the calculated data
+    Estimate the accuracy of the calculated data.
+    Returns the string too determine the sig figs later.
     """
 
     # Estimate the errors based on significant figure information
@@ -88,19 +87,23 @@ def calculate_irradiance_error(record, voc, jsc, ff, pce, irr):
 
 def calc_error_quantity(record, field):
     """
-    Calculate the error for a quantity that has dimensions but no given error.
-    This is done by looking at the significant figures
+    Calculate the error for a quantity, estimating where no error is given.
+    First, the record is checked for an extracted error value.
+    If not available, this is done by looking at the significant figures
     """
 
-    raw_value = getattr(record, field).raw_value
-    error_string = ''
-    for char in raw_value[:-1]:
-        if char != '.':
-            error_string += '0'
-        else:
-            error_string += '.'
-    error_string += '1'
-    prop_calc_raw_error = float(error_string)
+    if getattr(record, field).error is not None:
+        prop_calc_raw_error = getattr(record, field).error
+    else:
+        raw_value = getattr(record, field).raw_value
+        error_string = ''
+        for char in raw_value[:-1]:
+            if char != '.':
+                error_string += '0'
+            else:
+                error_string += '.'
+        error_string += '1'
+        prop_calc_raw_error = float(error_string)
     if field in ['voc', 'jsc']:
         prop_calc_error = getattr(record, field).units.convert_value_to_standard(prop_calc_raw_error)
     elif field == 'ff':
@@ -180,11 +183,10 @@ def do_classification(records, field_name, model_name, ref_value):
                 if record[field_name][model_name]['raw_value'].strip(' ') == ref_value:
                     ref_record = record
 
-            #
             if len(unique_counter_electrodes) == len(records) and ref_record is not None:
-                return (field_name, ref_record)
+                return field_name, ref_record
 
-    return ('None', None)
+    return 'None', None
 
 
 def calculate_relative_efficiencies(records, pt_record, classification):

@@ -20,6 +20,7 @@ from dsc_db.model import PhotovoltaicRecord
 from dsc_db.data import all_dyes, blacklist_headings
 from dsc_db.smiles import add_smiles
 from dsc_db.calculate import calculate_metrics, calculate_relative_metrics, round_to_sig_figs
+import sigfig
 
 # Properties to be merged from contextual sentences
 dsc_properties = [('SimulatedSolarLightIntensity', 'solar_simulator'),
@@ -369,7 +370,6 @@ def get_standardized_values(record):
                 std_value = [sub_record.units.convert_value_to_standard(val) for val in sub_record.value]
                 if getattr(sub_record, 'exponent', None) is not None and getattr(sub_record, 'exponent', None) != []:
                     std_value = [value * pow(10, int(sub_record.exponent[0])) for value in std_value]
-                std_value = [round_to_sig_figs(val, sub_record.raw_value) for i, val in enumerate(std_value)]  # Set to same number of s.f as the normal value
                 setattr(sub_record, 'std_value', std_value)
                 sub_record._values['std_value'] = std_value
                 sub_record.fields['std_value'] = ListType(FloatType())

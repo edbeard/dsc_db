@@ -5,7 +5,7 @@
 import unittest
 
 from dsc_db.model import PhotovoltaicRecord
-from dsc_db.calculate import calculate_metrics, calculate_irradiance, calculate_relative_metrics, count_sig_figs, calculate_irradiance_error, calc_error_quantity, calculate_irradiance_value
+from dsc_db.calculate import calculate_metrics, calculate_irradiance, calculate_relative_metrics, calculate_irradiance_error, calc_error_quantity, round_to_sig_figs
 from dsc_db.run import get_table_records
 from copy import deepcopy
 from pprint import pprint
@@ -154,13 +154,13 @@ class TestCalculate(unittest.TestCase):
 
     def test_calculate_irradiance(self):
 
-        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.))
-        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.))
-        ff = FillFactor(value=[0.664])
-        pce = PowerConversionEfficiency(value=[7.78], units=Percent())
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49')
+        ff = FillFactor(value=[0.664], raw_value='0.664')
+        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
         input_record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
         output_record = calculate_irradiance(input_record)
-        expected = 999.5
+        expected = 999.0
         irradiance = output_record.calculated_properties['solar_simulator'].value
         self.assertEqual(irradiance[0], expected)
 
@@ -298,11 +298,38 @@ class TestCalculate(unittest.TestCase):
 
         updated_record = calculate_irradiance(record)
         output = updated_record.calculated_properties['solar_simulator']
-        self.assertEqual(output.value, [1000.0])
+        self.assertEqual(output.value, [999.0])
         self.assertEqual(output.error, 2.0)
-        print('The irradiance was calculated as: %s' % output.value)
-        print(' The error was calculated as : %s' % output.error)
+
+    def test_explict_error_in_calculations(self):
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0', error=5.)
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49', error= 1)
+        ff = FillFactor(value=[0.664], raw_value='0.664')
+        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
+        record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
+
+        updated_record = calculate_irradiance(record)
+        output = updated_record.calculated_properties['solar_simulator']
+        self.assertEqual(output.value, [1000.0])
+        self.assertEqual(output.error, 60.0)
         # self.assertEqual(irradiance[0], expected)
 
+    def test_round_to_sig_figs(self):
 
+        irr1, err1, exp1 = 999.45, 1, 999
+        irr2, err2, exp2 = 986.31, 60, 990.
+        irr3, err3, exp3 = 999.45, 0.1, 999.5
+        irr4, err4, exp4 = 999.451234567, 0.00000001, 999.45123457
+        irr5, err5, exp5 = 999.45123, 0.01, 999.45
+        irr6, err6, exp6 = 123456.78, 3000, 123000.
+        irr7, err7, exp7 = 0.002601, 0.00003, 0.00260
+        irr8, err8, exp8 = 99999999999.9999999999, 0.000000001, 100000000000.
 
+        self.assertEqual(round_to_sig_figs(irr1, err1), exp1)
+        self.assertEqual(round_to_sig_figs(irr2, err2), exp2)
+        self.assertEqual(round_to_sig_figs(irr3, err3), exp3)
+        self.assertEqual(round_to_sig_figs(irr4, err4), exp4)
+        self.assertEqual(round_to_sig_figs(irr5, err5), exp5)
+        self.assertEqual(round_to_sig_figs(irr6, err6), exp6)
+        self.assertEqual(round_to_sig_figs(irr7, err7), exp7)
+        self.assertEqual(round_to_sig_figs(irr8, err8), exp8)
