@@ -17,13 +17,14 @@ from chemdataextractor.model import Compound, ListType, FloatType
 from chemdataextractor.model.units.unit import UnitType
 
 from dsc_db.model import PhotovoltaicRecord
-from dsc_db.data import all_dyes, blacklist_headings
+from dsc_db.data import all_dyes, blacklist_headings, redox_couples
 from dsc_db.smiles import add_smiles
 from dsc_db.calculate import calculate_metrics, calculate_relative_metrics, round_to_sig_figs
 import sigfig
 
 # Properties to be merged from contextual sentences
-dsc_properties = [('SimulatedSolarLightIntensity', 'solar_simulator'),
+dsc_properties = [('RedoxCouple', 'redox_couple'),
+    ('SimulatedSolarLightIntensity', 'solar_simulator'),
               ('Semiconductor', 'semiconductor'),
               ('SentenceDyeLoading', 'dye_loading'),
               ('Substrate', 'substrate'),
@@ -181,7 +182,11 @@ def add_contextual_info(pv_records, filtered_elements, properties):
     for parser, field in properties:
         filtered_record = [get_standardized_values_single_property(record).serialize() for el in filtered_elements for record in el.records if
                                               record.__class__.__name__ == parser]
-        sentence_records.append([record for record in filtered_record if record[parser].get('raw_value')])
+
+        element_records = [record for record in filtered_record if record[parser].get('raw_value')]
+        # Merge equivalent names together
+        element_records = merge_redox_couples(element_records)
+        sentence_records.append(element_records)
 
     for pv_record in pv_records:
         caption = pv_record.table.caption
@@ -192,6 +197,7 @@ def add_contextual_info(pv_records, filtered_elements, properties):
                 caption_records = [get_standardized_values_single_property(record).serialize() for record in caption.records if
                                               record.__class__.__name__ == parser]
                 caption_records = [record for record in caption_records if record[parser].get('raw_value')]
+                caption_records = merge_redox_couples(caption_records)
 
                 # Then, count the occurrences. If there is only one result, merge (as we can assume this applies to all the
                 # results in the table.
@@ -588,6 +594,31 @@ def add_dye_information(pv_records, filtered_elements):
     pv_records, _ = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=True)
 
     return pv_records
+
+
+def merge_redox_couples(records):
+
+    """
+    Standardizing redox couple data based on the extracted string
+    """
+
+    for record in records:
+        if 'RedoxCouple' in record.keys():
+            raw_value = record['RedoxCouple']['raw_value']
+
+            # Remove generic hyphen characters for matching
+            characters_to_remove = '−−-'
+            match_string = raw_value
+            for char in characters_to_remove:
+                match_string = match_string.replace(char, '')
+
+            for key, item in redox_couples.items():
+                if match_string in item['match']:
+                    record['RedoxCouple']['value'] = key
+                    record['RedoxCouple']['names'] = item['names']
+
+
+    return records
 
 
 if __name__ == '__main__':

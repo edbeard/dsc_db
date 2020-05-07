@@ -5,15 +5,17 @@
 import unittest
 
 from dsc_db.model import PhotovoltaicRecord
-from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, add_contextual_info, get_filtered_elements, dsc_properties, get_standardized_values, get_standardized_values_single_property
+from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, \
+    add_contextual_info, get_filtered_elements, dsc_properties, get_standardized_values, get_standardized_values_single_property, \
+    merge_redox_couples
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
 from chemdataextractor.model.units import Volt
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
 from chemdataextractor.model.units.substance_amount_density import MolPerMeterSquared
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading, OpenCircuitVoltage, ShortCircuitCurrentDensity, ActiveArea
-from chemdataextractor.doc import Table, Caption, Paragraph, Heading
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading, OpenCircuitVoltage, ShortCircuitCurrentDensity, ActiveArea, RedoxCouple
+from chemdataextractor.doc import Table, Caption, Paragraph, Heading, Sentence
 
 
 class TestRun(unittest.TestCase):
@@ -455,6 +457,26 @@ class TestRun(unittest.TestCase):
                                 'value': [756.0]}}}
         self.do_contextual_document_merging(text, model, expected)
 
+    def test_contextual_redox_couple_merged_from_document(self):
+        text = 'Obviously, the Epp for two electrodes is almost identical, while the peak current density of the NGF electrode is a bit higher than that of the Pt electrode, indicating that NGFs possess superior electrocatalytic activity for the regeneration of the I−/I3− redox couple.'
+        model = RedoxCouple
+        expected = {'redox_couple': {'RedoxCouple': {'contextual': 'document',
+                                  'raw_value': 'I−/I3−',
+                                  'value': 'triiodide/iodide',
+                                  'names': ['I-/I3-',
+                                            'I3-/I-',
+                                            'triiodide/iodide',
+                                            'iodide/triiodide'],
+                                  'specifier': 'redox couple'}},
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+
+        self.do_contextual_document_merging(text, model, expected)
+
+
     def test_filtering_logic(self):
 
         pv_record1 = PhotovoltaicRecord({})
@@ -529,3 +551,58 @@ class TestRun(unittest.TestCase):
         out_rec = get_standardized_values(record)
         self.assertEqual(out_rec.voc.std_value[0], 0.756)
         self.assertEqual(out_rec.jsc.std_value[0], 154.9)
+
+    def test_redox_couple_merging(self):
+
+        redox_input_dict = [{'RedoxCouple': {'raw_value': 'I−/I3−', 'specifier': 'redox couple'},
+                        'OpenCircuitVoltage': {'raw_value' : 'blah', 'value': 'blah'}}]
+
+        output = merge_redox_couples(redox_input_dict)
+        self.assertEqual(output[0]['RedoxCouple']['value'], 'triiodide/iodide')
+
+    def test_redox_couple_that_doesnt_match(self):
+        redox_input_dict = [{'RedoxCouple': {'raw_value': 'this isnt a standard redox couple', 'specifier': 'redox couple'},
+                        'OpenCircuitVoltage': {'raw_value' : 'blah', 'value': 'blah'}}]
+
+        output = merge_redox_couples(redox_input_dict)
+        self.assertTrue('value' not in output[0]['RedoxCouple'].keys())
+
+    def test_document_merging_equivalent_redox_couples(self):
+
+        sentence1 = Sentence('Cyclic voltammetry (CV) for I3−/I− redox couple was carried out in a three-electrode system in an argon-purged acetonitrile solution which contained 0.1 M LiClO4, 10 mM LiI, and 1 mM I2 at a scan rate of 10 mV s−1 using a electrochemical analyzer (CHI630, Chenhua, Shanghai)')
+        sentence2 = Sentence('The iodide/triiodide was used in the redox reaction')
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
+        }
+        pv_records = [PhotovoltaicRecord(pv_input, Table(Caption('')))]
+        doc = Document(sentence1, sentence2, models=[PhotovoltaicCell])
+        filtered_elements = get_filtered_elements(doc)
+        output = add_contextual_info(pv_records, filtered_elements, [('RedoxCouple', 'redox_couple')] )
+        expected = {'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756',
+                                                   'specifier': 'Voc', 'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+                    'redox_couple': {'RedoxCouple': {'specifier': 'redox couple', 'raw_value': 'I3−/I−',
+                                                     'value': 'triiodide/iodide',
+                                                     'names': ['I-/I3-', 'I3-/I-', 'triiodide/iodide', 'iodide/triiodide'],
+                                                     'contextual': 'document'}}}
+
+        self.assertEqual(expected, output[0].serialize())
+
+    def test_table_caption_document_merging_redox_couples(self):
+        table = Table(Caption('The peak to peak voltage separation (Epp) of reaction (1) corresponds to the electrocatalytic activity of the CEs for I−/I3− redox reactions, with the standard electrochemical rate constant inversely correlated.'), models=[PhotovoltaicCell])
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
+        }
+        pv_records = [PhotovoltaicRecord(pv_input, table)]
+        dummy_elements = Document('test doc').elements
+        output = add_contextual_info(pv_records, dummy_elements, [('RedoxCouple', 'redox_couple')] )
+        expected = {'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756',
+                                                   'specifier': 'Voc', 'units': '(10^-3.0) * Volt^(1.0)',
+                                                   'value': [756.0]}},
+                    'redox_couple': {'RedoxCouple': {'specifier': 'redox reactions',
+                                                     'raw_value': 'I−/I3−', 'value': 'triiodide/iodide',
+                                                     'names': ['I-/I3-', 'I3-/I-', 'triiodide/iodide', 'iodide/triiodide'],
+                                                     'contextual': 'table_caption'}}}
+
+        self.assertEqual(output[0].serialize(), expected)

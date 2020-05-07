@@ -370,6 +370,16 @@ greatcell_solar = {
 # Combine dictionaries
 all_dyes = {**dyenamo_dyes, **solaronix_dyes, **sigma_aldrich, **greatcell_solar}
 
+# Merging redox couple data.
+redox_couples = {
+        'triiodide/iodide' : {'match' : ['I/I3', 'I3/I', 'triiodide/iodide', 'iodide/triiodide'],
+                              'names':['I-/I3-', 'I3-/I-', 'triiodide/iodide', 'iodide/triiodide']
+                              },
+        'disulfide/thiolate' : { 'match' : ['T2/T', 'T/T2', 'disulfide/thiolate', 'thiolate/disulfide'],
+                                 'names': ['T2/T-', 'T-/T2', 'disulfide/thiolate', 'thiolate/disulfide']
+                                }
+    }
+
 #### Common Perovskite Materials ####
 
 ## Perovskite Materials
