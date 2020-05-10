@@ -368,18 +368,13 @@ def get_standardized_values(record):
         if sub_record:
             if getattr(sub_record, 'value', None) is not None and getattr(sub_record, 'units', None) is not None:
                 # Standardize and add the units information
-                setattr(sub_record, 'std_units', sub_record.units.dimensions.standard_units)
-                sub_record._values['std_units'] = sub_record.units.dimensions.standard_units
-                sub_record.fields['std_units'] = UnitType()
-                sub_record.fields['std_units'].name = 'std_units'
+                sub_record.std_units = sub_record.units.dimensions.standard_units
+
                 # Standardize the value information
                 std_value = [sub_record.units.convert_value_to_standard(val) for val in sub_record.value]
                 if getattr(sub_record, 'exponent', None) is not None and getattr(sub_record, 'exponent', None) != []:
                     std_value = [value * pow(10, int(sub_record.exponent[0])) for value in std_value]
-                setattr(sub_record, 'std_value', std_value)
-                sub_record._values['std_value'] = std_value
-                sub_record.fields['std_value'] = ListType(FloatType())
-                sub_record.fields['std_value'].name = 'std_value'
+                sub_record.std_value = std_value
 
                 # Standardize the error information if present
                 if getattr(sub_record, 'error', None) is not None:
@@ -387,10 +382,7 @@ def get_standardized_values(record):
                     if getattr(sub_record, 'exponent', None) is not None and getattr(sub_record, 'exponent', None) != []:
                         # Assumes that the error is also expressed as part of this exponent
                         std_error = std_error * pow(10, int(sub_record.exponent[0]))
-                    setattr(sub_record, 'std_error', std_error)
-                    sub_record._values['std_error'] = std_value
-                    sub_record.fields['std_error'] = FloatType()
-                    sub_record.fields['std_error'].name = 'std_error'
+                    sub_record.std_error = std_error
 
     return record
 
@@ -401,29 +393,20 @@ def get_standardized_values_single_property(record):
     """
     if getattr(record, 'value', None) is not None and getattr(record, 'units', None) is not None:
         # Standardize and add the units information
-        setattr(record, 'std_units', record.units.dimensions.standard_units)
-        record._values['std_units'] = record.units.dimensions.standard_units
-        record.fields['std_units'] = UnitType()
-        record.fields['std_units'].name = 'std_units'
+        record.std_units = record.units.dimensions.standard_units
 
         # Standardize the value information
         std_value = [record.units.convert_value_to_standard(val) for val in record.value]
         if getattr(record, 'exponent', None) is not None and getattr(record, 'exponent', None) != []:
             std_value = [value * pow(10, int(record.exponent[0])) for value in std_value]
-        setattr(record, 'std_value', std_value)
-        record._values['std_value'] = std_value
-        record.fields['std_value'] = ListType(FloatType())
-        record.fields['std_value'].name = 'std_value'
+        record.std_value = std_value
 
         # Standardize the error information if present
         if getattr(record, 'error', None) is not None:
             std_error = record.units.convert_error_to_standard(record.error)
             if getattr(record, 'exponent', None) is not None and getattr(record, 'exponent', None) != []:
                 std_error = std_error * pow(10, int(record.exponent[0]))
-            setattr(record, 'std_error', std_error)
-            record._values['std_error'] = std_value
-            record.fields['std_error'] = FloatType()
-            record.fields['std_error'].name = 'std_error'
+            record.std_error = std_error
 
     return record
 
