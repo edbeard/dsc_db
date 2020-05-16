@@ -7,7 +7,7 @@ import unittest
 from dsc_db.model import PhotovoltaicRecord
 from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, \
     add_contextual_info, get_filtered_elements, dsc_properties, get_standardized_values, get_standardized_values_single_property, \
-    merge_redox_couples
+    merge_redox_couples, get_active_area
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
@@ -606,3 +606,17 @@ class TestRun(unittest.TestCase):
                                                      'contextual': 'table_caption'}}}
 
         self.assertEqual(output[0].serialize(), expected)
+
+    def test_get_active_area(self):
+        sentence1 = Sentence('The photocurrent–voltage characteristics were measured using an AM 1.5 solar simulator (Oriel solar simulator, 300 W Xenon lamp) with an active area of 0.26 cm2', models=[ActiveArea])
+        sentence2 = Sentence('This sentence says nothing of note.', models=[ActiveArea])
+        out = get_active_area([sentence1, sentence2])
+        expected = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+        self.assertEqual(out, expected)

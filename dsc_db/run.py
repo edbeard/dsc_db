@@ -30,6 +30,12 @@ dsc_properties = [('RedoxCouple', 'redox_couple'),
               ('Substrate', 'substrate'),
                 ('ActiveArea', 'active_area')]
 
+calc_properties_to_add = {
+    'solar_simulator': 'SimulatedSolarLightIntensity',
+    'jsc': 'ShortCircuitCurrentDensity',
+    'isc': 'ShortCircuitCurrent'
+}
+
 
 def create_dsscdb_from_file(doc):
     """
@@ -41,15 +47,18 @@ def create_dsscdb_from_file(doc):
     # Only add the photovoltaiccell and Compound models to the document
     doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, SentenceSemiconductor, SentenceDyeLoading])# Substrate, SentenceSemiconductor, DyeLoading])
 
+    filtered_elements = get_filtered_elements(doc)
+
+    # Get the active_area property if available, used in calculating properties
+    active_area_record  = get_active_area(filtered_elements)
+
     # Get all records from the table
     # This returns a tuple of type (pv_record, table)
     # The table object contains all the other records that were extracted
-    table_records = get_table_records(doc, 'PhotovoltaicCell')
+    table_records = get_table_records(doc, 'PhotovoltaicCell', active_area_record)
 
     # Create PhotovoltaicRecord object
     pv_records = [PhotovoltaicRecord(record, table) for record, table in table_records]
-
-    filtered_elements = get_filtered_elements(doc)
 
     # print('Printing the results after table extraction only')
     # for pv_record in pv_records:
@@ -126,6 +135,25 @@ def create_dsscdb_from_file(doc):
     return pv_records
 
 
+def get_active_area(filtered_elements):
+    """
+    Obtains the active area (if available) from filtered document elements
+    """
+
+    filtered_record = [get_standardized_values_single_property(record).serialize() for el in filtered_elements for record in el.records if
+                                          record.__class__.__name__ == 'ActiveArea']
+
+    active_area_records = [record for record in filtered_record if record['ActiveArea'].get('raw_value')]
+
+    sentence_values = [rec['ActiveArea']['value'] for rec in active_area_records]
+
+    if sentence_values:
+        all_equal = sentence_values.count(sentence_values[0]) == len(sentence_values)
+        if all_equal:
+            active_area_records[0]['ActiveArea']['contextual'] = 'document'
+            return active_area_records[0]
+
+
 def add_calculated_properties(pv_records):
     """
     Uses the calculated_properties field to add data
@@ -140,6 +168,24 @@ def add_calculated_properties(pv_records):
 
                 pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_units'] = pv_record.calculated_properties['solar_simulator']['units']
                 pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_error'] = pv_record.calculated_properties['solar_simulator']['error']
+
+            if 'isc' in pv_record.calculated_properties.keys():
+                if pv_record.isc is not None:
+                    pv_record.isc['ShortCircuitCurrent']['calculated_value'] = pv_record.calculated_properties['isc']['value']
+                else:
+                    pv_record.isc = {'ShortCircuitCurrent': {'calculated_value': pv_record.calculated_properties['isc']['value']}}
+
+                pv_record.isc['ShortCircuitCurrent']['calculated_units'] = pv_record.calculated_properties['isc']['units']
+                pv_record.isc['ShortCircuitCurrent']['calculated_error'] = pv_record.calculated_properties['isc']['error']
+
+            if 'jsc' in pv_record.calculated_properties.keys():
+                if pv_record.jsc is not None:
+                    pv_record.jsc['ShortCircuitCurrentDensity']['calculated_value'] = pv_record.calculated_properties['jsc']['value']
+                else:
+                    pv_record.jsc = {'ShortCircuitCurrentDensity': {'calculated_value': pv_record.calculated_properties['jsc']['value']}}
+
+                pv_record.jsc['ShortCircuitCurrentDensity']['calculated_units'] = pv_record.calculated_properties['jsc']['units']
+                pv_record.jsc['ShortCircuitCurrentDensity']['calculated_error'] = pv_record.calculated_properties['jsc']['error']
 
         else:
             pp.pprint(pv_record.serialize())
@@ -292,11 +338,15 @@ def get_compound_records(doc):
     return compounds
 
 
-def get_table_records(doc, record_type):
+def get_table_records(doc, record_type, active_area_record=None, model_field_dict=calc_properties_to_add):
     """ Function to extract the photovoltaic device information from tables.
         Returns a tuple of (pv_record, table) for each PhotovoltaicCell records that is determined.
         Note that each Table has its id set to the enumerated index, for later merging.
         :param chemdataextractor.Document doc : Document used to extract
+        :param record_type : the name of the model of record to target
+        :param active_area_record: The contextual records containing active area data (if applicable)
+        :param model_field_dict: Dict of field-model pairs for properties being calculated.
+
         :return Tuple(pv_record, chemdataextractor.table) tables_record : All Photovoltaic records
 
     """
@@ -315,14 +365,14 @@ def get_table_records(doc, record_type):
                 serialized_record = record.serialize()[record_type]
 
                 # Add calculated properties to the pv_records
-                record = calculate_metrics(record)
+                record = calculate_metrics(record, active_area_record)
                 if record.calculated_properties:
                     serialized_record['calculated_properties'] = {}
                 for key, data in record.calculated_properties.items():
                     serialized_data = data.serialize()
-                    calc_props = {'value': serialized_data['SimulatedSolarLightIntensity']['value'],
-                                  'units': serialized_data['SimulatedSolarLightIntensity']['units'],
-                                  'error': serialized_data['SimulatedSolarLightIntensity']['error']}
+                    calc_props = {'value': serialized_data[model_field_dict[key]]['value'],
+                                  'units': serialized_data[model_field_dict[key]]['units'],
+                                  'error': serialized_data[model_field_dict[key]]['error']}
                     serialized_record['calculated_properties'][key] = calc_props
 
                 serialized_record['table_row_categories'] = record.table_row_categories
@@ -606,7 +656,7 @@ def merge_redox_couples(records):
 
 if __name__ == '__main__':
     import cProfile, pstats, io
-    path = "/home/edward/pv/extractions/input_filtered_tables/dsc/C3CS60449G.html"
+    path = "/home/edward/pv/extractions/input_filtered_tables/dsc/C1EE01196K.html"
     with open(path, 'rb') as f:
         doc = Document.from_file(f)
     cProfile.runctx("create_dsscdb_from_file(doc)", None, locals=locals())

@@ -4,8 +4,8 @@
 
 import unittest
 
-from dsc_db.model import PhotovoltaicRecord
-from dsc_db.calculate import calculate_metrics, calculate_irradiance, calculate_relative_metrics, calculate_irradiance_error, calc_error_quantity, round_to_sig_figs
+from dsc_db.calculate import calculate_irradiance, calculate_relative_metrics, \
+    calc_error_quantity, round_to_sig_figs, calculate_current_density, calculate_current
 from dsc_db.run import get_table_records
 from copy import deepcopy
 from pprint import pprint
@@ -14,8 +14,9 @@ from chemdataextractor import Document
 from chemdataextractor.model import Compound
 from chemdataextractor.doc.table import Table
 from chemdataextractor.doc.text import Caption
-from chemdataextractor.model.pv_model import PhotovoltaicCell, OpenCircuitVoltage, ShortCircuitCurrentDensity, FillFactor, PowerConversionEfficiency
-from chemdataextractor.model.units import Volt, Percent
+from chemdataextractor.model.pv_model import PhotovoltaicCell, OpenCircuitVoltage, ShortCircuitCurrentDensity, FillFactor,\
+    PowerConversionEfficiency, ShortCircuitCurrent
+from chemdataextractor.model.units import Volt, Percent, Ampere
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
 
 test_records_pt = [{'voc': {'OpenCircuitVoltage': {'raw_value': '22.22', 'raw_units': '(V)', 'value': [22.22],
@@ -170,6 +171,41 @@ class TestCalculate(unittest.TestCase):
         input_record2 = PhotovoltaicCell(voc=voc, jsc=jsc)
         output_record2 = calculate_irradiance(input_record2)
         self.assertFalse(output_record2.calculated_properties)
+
+    def test_calculate_jsc(self):
+        isc = ShortCircuitCurrent(value=[0.653], units=Ampere(magnitude=-3), raw_value='0.653')
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+        input_record = PhotovoltaicCell(isc=isc)
+        output_record = calculate_current_density(input_record, active_area_record)
+        jsc = output_record.calculated_properties['jsc'].value
+        expected = 25.0
+        self.assertEqual(jsc[0], expected)
+
+    def test_calculate_isc(self):
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49')
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+        input_record = PhotovoltaicCell(jsc=jsc)
+        output_record = calculate_current(input_record, active_area_record)
+        isc = output_record.calculated_properties['isc'].value
+        isc_error = output_record.calculated_properties['isc'].error
+        expected_val = 0.0040
+        expected_err = 0.0002
+        self.assertEqual(isc[0], expected_val)
+        self.assertEqual(isc_error, expected_err)
 
     def test_generate_inputs_for_calculating_metrics(self):
         table_input = [['Semiconductor', 'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Novel SC', '11.11', '22.22', '33.33', '44.44'],

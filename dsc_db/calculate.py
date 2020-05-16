@@ -2,8 +2,11 @@
 Functionality to calculate properties from extracted data
 """
 
+from chemdataextractor.model.units.current import Ampere
+from chemdataextractor.model.units.current_density import AmpPerMeterSquared
+from chemdataextractor.model.units.area import MetersSquaredAreaUnit
 from chemdataextractor.model.units.irradiance import WattPerMeterSquared
-from chemdataextractor.model.pv_model import SimulatedSolarLightIntensity
+from chemdataextractor.model.pv_model import SimulatedSolarLightIntensity, ShortCircuitCurrentDensity, ShortCircuitCurrent
 
 from statistics import mean
 from math import sqrt
@@ -12,14 +15,67 @@ import copy
 import sigfig
 
 
-def calculate_metrics(record):
+def calculate_metrics(record, active_area_record):
     """
     Calculate values of properties where possible
     :param records: List of PhotovoltaicCell object records
 
     """
+
+    if active_area_record is not None:
+        try:
+            record = calculate_current_density(record, active_area_record)
+            record = calculate_current(record, active_area_record)
+        except:
+            print('Couldn\'t interpret units of active area. Not calculating this.')
     record = calculate_irradiance(record)
     return record
+
+
+def calculate_current_density(record, active_area_record):
+    """
+    Calculate the short circuit current density when the active area is given
+    """
+
+    new_record = copy.deepcopy(record)
+    # First, attempt to calculate the Jsc when Isc given
+    if all([record.isc, active_area_record]):
+        if all([record.isc.value, record.isc.units, active_area_record['ActiveArea']['std_value']]):
+
+            isc = record.isc.units.convert_value_to_standard(mean(record.isc.value))
+            active_area = mean(active_area_record['ActiveArea']['std_value'])
+
+            jsc = isc / active_area
+            jsc_err = calculate_jsc_error(record, active_area_record, isc, active_area, jsc)
+            jsc = round_to_sig_figs(jsc, jsc_err)
+
+            short_circuit_current_density = ShortCircuitCurrentDensity(value=[jsc], units=AmpPerMeterSquared(), error=jsc_err)
+            new_record.set_calculated_properties('jsc', short_circuit_current_density)
+
+    return new_record
+
+
+def calculate_current(record, active_area_record):
+    """
+    Calculate the short circuit current when the active area is given
+    """
+
+    new_record = copy.deepcopy(record)
+    # First, attempt to calculate the Jsc when Isc given
+    if all([record.jsc, active_area_record]):
+        if all([record.jsc.value, record.jsc.units, active_area_record['ActiveArea']['std_value']]):
+
+            jsc = record.jsc.units.convert_value_to_standard(mean(record.jsc.value))
+            active_area = mean(active_area_record['ActiveArea']['std_value'])
+
+            isc = jsc * active_area
+            isc_err = calculate_isc_error(record, active_area_record, jsc, active_area, isc)
+            isc = round_to_sig_figs(isc, isc_err)
+
+            short_circuit_current = ShortCircuitCurrent(value=[isc], units=Ampere(), error=isc_err)
+            new_record.set_calculated_properties('isc', short_circuit_current)
+
+    return new_record
 
 
 def calculate_irradiance(record):
@@ -69,7 +125,6 @@ def round_to_sig_figs(irr, irr_err):
 def calculate_irradiance_error(record, voc, jsc, ff, pce, irr):
     """
     Estimate the accuracy of the calculated data.
-    Returns the string too determine the sig figs later.
     """
 
     # Estimate the errors based on significant figure information
@@ -82,7 +137,66 @@ def calculate_irradiance_error(record, voc, jsc, ff, pce, irr):
     irr_err = irr * sqrt( ((voc_err / voc) ** 2) +  ((jsc_err / jsc) ** 2) + ((ff_err / ff) ** 2 + ((pce_err / pce) ** 2)))
 
     # Round to one s.f
-    return float(format(irr_err, '.1g'))
+    return sigfig.round(irr_err, sigfigs=1)
+
+
+def calculate_jsc_error(record, aa_record, isc, active_area, jsc):
+    """
+    Estimate the accuracy of the calculated data.
+    """
+
+    isc_error = calc_error_quantity(record, 'isc')
+    active_area_error = calc_error_active_area(aa_record)
+
+    # Calculate the jsc error
+    jsc_err = jsc * sqrt( ((isc_error / isc) ** 2) +  ((active_area_error / active_area) ** 2))
+    # Round to one s.f
+    return sigfig.round(jsc_err, sigfigs=1)
+
+
+def calculate_isc_error(record, aa_record, jsc, active_area, isc):
+    """
+    Estimate the accuracy of the calculated data.
+    """
+
+    jsc_error = calc_error_quantity(record, 'jsc')
+    active_area_error = calc_error_active_area(aa_record)
+
+    # Calculate the jsc error
+    isc_err = isc * sqrt( ((jsc_error / jsc) ** 2) +  ((active_area_error / active_area) ** 2))
+    # Round to one s.f
+    return sigfig.round(isc_err, sigfigs=1)
+
+
+def calc_error_active_area(active_area_rec):
+    """
+    Calculate the error of active area from serialized record.
+    If not available, estimate from the number of dp.
+    """
+    active_area = active_area_rec['ActiveArea']
+    if 'error' in active_area.keys():
+        prop_calc_raw_error = active_area['error']
+    else:
+        raw_value = active_area['raw_value']
+        error_string = ''
+        for char in raw_value[:-1]:
+            if char != '.':
+                error_string += '0'
+            else:
+                error_string += '.'
+        error_string += '1'
+        prop_calc_raw_error = float(error_string)
+
+    if active_area['raw_units'] == 'cm2':
+        prop_calc_error = MetersSquaredAreaUnit(magnitude=-4).convert_value_to_standard(prop_calc_raw_error)
+    elif active_area['raw_units'] == 'mm2':
+        prop_calc_error = MetersSquaredAreaUnit(magnitude=-6).convert_value_to_standard(prop_calc_raw_error)
+    elif active_area['raw_units'] == 'm2':
+        prop_calc_error = MetersSquaredAreaUnit(magnitude=0).convert_value_to_standard(prop_calc_raw_error)
+    else:
+        raise Exception('Couldn\'t identify units from active area')
+
+    return prop_calc_error
 
 
 def calc_error_quantity(record, field):
@@ -104,7 +218,7 @@ def calc_error_quantity(record, field):
                 error_string += '.'
         error_string += '1'
         prop_calc_raw_error = float(error_string)
-    if field in ['voc', 'jsc']:
+    if field in ['voc', 'jsc', 'isc']:
         prop_calc_error = getattr(record, field).units.convert_value_to_standard(prop_calc_raw_error)
     elif field == 'ff':
         if mean(record.ff.value) > 1:

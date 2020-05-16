@@ -64,6 +64,7 @@ class TestModel(unittest.TestCase):
                                                    'value': [15.49]}},
             'dye': None,
             'ref': None,
+            'isc': None,
             'redox_couple': None,
             'dye_loading': None,
             'counter_electrode': {'CounterElectrode': {'raw_value': 'NiSe2 - 180', 'specifier': 'CE'}},
