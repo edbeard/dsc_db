@@ -64,7 +64,6 @@ class TestRun(unittest.TestCase):
         pv_records = add_dye_information(pv_records, filtered_elements)
         self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table_caption', 'raw_value': 'N719'}]})
 
-
     def test_dye_candidate_caption_substitution_multiplicity_sentence_dye(self):
         """Test the case where the caption contains multiple dye candidates, all of which are not common sentence dyes."""
         table_input = [['CE',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Pt', '11.11', '22.22', '33.33', '44.44']]
@@ -79,21 +78,6 @@ class TestRun(unittest.TestCase):
         filtered_elements = []
         pv_records = add_dye_information(pv_records, filtered_elements)
         self.assertEqual(pv_records[0].dye, {'Dye': [{'contextual': 'table_caption_permissive', 'raw_value': 'X24'}]})
-
-    def test_dye_candidate_document_substitution(self):
-        """ Test the case where dye is specified in the document"""
-        table_input = [['CE',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Pt', '11.11', '22.22', '33.33', '44.44']]
-        table = Table(caption=Caption('Null'), table_data=table_input)#, models=[PhotovoltaicCell])
-        input_doc = Document(Paragraph('This is a test document. It says a few cool things. It also defines the dye, X23'), table)
-        input_doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
-        input = {
-            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
-                                       'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
-        }
-        filtered_elements = get_filtered_elements(input_doc)
-        pv_records = [PhotovoltaicRecord(input, table)]
-        pv_records = add_dye_information(pv_records, filtered_elements)
-        self.assertEqual({'Dye': [{'contextual': 'document_permissive', 'raw_value': 'X23'}]}, pv_records[0].dye)
 
     def test_dye_candidate_document_substitution_with_compound_substitution(self):
         table_input = [['CE',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Pt', '11.11', '22.22', '33.33', '44.44']]

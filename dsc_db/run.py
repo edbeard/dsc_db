@@ -599,9 +599,8 @@ def add_dye_information(pv_records, filtered_elements):
     """
     Function to add contextual dye information from document where possible, by doing the following
     1) Search for common dyes in the table caption
-    2) Search for potential dyes in the table caption as alphanumerics
-    3) Search the methods section of the document for common dyes.
-    4) Search the methods section of the document for potential dyes as alphanumerics.
+    2) Search the methods section of the document for common dyes.
+    3) Search with permissive dye search inside table caption.
     For each stage, if multiple results are returned the most common is assumed to be correct.
 
     :return: updated records
@@ -613,18 +612,13 @@ def add_dye_information(pv_records, filtered_elements):
     if altered:
         return pv_records
 
-    # Step 2: Check the table caption using the more permissive DyeSentence parser
-    pv_records, altered = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=True)
-    if altered:
-        return pv_records
-
-    # Step 3: Check the Methods section using the CommonDyeSentence parser
+    # Step 2: Check the Methods section using the CommonDyeSentence parser
     pv_records, altered = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=False)
     if altered:
         return pv_records
 
-    # Step 4: Check the Methods section using the more permissive DyeSentence parser
-    pv_records, _ = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=True)
+    # Step 3: Check the table caption using the more permissive DyeSentence parser
+    pv_records, _ = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=True)
 
     return pv_records
 
