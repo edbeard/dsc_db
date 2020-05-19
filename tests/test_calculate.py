@@ -176,6 +176,28 @@ class TestCalculate(unittest.TestCase):
         output_record2 = calculate_irradiance(input_record2)
         self.assertFalse(output_record2.calculated_properties)
 
+    def test_calculate_irradaince_ff_with_unit(self):
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49')
+        ff = FillFactor(value=[0.2], raw_value='0.2', units=Percent())
+        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
+        input_record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
+        output_record = calculate_irradiance(input_record)
+        expected = 3.0
+        irradiance = output_record.calculated_properties['solar_simulator'].value
+        self.assertEqual(irradiance[0], expected)
+
+    def test_calculate_irradiance_ff_too_large(self):
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49')
+        ff = FillFactor(value=[0.48], raw_value='0.48')
+        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
+        input_record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
+        output_record = calculate_irradiance(input_record)
+        expected = 720
+        irradiance = output_record.calculated_properties['solar_simulator'].value
+        self.assertEqual(irradiance[0], expected)
+
     def test_calculate_jsc(self):
         isc = ShortCircuitCurrent(value=[0.653], units=Ampere(magnitude=-3), raw_value='0.653')
         active_area_record = {'ActiveArea': {'contextual': 'document',
@@ -287,8 +309,6 @@ class TestCalculate(unittest.TestCase):
         self.assertEqual(rs[0], expected_val)
         self.assertEqual(rs_error, expected_err)
 
-
-
     def test_generate_inputs_for_calculating_metrics(self):
         table_input = [['Semiconductor', 'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Novel SC', '11.11', '22.22', '33.33', '44.44'],
                        [' TiO2', '55.55', '66.66', '77.77', '88.88']]
@@ -299,7 +319,6 @@ class TestCalculate(unittest.TestCase):
 
         for record in records:
             pprint(record[0])
-
 
     def test_classify_table_counter_electrode(self):
 

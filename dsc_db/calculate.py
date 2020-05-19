@@ -6,6 +6,7 @@ from chemdataextractor.model.units.current import Ampere
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
 from chemdataextractor.model.units.area import MetersSquaredAreaUnit
 from chemdataextractor.model.units.irradiance import WattPerMeterSquared
+from chemdataextractor.model.units.ratio import Percent
 from chemdataextractor.model.units.resistance import Ohm
 from chemdataextractor.model.pv_model import SimulatedSolarLightIntensity, ShortCircuitCurrentDensity, ShortCircuitCurrent, \
     SpecificChargeTransferResistance, SpecificSeriesResistance, ChargeTransferResistance,SeriesResistance
@@ -188,17 +189,24 @@ def calculate_irradiance(record):
 
             voc = record.voc.units.convert_value_to_standard(mean(record.voc.value))
             jsc = record.jsc.units.convert_value_to_standard(mean(record.jsc.value))
-            ff_mean = mean(record.ff.value)
-            pce_mean = mean(record.pce.value)
 
-            # If FF > 1, assume it is a percentage
-            if ff_mean > 1:
+            ff_mean = mean(record.ff.value)
+            if isinstance(record.ff.units, Percent):
                 ff = ff_mean / 100
             else:
-                ff = ff_mean
+                # If FF > 1, assume it is a percentage
+                if ff_mean > 1:
+                    ff = ff_mean / 100
+                else:
+                    ff = ff_mean
 
             # Calculate PCE (use the unit where given)
-            if record.pce.units or pce_mean > 0.35:
+            pce_mean = mean(record.pce.value)
+            if isinstance(record.pce.units, Percent):
+                pce = pce_mean / 100
+
+            # If decimal is larger than Shockley-Queisser limit, assume it is a percentage
+            elif pce_mean > 0.34:
                 pce = pce_mean / 100
             else:
                 pce = pce_mean
@@ -331,12 +339,12 @@ def calc_error_quantity(record, field):
                  'series_resistance', 'specific_series_resistance']:
         prop_calc_error = getattr(record, field).units.convert_value_to_standard(prop_calc_raw_error)
     elif field == 'ff':
-        if mean(record.ff.value) > 1:
+        if mean(record.ff.value) > 1 or isinstance(record.ff.units, Percent):
             prop_calc_error = prop_calc_raw_error / 100
         else:
             prop_calc_error = prop_calc_raw_error
     elif field == 'pce':
-        if record.pce.units or mean(record.pce.value) > 0.35:
+        if isinstance(record.pce.units, Percent) or mean(record.pce.value) > 0.34:
             prop_calc_error = prop_calc_raw_error / 100
         else:
             prop_calc_error = prop_calc_raw_error
