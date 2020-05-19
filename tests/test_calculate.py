@@ -5,8 +5,8 @@
 import unittest
 
 from dsc_db.calculate import calculate_irradiance, calculate_relative_metrics, \
-    calc_error_quantity, round_to_sig_figs, calculate_current_density, calculate_current, calculate_specific_resistance, \
-    calculate_resistance
+    calc_error_quantity, round_to_sig_figs, calculate_current_density, calculate_current, calculate_specific_resistance_rct, \
+    calculate_specific_resistance_rs, calculate_resistance_rct, calculate_resistance_rs
 from dsc_db.run import get_table_records
 from copy import deepcopy
 from pprint import pprint
@@ -222,7 +222,7 @@ class TestCalculate(unittest.TestCase):
                 'units': '(10^-4.0) * Meter^(2.0)',
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(charge_transfer_resistance=rct)
-        output_record = calculate_specific_resistance(input_record, active_area_record)
+        output_record = calculate_specific_resistance_rct(input_record, active_area_record)
         sp_rct = output_record.calculated_properties['specific_charge_transfer_resistance'].value
         sp_rct_error = output_record.calculated_properties['specific_charge_transfer_resistance'].error
         expected_val = 0.00040
@@ -241,7 +241,7 @@ class TestCalculate(unittest.TestCase):
                 'units': '(10^-4.0) * Meter^(2.0)',
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(series_resistance=rs)
-        output_record = calculate_specific_resistance(input_record, active_area_record)
+        output_record = calculate_specific_resistance_rs(input_record, active_area_record)
         sp_rs = output_record.calculated_properties['specific_series_resistance'].value
         sp_rs_error = output_record.calculated_properties['specific_series_resistance'].error
         expected_val = 0.000205
@@ -260,7 +260,7 @@ class TestCalculate(unittest.TestCase):
                 'units': '(10^-4.0) * Meter^(2.0)',
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(specific_charge_transfer_resistance=sp_rct)
-        output_record = calculate_resistance(input_record, active_area_record)
+        output_record = calculate_resistance_rct(input_record, active_area_record)
         rct = output_record.calculated_properties['charge_transfer_resistance'].value
         rct_error = output_record.calculated_properties['charge_transfer_resistance'].error
         expected_val = 20.4
@@ -279,7 +279,7 @@ class TestCalculate(unittest.TestCase):
                 'units': '(10^-4.0) * Meter^(2.0)',
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(specific_series_resistance=sp_rs)
-        output_record = calculate_resistance(input_record, active_area_record)
+        output_record = calculate_resistance_rs(input_record, active_area_record)
         rs = output_record.calculated_properties['series_resistance'].value
         rs_error = output_record.calculated_properties['series_resistance'].error
         expected_val = 30.0

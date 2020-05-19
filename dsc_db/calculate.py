@@ -30,8 +30,10 @@ def calculate_metrics(record, active_area_record):
             record = calculate_current_density(record, active_area_record)
             record = calculate_current(record, active_area_record)
 
-            record = calculate_specific_resistance(record, active_area_record)
-            record = calculate_resistance(record, active_area_record)
+            record = calculate_specific_resistance_rct(record, active_area_record)
+            record = calculate_specific_resistance_rs(record, active_area_record)
+            record = calculate_resistance_rct(record, active_area_record)
+            record = calculate_resistance_rs(record, active_area_record)
         except:
             print('Couldn\'t interpret units of active area. Not calculating this.')
 
@@ -39,13 +41,12 @@ def calculate_metrics(record, active_area_record):
     return record
 
 
-def calculate_specific_resistance(record, active_area_record):
+def calculate_specific_resistance_rct(record, active_area_record):
     """
-    Calculate the specific values of Rct / Rs when active area is identified
+    Calculate the specific values of Rct when active area is identified
     """
 
     new_record = copy.deepcopy(record)
-    # First attempt to calculate the specific Rct value(sp_rct) when Rct given
     if all([record.charge_transfer_resistance, active_area_record]):
         if all([record.charge_transfer_resistance.value, record.charge_transfer_resistance.units, active_area_record['ActiveArea']['std_value']]):
 
@@ -59,7 +60,16 @@ def calculate_specific_resistance(record, active_area_record):
             sp_rct_record = SpecificChargeTransferResistance(value=[sp_rct], units=(Ohm() * MetersSquaredAreaUnit()), error=sp_rct_err)
             new_record.set_calculated_properties('specific_charge_transfer_resistance', sp_rct_record)
 
-    elif all([record.series_resistance, active_area_record]):
+    return new_record
+
+
+def calculate_specific_resistance_rs(record, active_area_record):
+    """
+    Calculate the specific values of Rs when active area is identified
+    """
+
+    new_record = copy.deepcopy(record)
+    if all([record.series_resistance, active_area_record]):
         if all([record.series_resistance.value, record.series_resistance.units, active_area_record['ActiveArea']['std_value']]):
 
             rs = record.series_resistance.units.convert_value_to_standard(mean(record.series_resistance.value))
@@ -75,9 +85,9 @@ def calculate_specific_resistance(record, active_area_record):
     return new_record
 
 
-def calculate_resistance(record, active_area_record):
+def calculate_resistance_rct(record, active_area_record):
     """
-    Calculate the values of Rct / Rs when active area is identified and the specific resistances are given
+    Calculate the values of Rct when active area is identified and the specific resistances are given
     """
 
     new_record = copy.deepcopy(record)
@@ -95,7 +105,16 @@ def calculate_resistance(record, active_area_record):
             rct_record = ChargeTransferResistance(value=[rct], units=Ohm(), error=rct_err)
             new_record.set_calculated_properties('charge_transfer_resistance', rct_record)
 
-    elif all([record.specific_series_resistance, active_area_record]):
+    return new_record
+
+
+def calculate_resistance_rs(record, active_area_record):
+    """
+    Calculate the values of Rs when active area is identified and the specific resistances are given
+    """
+
+    new_record = copy.deepcopy(record)
+    if all([record.specific_series_resistance, active_area_record]):
         if all([record.specific_series_resistance.value, record.specific_series_resistance.units, active_area_record['ActiveArea']['std_value']]):
 
             sp_rs = record.specific_series_resistance.units.convert_value_to_standard(mean(record.specific_series_resistance.value))
