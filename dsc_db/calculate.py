@@ -184,39 +184,49 @@ def calculate_irradiance(record):
     :param: List : records. List of chemical records from ChemDataExtractor
     """
     new_record = copy.deepcopy(record)
-    if all([record.voc, record.jsc, record.ff, record.pce]):
-        if all([record.voc.value, record.voc.units, record.jsc.value, record.jsc.units, record.ff.value, record.pce.value]):
+    if all([record.voc, record.ff, record.pce]) and (record.jsc or 'jsc' in record.calculated_properties.keys()):
+        if all([record.voc.value, record.voc.units, record.ff.value, record.pce.value]):
+            jsc = None
+            # Use extracted jsc value if possible
+            if record.jsc:
+                if all([record.jsc.value, record.jsc.units]):
+                    jsc = record.jsc.units.convert_value_to_standard(mean(record.jsc.value))
 
-            voc = record.voc.units.convert_value_to_standard(mean(record.voc.value))
-            jsc = record.jsc.units.convert_value_to_standard(mean(record.jsc.value))
+            # Otherwise, try to get calculated property
+            if 'jsc' in record.calculated_properties.keys() and jsc is None:
+                jsc_obj = record.calculated_properties['jsc']
+                jsc = jsc_obj.units.convert_value_to_standard(mean(jsc_obj.value))
 
-            ff_mean = mean(record.ff.value)
-            if isinstance(record.ff.units, Percent):
-                ff = ff_mean / 100
-            else:
-                # If FF > 1, assume it is a percentage
-                if ff_mean > 1:
+            if jsc is not None:
+                voc = record.voc.units.convert_value_to_standard(mean(record.voc.value))
+
+                ff_mean = mean(record.ff.value)
+                if isinstance(record.ff.units, Percent):
                     ff = ff_mean / 100
                 else:
-                    ff = ff_mean
+                    # If FF > 1, assume it is a percentage
+                    if ff_mean > 1:
+                        ff = ff_mean / 100
+                    else:
+                        ff = ff_mean
 
-            # Calculate PCE (use the unit where given)
-            pce_mean = mean(record.pce.value)
-            if isinstance(record.pce.units, Percent):
-                pce = pce_mean / 100
+                # Calculate PCE (use the unit where given)
+                pce_mean = mean(record.pce.value)
+                if isinstance(record.pce.units, Percent):
+                    pce = pce_mean / 100
 
-            # If decimal is larger than Shockley-Queisser limit, assume it is a percentage
-            elif pce_mean > 0.34:
-                pce = pce_mean / 100
-            else:
-                pce = pce_mean
+                # If decimal is larger than Shockley-Queisser limit, assume it is a percentage
+                elif pce_mean > 0.34:
+                    pce = pce_mean / 100
+                else:
+                    pce = pce_mean
 
-            irr = calculate_irradiance_value(voc, jsc, ff, pce)
-            irr_err = calculate_irradiance_error(record, voc, jsc, ff, pce, irr)
-            irr = round_to_sig_figs(irr, irr_err)
+                irr = calculate_irradiance_value(voc, jsc, ff, pce)
+                irr_err = calculate_irradiance_error(record, voc, jsc, ff, pce, irr)
+                irr = round_to_sig_figs(irr, irr_err)
 
-            solar_sim = SimulatedSolarLightIntensity(value=[irr], units=WattPerMeterSquared(), error=irr_err)
-            new_record.set_calculated_properties('solar_simulator', solar_sim)
+                solar_sim = SimulatedSolarLightIntensity(value=[irr], units=WattPerMeterSquared(), error=irr_err)
+                new_record.set_calculated_properties('solar_simulator', solar_sim)
 
     return new_record
 
@@ -323,10 +333,19 @@ def calc_error_quantity(record, field):
     If not available, this is done by looking at the significant figures
     """
 
-    if getattr(record, field).error is not None:
-        prop_calc_raw_error = getattr(record, field).error
+    # Choose the calculated property for jsc if required
+    if field == 'jsc':
+        if record.jsc is not None:
+            rec = getattr(record, field)
+        elif 'jsc' in record.calculated_properties.keys():
+            rec = record.calculated_properties['jsc']
     else:
-        raw_value = getattr(record, field).raw_value
+        rec = getattr(record, field)
+
+    if rec.error is not None:
+        prop_calc_raw_error = rec.error
+    else:
+        raw_value = rec.raw_value
         error_string = ''
         for char in raw_value[:-1]:
             if char != '.':
@@ -335,9 +354,9 @@ def calc_error_quantity(record, field):
                 error_string += '.'
         error_string += '1'
         prop_calc_raw_error = float(error_string)
-    if field in ['voc', 'jsc', 'isc', 'charge_transfer_resistance', 'specific_charge_transfer_resistance', \
+    if field in ['voc', 'isc', 'jsc', 'charge_transfer_resistance', 'specific_charge_transfer_resistance',
                  'series_resistance', 'specific_series_resistance']:
-        prop_calc_error = getattr(record, field).units.convert_value_to_standard(prop_calc_raw_error)
+        prop_calc_error = rec.units.convert_value_to_standard(prop_calc_raw_error)
     elif field == 'ff':
         if mean(record.ff.value) > 1 or isinstance(record.ff.units, Percent):
             prop_calc_error = prop_calc_raw_error / 100

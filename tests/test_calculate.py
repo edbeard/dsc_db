@@ -6,7 +6,7 @@ import unittest
 
 from dsc_db.calculate import calculate_irradiance, calculate_relative_metrics, \
     calc_error_quantity, round_to_sig_figs, calculate_current_density, calculate_current, calculate_specific_resistance_rct, \
-    calculate_specific_resistance_rs, calculate_resistance_rct, calculate_resistance_rs
+    calculate_specific_resistance_rs, calculate_resistance_rct, calculate_resistance_rs, calculate_metrics
 from dsc_db.run import get_table_records
 from copy import deepcopy
 from pprint import pprint
@@ -197,6 +197,32 @@ class TestCalculate(unittest.TestCase):
         expected = 720
         irradiance = output_record.calculated_properties['solar_simulator'].value
         self.assertEqual(irradiance[0], expected)
+
+    def test_calculate_irradiance_only_isc(self):
+        """
+        Testing that the value of jsc calculated from isc is used in the absence of an extracted jsc value
+        """
+
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
+        isc = ShortCircuitCurrent(value=[0.653], units=Ampere(magnitude=-3), raw_value='0.653')
+        ff = FillFactor(value=[0.48], raw_value='0.48')
+        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
+        input_record = PhotovoltaicCell(voc=voc, isc=isc, ff=ff, pce=pce)
+
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+
+        output_record = calculate_metrics(input_record, active_area_record)
+        expected = 117.
+        irradiance = output_record.calculated_properties['solar_simulator'].value
+        self.assertEqual(irradiance[0], expected)
+
 
     def test_calculate_jsc(self):
         isc = ShortCircuitCurrent(value=[0.653], units=Ampere(magnitude=-3), raw_value='0.653')
