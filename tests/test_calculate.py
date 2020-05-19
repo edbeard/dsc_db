@@ -5,7 +5,8 @@
 import unittest
 
 from dsc_db.calculate import calculate_irradiance, calculate_relative_metrics, \
-    calc_error_quantity, round_to_sig_figs, calculate_current_density, calculate_current
+    calc_error_quantity, round_to_sig_figs, calculate_current_density, calculate_current, calculate_specific_resistance, \
+    calculate_resistance
 from dsc_db.run import get_table_records
 from copy import deepcopy
 from pprint import pprint
@@ -15,9 +16,12 @@ from chemdataextractor.model import Compound
 from chemdataextractor.doc.table import Table
 from chemdataextractor.doc.text import Caption
 from chemdataextractor.model.pv_model import PhotovoltaicCell, OpenCircuitVoltage, ShortCircuitCurrentDensity, FillFactor,\
-    PowerConversionEfficiency, ShortCircuitCurrent
+    PowerConversionEfficiency, ShortCircuitCurrent, SpecificChargeTransferResistance, SpecificSeriesResistance, \
+    ChargeTransferResistance, SeriesResistance
 from chemdataextractor.model.units import Volt, Percent, Ampere
+from chemdataextractor.model.units.area import MetersSquaredAreaUnit
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
+from chemdataextractor.model.units.resistance import Ohm
 
 test_records_pt = [{'voc': {'OpenCircuitVoltage': {'raw_value': '22.22', 'raw_units': '(V)', 'value': [22.22],
                                                      'units': 'Volt^(1.0)', 'specifier': 'Voc', 'std_units': 'Volt^(1.0)', 'std_value': [22.22]}},
@@ -206,6 +210,84 @@ class TestCalculate(unittest.TestCase):
         expected_err = 0.0002
         self.assertEqual(isc[0], expected_val)
         self.assertEqual(isc_error, expected_err)
+
+    def test_calculate_sp_rct(self):
+        rct = ChargeTransferResistance(value=[15.49], units=Ohm(), raw_value='15.49')
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+        input_record = PhotovoltaicCell(charge_transfer_resistance=rct)
+        output_record = calculate_specific_resistance(input_record, active_area_record)
+        sp_rct = output_record.calculated_properties['specific_charge_transfer_resistance'].value
+        sp_rct_error = output_record.calculated_properties['specific_charge_transfer_resistance'].error
+        expected_val = 0.00040
+        expected_err = 0.00002
+        self.assertEqual(sp_rct[0], expected_val)
+        self.assertEqual(sp_rct_error, expected_err)
+
+    def test_calculate_sp_rs(self):
+        rs = SeriesResistance(value=[7.89], units=Ohm(), raw_value='7.89')
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+        input_record = PhotovoltaicCell(series_resistance=rs)
+        output_record = calculate_specific_resistance(input_record, active_area_record)
+        sp_rs = output_record.calculated_properties['specific_series_resistance'].value
+        sp_rs_error = output_record.calculated_properties['specific_series_resistance'].error
+        expected_val = 0.000205
+        expected_err = 0.000008
+        self.assertEqual(sp_rs[0], expected_val)
+        self.assertEqual(sp_rs_error, expected_err)
+
+    def test_calculate_rct(self):
+        sp_rct = SpecificChargeTransferResistance(value=[5.3], units=(Ohm() * MetersSquaredAreaUnit(magnitude=-4)), raw_value='5.3')
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+        input_record = PhotovoltaicCell(specific_charge_transfer_resistance=sp_rct)
+        output_record = calculate_resistance(input_record, active_area_record)
+        rct = output_record.calculated_properties['charge_transfer_resistance'].value
+        rct_error = output_record.calculated_properties['charge_transfer_resistance'].error
+        expected_val = 20.4
+        expected_err = 0.9
+        self.assertEqual(rct[0], expected_val)
+        self.assertEqual(rct_error, expected_err)
+
+    def test_calculate_rs(self):
+        sp_rs = SpecificSeriesResistance(value=[7.89], units=(Ohm() * MetersSquaredAreaUnit(magnitude=-4)), raw_value='7.89')
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+        input_record = PhotovoltaicCell(specific_series_resistance=sp_rs)
+        output_record = calculate_resistance(input_record, active_area_record)
+        rs = output_record.calculated_properties['series_resistance'].value
+        rs_error = output_record.calculated_properties['series_resistance'].error
+        expected_val = 30.0
+        expected_err = 1
+        self.assertEqual(rs[0], expected_val)
+        self.assertEqual(rs_error, expected_err)
+
+
 
     def test_generate_inputs_for_calculating_metrics(self):
         table_input = [['Semiconductor', 'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Novel SC', '11.11', '22.22', '33.33', '44.44'],

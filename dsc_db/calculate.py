@@ -6,7 +6,9 @@ from chemdataextractor.model.units.current import Ampere
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
 from chemdataextractor.model.units.area import MetersSquaredAreaUnit
 from chemdataextractor.model.units.irradiance import WattPerMeterSquared
-from chemdataextractor.model.pv_model import SimulatedSolarLightIntensity, ShortCircuitCurrentDensity, ShortCircuitCurrent
+from chemdataextractor.model.units.resistance import Ohm
+from chemdataextractor.model.pv_model import SimulatedSolarLightIntensity, ShortCircuitCurrentDensity, ShortCircuitCurrent, \
+    SpecificChargeTransferResistance, SpecificSeriesResistance, ChargeTransferResistance,SeriesResistance
 
 from statistics import mean
 from math import sqrt
@@ -23,13 +25,90 @@ def calculate_metrics(record, active_area_record):
     """
 
     if active_area_record is not None:
+        # Attempt to calculate current/current density properties
         try:
             record = calculate_current_density(record, active_area_record)
             record = calculate_current(record, active_area_record)
+
+            record = calculate_specific_resistance(record, active_area_record)
+            record = calculate_resistance(record, active_area_record)
         except:
             print('Couldn\'t interpret units of active area. Not calculating this.')
+
     record = calculate_irradiance(record)
     return record
+
+
+def calculate_specific_resistance(record, active_area_record):
+    """
+    Calculate the specific values of Rct / Rs when active area is identified
+    """
+
+    new_record = copy.deepcopy(record)
+    # First attempt to calculate the specific Rct value(sp_rct) when Rct given
+    if all([record.charge_transfer_resistance, active_area_record]):
+        if all([record.charge_transfer_resistance.value, record.charge_transfer_resistance.units, active_area_record['ActiveArea']['std_value']]):
+
+            rct = record.charge_transfer_resistance.units.convert_value_to_standard(mean(record.charge_transfer_resistance.value))
+            active_area = mean(active_area_record['ActiveArea']['std_value'])
+
+            sp_rct = rct * active_area
+            sp_rct_err = calculate_resistance_error(record, active_area_record, rct, active_area, sp_rct, quantity='charge_transfer_resistance')
+            sp_rct = round_to_sig_figs(sp_rct, sp_rct_err)
+
+            sp_rct_record = SpecificChargeTransferResistance(value=[sp_rct], units=(Ohm() * MetersSquaredAreaUnit()), error=sp_rct_err)
+            new_record.set_calculated_properties('specific_charge_transfer_resistance', sp_rct_record)
+
+    elif all([record.series_resistance, active_area_record]):
+        if all([record.series_resistance.value, record.series_resistance.units, active_area_record['ActiveArea']['std_value']]):
+
+            rs = record.series_resistance.units.convert_value_to_standard(mean(record.series_resistance.value))
+            active_area = mean(active_area_record['ActiveArea']['std_value'])
+
+            sp_rs = rs * active_area
+            sp_rs_err = calculate_resistance_error(record, active_area_record, rs, active_area, sp_rs, quantity='series_resistance')
+            sp_rs = round_to_sig_figs(sp_rs, sp_rs_err)
+
+            sp_rs_record = SpecificSeriesResistance(value=[sp_rs], units=(Ohm() * MetersSquaredAreaUnit()), error=sp_rs_err)
+            new_record.set_calculated_properties('specific_series_resistance', sp_rs_record)
+
+    return new_record
+
+
+def calculate_resistance(record, active_area_record):
+    """
+    Calculate the values of Rct / Rs when active area is identified and the specific resistances are given
+    """
+
+    new_record = copy.deepcopy(record)
+    # First attempt to calculate the specific Rct value(sp_rct) when Rct given
+    if all([record.specific_charge_transfer_resistance, active_area_record]):
+        if all([record.specific_charge_transfer_resistance.value, record.specific_charge_transfer_resistance.units, active_area_record['ActiveArea']['std_value']]):
+
+            sp_rct = record.specific_charge_transfer_resistance.units.convert_value_to_standard(mean(record.specific_charge_transfer_resistance.value))
+            active_area = mean(active_area_record['ActiveArea']['std_value'])
+
+            rct = sp_rct / active_area
+            rct_err = calculate_resistance_error(record, active_area_record, sp_rct, active_area, rct, quantity='specific_charge_transfer_resistance')
+            rct = round_to_sig_figs(rct, rct_err)
+
+            rct_record = ChargeTransferResistance(value=[rct], units=Ohm(), error=rct_err)
+            new_record.set_calculated_properties('charge_transfer_resistance', rct_record)
+
+    elif all([record.specific_series_resistance, active_area_record]):
+        if all([record.specific_series_resistance.value, record.specific_series_resistance.units, active_area_record['ActiveArea']['std_value']]):
+
+            sp_rs = record.specific_series_resistance.units.convert_value_to_standard(mean(record.specific_series_resistance.value))
+            active_area = mean(active_area_record['ActiveArea']['std_value'])
+
+            rs = sp_rs / active_area
+            rs_err = calculate_resistance_error(record, active_area_record, sp_rs, active_area, rs, quantity='specific_series_resistance')
+            rs = round_to_sig_figs(rs, rs_err)
+
+            rs_record = SeriesResistance(value=[rs], units=Ohm(), error=rs_err)
+            new_record.set_calculated_properties('series_resistance', rs_record)
+
+    return new_record
 
 
 def calculate_current_density(record, active_area_record):
@@ -120,6 +199,17 @@ def round_to_sig_figs(irr, irr_err):
     Round the irradiance to the appropriate number of significant figures
     """
     return sigfig.round(irr, uncertainty=irr_err)
+
+
+def calculate_resistance_error(record, aa_record, input_r, active_area, output_r, quantity):
+
+    input_r_error = calc_error_quantity(record, quantity)
+    active_area_error = calc_error_active_area(aa_record)
+
+    # Calculate the jsc error
+    output_r_error = output_r * sqrt(((input_r_error / input_r) ** 2) + ((active_area_error / active_area) ** 2))
+    # Round to one s.f
+    return sigfig.round(output_r_error, sigfigs=1)
 
 
 def calculate_irradiance_error(record, voc, jsc, ff, pce, irr):
@@ -218,7 +308,8 @@ def calc_error_quantity(record, field):
                 error_string += '.'
         error_string += '1'
         prop_calc_raw_error = float(error_string)
-    if field in ['voc', 'jsc', 'isc']:
+    if field in ['voc', 'jsc', 'isc', 'charge_transfer_resistance', 'specific_charge_transfer_resistance', \
+                 'series_resistance', 'specific_series_resistance']:
         prop_calc_error = getattr(record, field).units.convert_value_to_standard(prop_calc_raw_error)
     elif field == 'ff':
         if mean(record.ff.value) > 1:

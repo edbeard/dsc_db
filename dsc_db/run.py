@@ -33,7 +33,11 @@ dsc_properties = [('RedoxCouple', 'redox_couple'),
 calc_properties_to_add = {
     'solar_simulator': 'SimulatedSolarLightIntensity',
     'jsc': 'ShortCircuitCurrentDensity',
-    'isc': 'ShortCircuitCurrent'
+    'isc': 'ShortCircuitCurrent',
+    'specific_charge_transfer_resistance': 'SpecificChargeTransferResistance',
+    'charge_transfer_resistance': 'ChargeTransferResistance',
+    'specific_series_resistance': 'SpecificSeriesResistance',
+    'series_resistance': 'SeriesResistance'
 }
 
 
@@ -160,32 +164,23 @@ def add_calculated_properties(pv_records):
     """
     for pv_record in pv_records:
         if pv_record.calculated_properties is not None:
-            if 'solar_simulator' in pv_record.calculated_properties.keys():
-                if pv_record.solar_simulator is not None:
-                    pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_value'] = pv_record.calculated_properties['solar_simulator']['value']
-                else:
-                    pv_record.solar_simulator = {'SimulatedSolarLightIntensity': {'calculated_value': pv_record.calculated_properties['solar_simulator']['value']}}
 
-                pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_units'] = pv_record.calculated_properties['solar_simulator']['units']
-                pv_record.solar_simulator['SimulatedSolarLightIntensity']['calculated_error'] = pv_record.calculated_properties['solar_simulator']['error']
+            # Writing a general method for this:
+            for field, model in calc_properties_to_add.items():
+                if field in pv_record.calculated_properties.keys():
+                    if getattr(pv_record, field) is not None:
+                        calc_dict = getattr(pv_record, field)
+                        calc_dict[model]['calculated_value'] = pv_record.calculated_properties[field]['value']
+                        setattr(pv_record, field, calc_dict)
+                    else:
+                        setattr(pv_record, field, {model: {'calculated_value': pv_record.calculated_properties[field]['value']}})
+                        calc_dict = getattr(pv_record, field)
 
-            if 'isc' in pv_record.calculated_properties.keys():
-                if pv_record.isc is not None:
-                    pv_record.isc['ShortCircuitCurrent']['calculated_value'] = pv_record.calculated_properties['isc']['value']
-                else:
-                    pv_record.isc = {'ShortCircuitCurrent': {'calculated_value': pv_record.calculated_properties['isc']['value']}}
+                    calc_dict[model]['calculated_units'] = pv_record.calculated_properties[field]['units']
+                    setattr(pv_record, field, calc_dict)
 
-                pv_record.isc['ShortCircuitCurrent']['calculated_units'] = pv_record.calculated_properties['isc']['units']
-                pv_record.isc['ShortCircuitCurrent']['calculated_error'] = pv_record.calculated_properties['isc']['error']
-
-            if 'jsc' in pv_record.calculated_properties.keys():
-                if pv_record.jsc is not None:
-                    pv_record.jsc['ShortCircuitCurrentDensity']['calculated_value'] = pv_record.calculated_properties['jsc']['value']
-                else:
-                    pv_record.jsc = {'ShortCircuitCurrentDensity': {'calculated_value': pv_record.calculated_properties['jsc']['value']}}
-
-                pv_record.jsc['ShortCircuitCurrentDensity']['calculated_units'] = pv_record.calculated_properties['jsc']['units']
-                pv_record.jsc['ShortCircuitCurrentDensity']['calculated_error'] = pv_record.calculated_properties['jsc']['error']
+                    calc_dict[model]['calculated_error'] = pv_record.calculated_properties[field]['value']
+                    setattr(pv_record, field, calc_dict)
 
         else:
             pp.pprint(pv_record.serialize())
