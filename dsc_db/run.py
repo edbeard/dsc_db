@@ -12,7 +12,8 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 from chemdataextractor.doc import Document, Table
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, SentenceDyeLoading, SentenceSemiconductor
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, \
+    Substrate, Semiconductor, SentenceDyeLoading, SentenceSemiconductor
 from chemdataextractor.model import Compound, ListType, FloatType
 from chemdataextractor.model.units.unit import UnitType
 
@@ -37,7 +38,9 @@ calc_properties_to_add = {
     'specific_charge_transfer_resistance': 'SpecificChargeTransferResistance',
     'charge_transfer_resistance': 'ChargeTransferResistance',
     'specific_series_resistance': 'SpecificSeriesResistance',
-    'series_resistance': 'SeriesResistance'
+    'series_resistance': 'SeriesResistance',
+    'pin': 'PowerIn',
+    'pmax': 'PowerMax'
 }
 
 
@@ -81,11 +84,19 @@ def create_dsscdb_from_file(doc):
     doc_records = [record.serialize() for record in doc.records]
     compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
 
-    # Filtering our results that don't contain the variables voc, jsc, ff and PCE (if not running in debug mode)
+    # Filtering our results that don't contain at least 2 of the variables voc, jsc, ff and PCE (if not running in debug mode)
     debug = False
     if not debug:
-        pv_records = [pv_record for pv_record in pv_records if any([getattr(pv_record, 'voc', False), getattr(pv_record, 'jsc', False),
-                                                 getattr(pv_record, 'ff', False), getattr(pv_record, 'pce', False)])]
+        pv_records = [pv_record for pv_record in pv_records if (
+            all([getattr(pv_record, 'voc', False), getattr(pv_record, 'jsc', False)]) or
+            all([getattr(pv_record, 'voc', False), getattr(pv_record, 'ff', False)]) or
+            all([getattr(pv_record, 'voc', False), getattr(pv_record, 'pce', False)]) or
+            all([getattr(pv_record, 'jsc', False), getattr(pv_record, 'ff', False)]) or
+            all([getattr(pv_record, 'jsc', False), getattr(pv_record, 'pce', False)]) or
+            all([getattr(pv_record, 'ff', False), getattr(pv_record, 'pce', False)])) ]
+
+            # any([getattr(pv_record, 'voc', False), getattr(pv_record, 'jsc', False),
+            #                                      getattr(pv_record, 'ff', False), getattr(pv_record, 'pce', False)])]
 
     # Merge other information from inside the document when appropriate
     for record in pv_records:
@@ -179,7 +190,7 @@ def add_calculated_properties(pv_records):
                     calc_dict[model]['calculated_units'] = pv_record.calculated_properties[field]['units']
                     setattr(pv_record, field, calc_dict)
 
-                    calc_dict[model]['calculated_error'] = pv_record.calculated_properties[field]['value']
+                    calc_dict[model]['calculated_error'] = pv_record.calculated_properties[field]['error']
                     setattr(pv_record, field, calc_dict)
 
         else:

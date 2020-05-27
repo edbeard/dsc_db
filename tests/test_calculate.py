@@ -6,7 +6,8 @@ import unittest
 
 from dsc_db.calculate import calculate_irradiance, calculate_relative_metrics, \
     calc_error_quantity, round_to_sig_figs, calculate_current_density, calculate_current, calculate_specific_resistance_rct, \
-    calculate_specific_resistance_rs, calculate_resistance_rct, calculate_resistance_rs, calculate_metrics
+    calculate_specific_resistance_rs, calculate_resistance_rct, calculate_resistance_rs, calculate_metrics, calculate_power_in, \
+    calculate_power_max
 from dsc_db.run import get_table_records
 from copy import deepcopy
 from pprint import pprint
@@ -17,10 +18,12 @@ from chemdataextractor.doc.table import Table
 from chemdataextractor.doc.text import Caption
 from chemdataextractor.model.pv_model import PhotovoltaicCell, OpenCircuitVoltage, ShortCircuitCurrentDensity, FillFactor,\
     PowerConversionEfficiency, ShortCircuitCurrent, SpecificChargeTransferResistance, SpecificSeriesResistance, \
-    ChargeTransferResistance, SeriesResistance
+    ChargeTransferResistance, SeriesResistance, SimulatedSolarLightIntensity, PowerIn, PowerMax
 from chemdataextractor.model.units import Volt, Percent, Ampere
 from chemdataextractor.model.units.area import MetersSquaredAreaUnit
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
+from chemdataextractor.model.units.irradiance import WattPerMeterSquared
+from chemdataextractor.model.units.power import Watt
 from chemdataextractor.model.units.resistance import Ohm
 
 test_records_pt = [{'voc': {'OpenCircuitVoltage': {'raw_value': '22.22', 'raw_units': '(V)', 'value': [22.22],
@@ -334,6 +337,86 @@ class TestCalculate(unittest.TestCase):
         expected_err = 1
         self.assertEqual(rs[0], expected_val)
         self.assertEqual(rs_error, expected_err)
+
+    def test_calculate_pin_extracted_from_document(self):
+        solar_simulator = SimulatedSolarLightIntensity(value=[1000], units=WattPerMeterSquared(), raw_value='1000')
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+        input_record = PhotovoltaicCell(solar_simulator=solar_simulator)
+        output_record = calculate_power_in(input_record, active_area_record)
+        pin = output_record.calculated_properties['pin'].value
+        pin_error = output_record.calculated_properties['pin'].error
+        expected_val = 0.026
+        expected_err = 0.001
+        self.assertEqual(pin[0], expected_val)
+        self.assertEqual(pin_error, expected_err)
+
+    def test_calculate_pin_calculated_solar_simulator(self):
+        """
+        Testing that the value of jsc calculated from isc is used in the absence of an extracted jsc value
+        """
+
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49')
+        ff = FillFactor(value=[0.48], raw_value='0.48')
+        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
+        input_record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
+
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+
+        output_record = calculate_metrics(input_record, active_area_record)
+        expected = 0.0187
+        pin = output_record.calculated_properties['pin'].value
+        self.assertEqual(pin[0], expected)
+
+    def test_calculate_pmax_extracted_from_document(self):
+
+        pin = PowerIn(value=[100], units=Watt(magnitude=1.), raw_value='100')
+        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
+
+        input_record = PhotovoltaicCell(pin=pin, pce=pce)
+        output_record = calculate_power_max(input_record)
+        pmax = output_record.calculated_properties['pmax'].value
+        pmax_error = output_record.calculated_properties['pmax'].error
+        expected_val = 77.8
+        expected_err = 0.8
+        self.assertEqual(pmax[0], expected_val)
+        self.assertEqual(pmax_error, expected_err)
+
+    def test_calculate_pmax_calculated_pin(self):
+
+        solar_simulator = SimulatedSolarLightIntensity(value=[1000], units=WattPerMeterSquared(), raw_value='1000')
+        active_area_record = {'ActiveArea': {'contextual': 'document',
+                'raw_units': 'cm2',
+                'raw_value': '0.26',
+                'specifier': 'active area',
+                'std_units': 'Meter^(2.0)',
+                'std_value': [2.6000000000000005e-05],
+                'units': '(10^-4.0) * Meter^(2.0)',
+                'value': [0.26]}}
+
+        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
+        input_record = PhotovoltaicCell(pce=pce, solar_simulator=solar_simulator)
+        output_record = calculate_metrics(input_record, active_area_record)
+        pmax = output_record.calculated_properties['pmax'].value
+        pmax_error = output_record.calculated_properties['pmax'].error
+        expected_val = 0.00202
+        expected_err = 8e-05
+        self.assertEqual(pmax[0], expected_val)
+        self.assertEqual(pmax_error, expected_err)
 
     def test_generate_inputs_for_calculating_metrics(self):
         table_input = [['Semiconductor', 'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Novel SC', '11.11', '22.22', '33.33', '44.44'],

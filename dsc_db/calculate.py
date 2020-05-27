@@ -6,10 +6,12 @@ from chemdataextractor.model.units.current import Ampere
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
 from chemdataextractor.model.units.area import MetersSquaredAreaUnit
 from chemdataextractor.model.units.irradiance import WattPerMeterSquared
+from chemdataextractor.model.units.power import Watt
 from chemdataextractor.model.units.ratio import Percent
 from chemdataextractor.model.units.resistance import Ohm
 from chemdataextractor.model.pv_model import SimulatedSolarLightIntensity, ShortCircuitCurrentDensity, ShortCircuitCurrent, \
-    SpecificChargeTransferResistance, SpecificSeriesResistance, ChargeTransferResistance,SeriesResistance
+    SpecificChargeTransferResistance, SpecificSeriesResistance, ChargeTransferResistance,SeriesResistance, \
+    PowerIn, PowerMax
 
 from statistics import mean
 from math import sqrt
@@ -38,8 +40,95 @@ def calculate_metrics(record, active_area_record):
         except:
             print('Couldn\'t interpret units of active area. Not calculating this.')
 
+    # Logic to caluclate irradiance
     record = calculate_irradiance(record)
+
+    if active_area_record is not None:
+        # Attempt to calculated power in and power max
+        try:
+            record = calculate_power_in(record, active_area_record)
+            # record = calculate_power_max(record)
+        except:
+            print('Couldn\'t interpret units of active area. Not calculating this.')
+
+    record = calculate_power_max(record)
+
     return record
+
+
+def calculate_power_in(record, active_area_record):
+    """
+    Calculate the power in based of extracted properties. Where more than one value is given for a record, the average
+    is taken.
+    :param: List : records. List of chemical records from ChemDataExtractor
+    """
+
+    new_record = copy.deepcopy(record)
+    if record.solar_simulator or 'solar_simulator' in record.calculated_properties.keys():
+        solar_simulator = None
+        # Use extracted solar_simulator value if possible
+        if record.solar_simulator:
+            if all([record.solar_simulator.value, record.solar_simulator.units]):
+                solar_simulator = record.solar_simulator.units.convert_value_to_standard(mean(record.solar_simulator.value))
+
+        # Otherwise, try to get calculated property
+        if 'solar_simulator' in record.calculated_properties.keys() and solar_simulator is None:
+            ss_obj = record.calculated_properties['solar_simulator']
+            solar_simulator = ss_obj.units.convert_value_to_standard(mean(ss_obj.value))
+
+        if solar_simulator is not None:
+            active_area = mean(active_area_record['ActiveArea']['std_value'])
+
+            pin = solar_simulator * active_area
+            pin_err = calculate_power_in_error(record, active_area_record, solar_simulator, active_area, pin, quantity='solar_simulator')
+            pin = round_to_sig_figs(pin, pin_err)
+
+            pin_record = PowerIn(value=[pin], units=Watt(), error=pin_err)
+            new_record.set_calculated_properties('pin', pin_record)
+
+    return new_record
+
+
+def calculate_power_max(record):
+    """
+    Calculate the maximum based of extracted properties. Where more than one value is given for a record, the average
+    is taken.
+    :param: List : records. List of chemical records from ChemDataExtractor
+    """
+
+    new_record = copy.deepcopy(record)
+    if record.pce and (record.pin or 'pin' in record.calculated_properties.keys()):
+        pin = None
+        # Use extracted solar_simulator value if possible
+        if record.pin:
+            if all([record.pin.value, record.pin.units]):
+                pin = record.pin.units.convert_value_to_standard(mean(record.pin.value))
+
+        # Otherwise, try to get calculated property
+        if 'pin' in record.calculated_properties.keys() and pin is None:
+            pin_obj = record.calculated_properties['pin']
+            pin = pin_obj.units.convert_value_to_standard(mean(pin_obj.value))
+
+        if pin is not None and record.pce.value:
+            # Calculate PCE (use the unit where given)
+            pce_mean = mean(record.pce.value)
+            if isinstance(record.pce.units, Percent):
+                pce = pce_mean / 100
+
+            # If decimal is larger than Shockley-Queisser limit, assume it is a percentage
+            elif pce_mean > 0.34:
+                pce = pce_mean / 100
+            else:
+                pce = pce_mean
+
+            pmax = pin * pce
+            pmax_err = calculate_power_max_error(record, pin, pce, pmax)
+            pmax = round_to_sig_figs(pmax, pmax_err)
+
+            pmax_record = PowerMax(value=[pmax], units=Watt(), error=pmax_err)
+            new_record.set_calculated_properties('pmax', pmax_record)
+
+    return new_record
 
 
 def calculate_specific_resistance_rct(record, active_area_record):
@@ -238,6 +327,31 @@ def round_to_sig_figs(irr, irr_err):
     return sigfig.round(irr, uncertainty=irr_err)
 
 
+def calculate_power_in_error(record, aa_record, input, active_area, output, quantity):
+
+    input_error = calc_error_quantity(record, quantity)
+    active_area_error = calc_error_active_area(aa_record)
+
+    # Calculate the error on output quantity
+    output_error = output * sqrt(((input_error / input) ** 2) + ((active_area_error / active_area) ** 2))
+    # Round to one s.f
+    return sigfig.round(output_error, sigfigs=1)
+
+
+def calculate_power_max_error(record, pin, pce, pmax):
+    """
+    Calculate the error for power max quantity
+    """
+
+    pin_error = calc_error_quantity(record, 'pin')
+    pce_error = calc_error_quantity(record, 'pce')
+
+    # Calculate the error on output quantity
+    pmax_error = pmax * sqrt(((pin_error / pin) ** 2) + ((pce_error / pce) ** 2))
+    # Round to one s.f
+    return sigfig.round(pmax_error, sigfigs=1)
+
+
 def calculate_resistance_error(record, aa_record, input_r, active_area, output_r, quantity):
 
     input_r_error = calc_error_quantity(record, quantity)
@@ -333,12 +447,14 @@ def calc_error_quantity(record, field):
     If not available, this is done by looking at the significant figures
     """
 
+    potentially_calculated_fields = ['jsc', 'solar_simulator', 'pin']
+
     # Choose the calculated property for jsc if required
-    if field == 'jsc':
-        if record.jsc is not None:
+    if field in potentially_calculated_fields:
+        if getattr(record, field) is not None:
             rec = getattr(record, field)
-        elif 'jsc' in record.calculated_properties.keys():
-            rec = record.calculated_properties['jsc']
+        elif field in record.calculated_properties.keys():
+            rec = record.calculated_properties[field]
     else:
         rec = getattr(record, field)
 
@@ -355,7 +471,7 @@ def calc_error_quantity(record, field):
         error_string += '1'
         prop_calc_raw_error = float(error_string)
     if field in ['voc', 'isc', 'jsc', 'charge_transfer_resistance', 'specific_charge_transfer_resistance',
-                 'series_resistance', 'specific_series_resistance']:
+                 'series_resistance', 'specific_series_resistance', 'solar_simulator', 'pin', 'pmax']:
         prop_calc_error = rec.units.convert_value_to_standard(prop_calc_raw_error)
     elif field == 'ff':
         if mean(record.ff.value) > 1 or isinstance(record.ff.units, Percent):

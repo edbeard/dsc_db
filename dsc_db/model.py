@@ -15,7 +15,7 @@ class PhotovoltaicRecord(object):
     _fields = ['jsc', 'isc', 'voc', 'pce', 'ff', 'dye', 'ref', 'redox_couple', 'dye_loading', 'counter_electrode',
                'semiconductor', 'active_area', 'solar_simulator', 'electrolyte', 'substrate',
                'charge_transfer_resistance', 'series_resistance', 'specific_charge_transfer_resistance',
-               'specific_series_resistance', 'exposure_time', 'table_row_categories', 'calculated_properties']
+               'specific_series_resistance', 'exposure_time', 'table_row_categories', 'calculated_properties', 'pin', 'pmax']
 
     def __init__(self, records, table=None):
         # Initialize exisiting records
@@ -23,7 +23,7 @@ class PhotovoltaicRecord(object):
         for key, value in six.iteritems(records):
             if key in ['series_resistance', 'charge_transfer_resistance', 'specific_series_resistance', 'specific_charge_transfer_resistance' ]:
                 if 'units' not in next(iter(value.values())).keys():
-                    print('No unit extracted for record : %s' % value)
+                   # print('No unit extracted for record : %s' % value)
                     missing_fields.append(key)
                 else:
                     setattr(self, key, value)
@@ -44,12 +44,12 @@ class PhotovoltaicRecord(object):
         self.table = table
 
     def __repr__(self):
-        string = 'PV record with dye:' + str(self.dye) + ', '
+        string = 'PV record with dye: ' + str(self.dye) + ', '
         string += 'and a Voc of ' + str(self.voc)
         return string
 
     def __str__(self):
-        string = 'PV record with dye:' + str(self.dye) + ', '
+        string = 'PV record with dye: ' + str(self.dye) + ', '
         string += 'and a Voc of ' + str(self.voc)
         return string
     def __contains__(self, name):
