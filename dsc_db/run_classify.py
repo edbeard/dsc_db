@@ -6,9 +6,9 @@ from shutil import copy
 from dsc_db.classify import classify_document
 from chemdataextractor import Document
 
-root_dir = '/home/edward/pv/extractions/input'
-output_path = '/home/edward/pv/extractions/input_filtered'
-output_table_path = '/home/edward/pv/extractions/input_filtered_tables' # Pathto papers after removing results without tables
+root_dir = '/home/edward/pv/webscraping/rsc/articles/dscs/dye%20sensitized%20solar%20cell'
+output_path = '/home/edward/pv/extractions/dsc_rsc_filtered'
+output_table_path = '/home/edward/pv/extractions/dsc_rsc_filtered_tables' # Path to papers after removing results without tables
 
 
 if __name__ == '__main__':
@@ -28,6 +28,7 @@ if __name__ == '__main__':
             meta = doc.metadata
         except:
             classification = 'format_error'
+            tables = None
 
         if classification == 'dsc':
             copy(paper, os.path.join(output_path, 'dsc'))

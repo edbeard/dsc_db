@@ -16,7 +16,7 @@ from chemdataextractor.doc import Document, Table
 from chemdataextractor.model.pv_model import PerovskiteSolarCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, SentenceDyeLoading, SentenceSemiconductor
 from chemdataextractor.model import Compound
 
-from dsc_db.run import get_table_records, get_filtered_elements, add_contextual_info
+from dsc_db.run import get_table_records, get_filtered_elements, add_contextual_info, get_active_area
 from dsc_db.model import PhotovoltaicRecord, PerovskiteRecord
 from dsc_db.data import  blacklist_headings, all_perovskites, all_htls, all_etls
 from dsc_db.smiles import add_smiles
@@ -32,31 +32,37 @@ peroskite_material_properties = [
 ]
 
 
-def create_pdb_from_file(path):
+def create_pdb_from_file(doc):
     """
     Extract records from specific files tables.
     This contains the main algorithm.
     """
 
-    # Load the document from the file
-    with open(path, 'rb') as f:
-        doc = Document.from_file(f)
-
-        # Only add the photovoltaiccell and Compound models to the document
+    # Only add the photovoltaiccell and Compound models to the document
     doc.add_models([PerovskiteSolarCell, Compound])  # Substrate, SentenceSemiconductor, DyeLoading])
+
+    filtered_elements = get_filtered_elements(doc) # Get the relevant filtered elements for merging
+
+    # Get the active_area property if available, used in calculating properties
+    active_area_record = get_active_area(filtered_elements)
 
     # Get all records from the table
     # This returns a tuple of type (pv_record, table)
     # The table object contains all the other records that were extracted
-    table_records = get_table_records(doc, 'PerovskiteSolarCell')
+    table_records = get_table_records(doc, 'PerovskiteSolarCell', active_area_record)
 
     # Create PhotovoltaicRecord object
     pv_records = [PerovskiteRecord(record, table) for record, table in table_records]
 
-    filtered_elements = get_filtered_elements(doc)
+
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # And contextual information from perovskites
     pv_records = add_contextual_info(pv_records, filtered_elements, peroskite_material_properties)
+
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # Get all compound records for the next stage
     doc_records = [record.serialize() for record in doc.records]
@@ -65,18 +71,22 @@ def create_pdb_from_file(path):
     # Filtering our results that don't contain voc, jsc, ff or PCE (if not running in debug mode)
     debug = False
     if not debug:
-        pv_records = [pv_record for pv_record in [pv_records] if
-                      any([getattr(pv_record, 'voc', 'None'), getattr(pv_record, 'jsc', 'None'),
-                           getattr(pv_record, 'ff', 'None'), getattr(pv_record, 'pce', 'None')])]
+        pv_records = [pv_record for pv_record in pv_records if (
+            all([getattr(pv_record, 'voc', False), getattr(pv_record, 'jsc', False)]) or
+            all([getattr(pv_record, 'voc', False), getattr(pv_record, 'ff', False)]) or
+            all([getattr(pv_record, 'voc', False), getattr(pv_record, 'pce', False)]) or
+            all([getattr(pv_record, 'jsc', False), getattr(pv_record, 'ff', False)]) or
+            all([getattr(pv_record, 'jsc', False), getattr(pv_record, 'pce', False)]) or
+            all([getattr(pv_record, 'ff', False), getattr(pv_record, 'pce', False)])) ]
 
     # Merge other information from inside the document when appropriate
     for record in pv_records:
         # Substituting in the definitions from the entire document
-        if record.dye is not None:
+        if record.perovskite is not None:
             record._substitute_definitions('perovskite', 'Perovskite', doc)
 
         # Substituting the compound names for the perovskite
-        if record.dye is not None:
+        if record.perovskite is not None:
             record._substitute_compound('perovskite', 'Perovskite', compound_records)
 
     # Contextual merging of perovskites complete, filtering out results without perovskites
@@ -141,6 +151,26 @@ def add_distributor_info(pv_records):
     return pv_records
 
 
-def add_smiles():
+def add_smiles(pv_records):
     # TODO: Add SMILES logic after determining which properties will require it.
     pass
+
+
+if __name__ == '__main__':
+
+    import cProfile, pstats, io
+    path = "/home/edward/pv/extractions/input_filtered/psc/C6NR01010E.html"
+    with open(path, 'rb') as f:
+        doc = Document.from_file(f)
+    cProfile.runctx("create_pdb_from_file(doc)", None, locals=locals())
+
+
+    # Create stream for progiler to write to
+    profiling_output = io.StringIO()
+    p = pstats.Stats('mainstats', stream=profiling_output)
+
+
+
+
+
+

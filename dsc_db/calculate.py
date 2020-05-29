@@ -428,11 +428,11 @@ def calc_error_active_area(active_area_rec):
         error_string += '1'
         prop_calc_raw_error = float(error_string)
 
-    if active_area['raw_units'] == 'cm2':
+    if 'cm2' in active_area['raw_units']:
         prop_calc_error = MetersSquaredAreaUnit(magnitude=-4).convert_value_to_standard(prop_calc_raw_error)
-    elif active_area['raw_units'] == 'mm2':
+    elif 'mm2' in active_area['raw_units']:
         prop_calc_error = MetersSquaredAreaUnit(magnitude=-6).convert_value_to_standard(prop_calc_raw_error)
-    elif active_area['raw_units'] == 'm2':
+    elif 'm2' in active_area['raw_units']:
         prop_calc_error = MetersSquaredAreaUnit(magnitude=0).convert_value_to_standard(prop_calc_raw_error)
     else:
         raise Exception('Couldn\'t identify units from active area')
