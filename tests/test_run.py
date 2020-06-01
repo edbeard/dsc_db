@@ -160,7 +160,7 @@ class TestRun(unittest.TestCase):
         }
         doc.add_models([PhotovoltaicCell, CommonSentenceDye])
         pv_records = [PhotovoltaicRecord(pv_input, Table(Caption('')))]
-        pv_records, _ = add_contextual_dye_from_document_by_multiplicity(pv_records, doc.elements)
+        pv_records = add_contextual_dye_from_document_by_multiplicity(pv_records, doc.elements)
         for pv_record in pv_records:
             print(pv_record.serialize())
         return pv_records

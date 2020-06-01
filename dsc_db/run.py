@@ -67,18 +67,18 @@ def create_dsscdb_from_file(doc):
     # Create PhotovoltaicRecord object
     pv_records = [PhotovoltaicRecord(record, table) for record, table in table_records]
 
-    # print('Printing the results after table extraction only')
-    # for pv_record in pv_records:
-    #     pp.pprint(pv_record.serialize())
+    print('Printing the results after table extraction only')
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # When no Dye field is present, search contextually for it
     pv_records = add_dye_information(pv_records, filtered_elements)
 
     # print(str(pv_records))
 
-    # print('Printing the PV records after adding dyes contextually:')
-    # for pv_record in pv_records:
-    #     pp.pprint(pv_record.serialize())
+    print('Printing the PV records after adding dyes contextually:')
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # Get the compound records for the next stage
     doc_records = [record.serialize() for record in doc.records]
@@ -109,9 +109,9 @@ def create_dsscdb_from_file(doc):
             record._substitute_compound('dye', 'Dye', compound_records)
 
     # print the output before dyes removed...
-    # print('Printing output after the contextual Dye information is added...')
-    # for pv_record in pv_records:
-    #     pp.pprint(pv_record.serialize())
+    print('Printing output after the contextual Dye information is added...')
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # Contextual merging of dyes complete, filtering out results without dyes
     if not debug:
@@ -120,9 +120,9 @@ def create_dsscdb_from_file(doc):
 
     # Apply sentence parsers for contextual information (Irradiance etc)
     pv_records = add_contextual_info(pv_records, filtered_elements, dsc_properties)
-    # print('Printing output after contextual info is added from the caption and document body...')
-    # for pv_record in pv_records:
-    #     pp.pprint(pv_record.serialize())
+    print('Printing output after contextual info is added from the caption and document body...')
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
 
     # Add chemical data from distributor of common dyes
@@ -130,9 +130,9 @@ def create_dsscdb_from_file(doc):
 
     # Add SMILES through PubChem and ChemSpider where not added by distributor
     pv_records = add_smiles(pv_records)
-    # print('Printing output after smiles are added ...')
-    # for pv_record in pv_records:
-    #     pp.pprint(pv_record.serialize())
+    print('Printing output after smiles are added ...')
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # Merge calculated properties
     pv_records = add_calculated_properties(pv_records)
@@ -192,9 +192,6 @@ def add_calculated_properties(pv_records):
 
                     calc_dict[model]['calculated_error'] = pv_record.calculated_properties[field]['error']
                     setattr(pv_record, field, calc_dict)
-
-        else:
-            pp.pprint(pv_record.serialize())
 
     return pv_records
 
@@ -526,19 +523,15 @@ def add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elemen
         context = 'document'
 
     # Count occurrence in the filtered element list
-    altered = False # Boolean indicating whether the following logic altered the photovoltaic records
     sentence_dyes = []
     sentence_dye_records = [record.serialize() for el in filtered_elements for record in el.records if record.__class__.__name__ == dye_key]
     if not sentence_dye_records:
-        return pv_records, altered
+        return pv_records
     for record in sentence_dye_records:
         if 'raw_value' in record[dye_key].keys():
             sentence_dyes.append(record[dye_key]['raw_value'])
 
     # If a dye was found, output
-    if sentence_dyes:
-        altered = True
-
     most_common_dyes = get_most_common_dyes(sentence_dyes)
 
     # Substitute in the most common dye, if found
@@ -548,7 +541,7 @@ def add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elemen
                 dye = {'contextual': context, 'raw_value': most_common_dyes[0]}
                 pv_record.dye = {'Dye': [dye]}
 
-    return pv_records, altered
+    return pv_records
 
 
 def add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=False):
@@ -562,7 +555,6 @@ def add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive
         dye_key = 'CommonSentenceDye'
         context = 'table_caption'
 
-    altered = False
     for pv_record in pv_records:
         if pv_record.dye is None:
             caption = pv_record.table.caption
@@ -574,14 +566,12 @@ def add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive
                     caption_dyes.append(cap_record[dye_key]['raw_value'])
 
             # If a dye was found, output
-            if caption_dyes:
-                altered = True
             most_common_dyes = get_most_common_dyes(caption_dyes)
             if len(most_common_dyes) == 1:
                 dye = {'contextual': context, 'raw_value': most_common_dyes[0]}
                 pv_record.dye = {'Dye': [dye]}
 
-    return pv_records, altered
+    return pv_records
 
 
 def get_most_common_dyes(sentence_dyes):
@@ -611,20 +601,15 @@ def add_dye_information(pv_records, filtered_elements):
 
     :return: updated records
     """
-    altered = False
 
     # Step 1: Check the table caption using the CommonDyeSentence parser
-    pv_records, altered = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=False)
-    if altered:
-        return pv_records
+    pv_records = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=False)
 
     # Step 2: Check the Methods section using the CommonDyeSentence parser
-    pv_records, altered = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=False)
-    if altered:
-        return pv_records
+    pv_records = add_contextual_dye_from_document_by_multiplicity(pv_records, filtered_elements, permissive=False)
 
     # Step 3: Check the table caption using the more permissive DyeSentence parser
-    pv_records, _ = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=True)
+    pv_records = add_contextual_dye_from_table_caption_by_multiplicity(pv_records, permissive=True)
 
     return pv_records
 

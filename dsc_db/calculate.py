@@ -522,11 +522,14 @@ def classify_table(records):
     # Test for counter electrode
     classification, ref_record = do_classification(records, 'counter_electrode', 'CounterElectrode', 'Pt')
     if classification == 'None':
-        # Test for DSC
+        # Test for DSC. First check for N719
         classification, ref_record = do_classification(records, 'dye', 'Dye', 'N719')
         if classification == 'None':
-            # Test for semiconductor
-            classification, ref_record = do_classification(records, 'semiconductor', 'Semiconductor', 'TiO2')
+            # Next check for DSC with reference N3
+            classification, ref_record = do_classification(records, 'dye', 'Dye', 'N3')
+            if classification == 'None':
+                    # Test for semiconductor
+                    classification, ref_record = do_classification(records, 'semiconductor', 'Semiconductor', 'TiO2')
 
     return classification, ref_record
 
@@ -538,19 +541,19 @@ def do_classification(records, field_name, model_name, ref_value):
 
     if all([field in record.keys() for record in records for field in (field_name, 'pce')]):
 
-        # Check that these values have names for the counter electrode and a value for the pce field_name
+        # Check that records contain a name for the targetted property and a value for pce
         if all(['raw_value' in record[field_name][model_name].keys() for record in records]) and \
                 all(['value' in record['pce']['PowerConversionEfficiency'].keys() for record in records]):
 
-            # Determine if all the counter electrode values are unique, and which is the reference result.
-            unique_counter_electrodes = set()
+            # Determine if all values are unique, and which is the reference result.
+            unique_values = set()
             ref_record = None
             for record in records:
-                unique_counter_electrodes.add(record[field_name][model_name]['raw_value'])
+                unique_values.add(record[field_name][model_name]['raw_value'])
                 if record[field_name][model_name]['raw_value'].strip(' ') == ref_value:
                     ref_record = record
 
-            if len(unique_counter_electrodes) == len(records) and ref_record is not None:
+            if len(unique_values) == len(records) and ref_record is not None:
                 return field_name, ref_record
 
     return 'None', None
@@ -566,7 +569,10 @@ def calculate_relative_efficiencies(records, pt_record, classification):
     if classification == 'counter_electrode':
         std_component = 'Pt'
     elif classification == 'dye':
-        std_component = 'N719'
+        if pt_record['dye']['Dye']['raw_value'].strip(' ') == 'N719':
+            std_component = 'N719'
+        else:
+            std_component = 'N3'
     elif classification == 'semiconductor':
         std_component = 'TiO2'
     else:

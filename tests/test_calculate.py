@@ -469,7 +469,7 @@ class TestCalculate(unittest.TestCase):
         records = calculate_relative_metrics(records)
         self.assertTrue('normalized' not in records[1]['pce']['PowerConversionEfficiency'].keys())
 
-    def test_classify_table_dye(self):
+    def test_classify_table_dye_N719(self):
 
         test_records = deepcopy(test_records_n719)
         records = calculate_relative_metrics(test_records)
@@ -477,6 +477,15 @@ class TestCalculate(unittest.TestCase):
         self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
         self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'dye')
         self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'N719')
+
+    def test_classify_table_dye_N3(self):
+        test_records = deepcopy(test_records_n719)
+        test_records[0]['dye']['Dye']['raw_value'] = 'N3'
+        records = calculate_relative_metrics(test_records)
+        self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'dye')
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'N3')
 
     def test_classify_table_dye_one_without_dye_field(self):
 
