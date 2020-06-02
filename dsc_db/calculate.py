@@ -19,6 +19,8 @@ from math import sqrt
 import copy
 import sigfig
 
+hyphens = '-‐‑⁃‒–—―'
+
 
 def calculate_metrics(record, active_area_record):
     """
@@ -273,49 +275,52 @@ def calculate_irradiance(record):
     :param: List : records. List of chemical records from ChemDataExtractor
     """
     new_record = copy.deepcopy(record)
-    if all([record.voc, record.ff, record.pce]) and (record.jsc or 'jsc' in record.calculated_properties.keys()):
-        if all([record.voc.value, record.voc.units, record.ff.value, record.pce.value]):
-            jsc = None
-            # Use extracted jsc value if possible
-            if record.jsc:
-                if all([record.jsc.value, record.jsc.units]):
-                    jsc = record.jsc.units.convert_value_to_standard(mean(record.jsc.value))
+    try:
+        if all([record.voc, record.ff, record.pce]) and (record.jsc or 'jsc' in record.calculated_properties.keys()):
+            if all([record.voc.value, record.voc.units, record.ff.value, record.pce.value]):
+                jsc = None
+                # Use extracted jsc value if possible
+                if record.jsc:
+                    if all([record.jsc.value, record.jsc.units]):
+                        jsc = record.jsc.units.convert_value_to_standard(mean(record.jsc.value))
 
-            # Otherwise, try to get calculated property
-            if 'jsc' in record.calculated_properties.keys() and jsc is None:
-                jsc_obj = record.calculated_properties['jsc']
-                jsc = jsc_obj.units.convert_value_to_standard(mean(jsc_obj.value))
+                # Otherwise, try to get calculated property
+                if 'jsc' in record.calculated_properties.keys() and jsc is None:
+                    jsc_obj = record.calculated_properties['jsc']
+                    jsc = jsc_obj.units.convert_value_to_standard(mean(jsc_obj.value))
 
-            if jsc is not None:
-                voc = record.voc.units.convert_value_to_standard(mean(record.voc.value))
+                if jsc is not None:
+                    voc = record.voc.units.convert_value_to_standard(mean(record.voc.value))
 
-                ff_mean = mean(record.ff.value)
-                if isinstance(record.ff.units, Percent):
-                    ff = ff_mean / 100
-                else:
-                    # If FF > 1, assume it is a percentage
-                    if ff_mean > 1:
+                    ff_mean = mean(record.ff.value)
+                    if isinstance(record.ff.units, Percent):
                         ff = ff_mean / 100
                     else:
-                        ff = ff_mean
+                        # If FF > 1, assume it is a percentage
+                        if ff_mean > 1:
+                            ff = ff_mean / 100
+                        else:
+                            ff = ff_mean
 
-                # Calculate PCE (use the unit where given)
-                pce_mean = mean(record.pce.value)
-                if isinstance(record.pce.units, Percent):
-                    pce = pce_mean / 100
+                    # Calculate PCE (use the unit where given)
+                    pce_mean = mean(record.pce.value)
+                    if isinstance(record.pce.units, Percent):
+                        pce = pce_mean / 100
 
-                # If decimal is larger than Shockley-Queisser limit, assume it is a percentage
-                elif pce_mean > 0.34:
-                    pce = pce_mean / 100
-                else:
-                    pce = pce_mean
+                    # If decimal is larger than Shockley-Queisser limit, assume it is a percentage
+                    elif pce_mean > 0.34:
+                        pce = pce_mean / 100
+                    else:
+                        pce = pce_mean
 
-                irr = calculate_irradiance_value(voc, jsc, ff, pce)
-                irr_err = calculate_irradiance_error(record, voc, jsc, ff, pce, irr)
-                irr = round_to_sig_figs(irr, irr_err)
+                    irr = calculate_irradiance_value(voc, jsc, ff, pce)
+                    irr_err = calculate_irradiance_error(record, voc, jsc, ff, pce, irr)
+                    irr = round_to_sig_figs(irr, irr_err)
 
-                solar_sim = SimulatedSolarLightIntensity(value=[irr], units=WattPerMeterSquared(), error=irr_err)
-                new_record.set_calculated_properties('solar_simulator', solar_sim)
+                    solar_sim = SimulatedSolarLightIntensity(value=[irr], units=WattPerMeterSquared(), error=irr_err)
+                    new_record.set_calculated_properties('solar_simulator', solar_sim)
+    except:
+        print('Unsupported raw value format, could not calculate the solar_simulator')
 
     return new_record
 
@@ -461,15 +466,7 @@ def calc_error_quantity(record, field):
     if rec.error is not None:
         prop_calc_raw_error = rec.error
     else:
-        raw_value = rec.raw_value
-        error_string = ''
-        for char in raw_value[:-1]:
-            if char != '.':
-                error_string += '0'
-            else:
-                error_string += '.'
-        error_string += '1'
-        prop_calc_raw_error = float(error_string)
+        prop_calc_raw_error = estimate_error_from_length_of_raw_value_string(rec)
     if field in ['voc', 'isc', 'jsc', 'charge_transfer_resistance', 'specific_charge_transfer_resistance',
                  'series_resistance', 'specific_series_resistance', 'solar_simulator', 'pin', 'pmax']:
         prop_calc_error = rec.units.convert_value_to_standard(prop_calc_raw_error)
@@ -488,6 +485,57 @@ def calc_error_quantity(record, field):
         raise Exception
 
     return prop_calc_error
+
+
+def estimate_error_from_length_of_raw_value_string(rec):
+    """
+    Estimate the raw error on a value from the number of characters given
+    """
+
+    raw_value = rec.raw_value
+    error_string = ''
+
+    # Begin by checking for presence of minus/hyphen symbol
+    used_hyphens = [char for char in hyphens if char in raw_value]
+    if len(used_hyphens) == 1:
+        if raw_value[0] != used_hyphens[0] and raw_value.count(used_hyphens[0]) == 1:
+            # Assume ranged quantity, split at hyphen
+            value1, value2 = raw_value.split(used_hyphens[0])
+            # Choose the quantity with less sig_figs
+            if len(value1.replace('.', '')) > len(value2.replace('.', '')):
+                raw_value = value2
+            else:
+                raw_value = value1
+        elif raw_value[0] == used_hyphens[0] and raw_value.count(used_hyphens[0]) == 1:
+            # Case for a negative number
+            raw_value = raw_value[1:]
+    elif len(used_hyphens) == 2: # Assuming that one hyphen describes negativity, and one the ranged quantity
+        if raw_value[0] in used_hyphens:
+            neg_hyphen = raw_value[0]
+            used_hyphens.remove(neg_hyphen)
+            raw_value = raw_value.replace(neg_hyphen, '')
+
+            # Assume ranged quantity, split at hyphen
+            value1, value2 = raw_value.split(used_hyphens[0])
+            # Choose the quantity with less sig_figs
+            if len(value1.replace('.', '')) > len(value2.replace('.', '')):
+                raw_value = value2
+            else:
+                raw_value = value1
+        else:
+            raise Exception('Two hyphens detected in raw value, but couldn\'t parse...')
+
+    elif used_hyphens != []:
+        raise Exception('Multiple hyphens detected in raw value. Couldn\'t parse...')
+
+    for char in raw_value[:-1]:
+        if char != '.':
+            error_string += '0'
+        else:
+            error_string += '.'
+    error_string += '1'
+
+    return float(error_string)
 
 
 def calculate_irradiance_value(voc, jsc, ff, pce):
@@ -550,7 +598,7 @@ def do_classification(records, field_name, model_name, ref_value):
             ref_record = None
             for record in records:
                 unique_values.add(record[field_name][model_name]['raw_value'])
-                if record[field_name][model_name]['raw_value'].strip(' ') == ref_value:
+                if record[field_name][model_name]['raw_value'].replace(' ', '') == ref_value:
                     ref_record = record
 
             if len(unique_values) == len(records) and ref_record is not None:
@@ -569,7 +617,7 @@ def calculate_relative_efficiencies(records, pt_record, classification):
     if classification == 'counter_electrode':
         std_component = 'Pt'
     elif classification == 'dye':
-        if pt_record['dye']['Dye']['raw_value'].strip(' ') == 'N719':
+        if pt_record['dye']['Dye']['raw_value'].replace(' ', '') == 'N719':
             std_component = 'N719'
         else:
             std_component = 'N3'

@@ -543,6 +543,28 @@ class TestCalculate(unittest.TestCase):
         calculated_error4 = calc_error_quantity(record, 'pce')
         self.assertEqual(calculated_error4, 0.0001)
 
+    def test_calc_quantity_error_from_sig_figs_ranged_quantity(self):
+
+        voc = OpenCircuitVoltage(value=[756, 759], units=Volt(magnitude=-3.), raw_value='756-759')
+        jsc = ShortCircuitCurrentDensity(value=[15.5, 16.04], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.5—16.04')
+        record = PhotovoltaicCell(voc=voc, jsc=jsc)
+
+        calculated_error1 = calc_error_quantity(record, 'voc')
+        self.assertEqual(calculated_error1, 0.001)
+        calculated_error2 = calc_error_quantity(record, 'jsc')
+        self.assertEqual(calculated_error2, 1)
+
+    def test_calc_quantity_error_from_sig_figs_negative_quantity(self):
+        voc = OpenCircuitVoltage(value=[-756.0], units=Volt(magnitude=-3.), raw_value='-756.0')
+        jsc = ShortCircuitCurrentDensity(value=[-15.5, -16.04], units=AmpPerMeterSquared(magnitude=1.), raw_value='-15.5—-16.04')
+
+        record = PhotovoltaicCell(voc=voc, jsc=jsc)
+
+        calculated_error1 = calc_error_quantity(record, 'voc')
+        self.assertEqual(calculated_error1, 0.0001)
+        calculated_error2 = calc_error_quantity(record, 'jsc')
+        self.assertEqual(calculated_error2, 1)
+
     def test_calc_irradiance_error(self):
 
         voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
