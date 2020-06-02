@@ -7,7 +7,7 @@ import unittest
 from dsc_db.calculate import calculate_irradiance, calculate_relative_metrics, \
     calc_error_quantity, round_to_sig_figs, calculate_current_density, calculate_current, calculate_specific_resistance_rct, \
     calculate_specific_resistance_rs, calculate_resistance_rct, calculate_resistance_rs, calculate_metrics, calculate_power_in, \
-    calculate_power_max
+    calculate_power_max, calculate_relative_metrics_perovskite
 from dsc_db.run import get_table_records
 from copy import deepcopy
 from pprint import pprint
@@ -156,6 +156,62 @@ test_records_tio2 = [{'calculated_properties': {'solar_simulator': {'units': 'Wa
                                                         'units': 'Volt^(1.0)',
                                                         'value': [66.66]}}}
                         ]
+
+test_records_perovskite = [{'calculated_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
+                                               'value': [1851.5]}},
+                         'ff': {'FillFactor': {'raw_value': '33.33',
+                                               'specifier': 'FF',
+                                               'value': [33.33]}},
+                         'jsc': {'ShortCircuitCurrentDensity': {'raw_units': '(mAcm−2)',
+                                                                'raw_value': '11.11',
+                                                                'specifier': 'Jsc',
+                                                                'std_units': 'Ampere^(1.0)  '
+                                                                             'Meter^(-2.0)',
+                                                                'std_value': [111.1],
+                                                                'units': '(10^1.0) * Ampere^(1.0)  '
+                                                                         'Meter^(-2.0)',
+                                                                'value': [11.11]}},
+                         'pce': {'PowerConversionEfficiency': {'raw_value': '44.44',
+                                                               'specifier': 'PCE',
+                                                               'value': [44.44]}},
+                         'perovskite': {'Perovskite': {'raw_value': 'Novel sensitizer',
+                                                             'specifier': 'perovskite'}},
+                         'table_row_categories': 'Novel sensitizer',
+                         'voc': {'OpenCircuitVoltage': {'raw_units': '(V)',
+                                                        'raw_value': '22.22',
+                                                        'specifier': 'Voc',
+                                                        'std_units': 'Volt^(1.0)',
+                                                        'std_value': [22.22],
+                                                        'units': 'Volt^(1.0)',
+                                                        'value': [22.22]}}},
+                           {'calculated_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
+                                                                          'value': [32400.9]}},
+                            'ff': {'FillFactor': {'raw_value': '77.77',
+                                                  'specifier': 'FF',
+                                                  'value': [77.77]}},
+                            'jsc': {'ShortCircuitCurrentDensity': {'raw_units': '(mAcm−2)',
+                                                                   'raw_value': '55.55',
+                                                                   'specifier': 'Jsc',
+                                                                   'std_units': 'Ampere^(1.0)  '
+                                                                                'Meter^(-2.0)',
+                                                                   'std_value': [555.5],
+                                                                   'units': '(10^1.0) * Ampere^(1.0)  '
+                                                                            'Meter^(-2.0)',
+                                                                   'value': [55.55]}},
+                            'pce': {'PowerConversionEfficiency': {'raw_value': '88.88',
+                                                                  'specifier': 'PCE',
+                                                                  'value': [88.88]}},
+                            'perovskite': {'Perovskite': {'raw_value': 'CH3NH3PbI3',
+                                                          'specifier': 'perovskite'}},
+                            'table_row_categories': ' CH3NH3PbI3',
+                            'voc': {'OpenCircuitVoltage': {'raw_units': '(V)',
+                                                           'raw_value': '66.66',
+                                                           'specifier': 'Voc',
+                                                           'std_units': 'Volt^(1.0)',
+                                                           'std_value': [66.66],
+                                                           'units': 'Volt^(1.0)',
+                                                           'value': [66.66]}}}
+                           ]
 
 
 class TestCalculate(unittest.TestCase):
@@ -525,6 +581,14 @@ class TestCalculate(unittest.TestCase):
         self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
         self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'semiconductor')
         self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'TiO2')
+
+    def test_classify_perovskite_table(self):
+        test_records = deepcopy(test_records_perovskite)
+        records = calculate_relative_metrics_perovskite(test_records)
+        self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'perovskite')
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'CH3NH3PbI3')
 
     def test_calc_quantity_error_from_sig_figs(self):
 

@@ -562,6 +562,24 @@ def calculate_relative_metrics(records):
     return records
 
 
+def calculate_relative_metrics_perovskite(records):
+    """
+    Calculate relative metrics for standard properties of perovskites
+    Experiments typically express their results (for example, with a novel counter electrode) alongside the standard
+    setup for this (for example, a platinum (Pt) counter electrode). This is done as the values of each property can
+    vary across experiment, so this provides a baseline to compare the values from the particular experiment to.
+
+    This function will attempt to determine whether the independent variable is one that can be standardized. If it is,
+    and the standard comparison is also present, the value is calculated.    """
+
+    #start by classifying the table
+    classification, relative_record = classify_table_perovskite(records)
+
+    if classification != 'None':
+        records = calculate_relative_efficiencies_perovskite(records, relative_record, classification )
+    return records
+
+
 def classify_table(records):
     """
     Classify the table by looking at variables
@@ -578,6 +596,18 @@ def classify_table(records):
             if classification == 'None':
                     # Test for semiconductor
                     classification, ref_record = do_classification(records, 'semiconductor', 'Semiconductor', 'TiO2')
+
+    return classification, ref_record
+
+
+def classify_table_perovskite(records):
+    """
+    Classify the perovskite table by looking at the variables
+    """
+
+    # Test for counter electrode
+    classification, ref_record = do_classification(records, 'perovskite', 'Perovskite', 'CH3NH3PbI3')
+    # TODO - Add list of other useful relative variables here...
 
     return classification, ref_record
 
@@ -637,4 +667,29 @@ def calculate_relative_efficiencies(records, pt_record, classification):
 
     return records
 
+
+def calculate_relative_efficiencies_perovskite(records, pt_record, classification):
+    """
+    Calculate the relative efficiencies for an appropriate table
+    Assumes that the units of the PCE will be consistent throughout the table.
+    """
+
+    # Determine the standard component
+    # TODO: Expand this to account for all properties that could benefit from relative metrics 
+    #    (this may become apparent after testing)
+    if classification == 'perovskite':
+        std_component = 'CH3NH3PbI3'
+    else:
+        raise Exception
+
+    baseline_efficiency = mean(pt_record['pce']['PowerConversionEfficiency']['value'])
+
+    # Add a field to each record for efficiency
+    for record in records:
+        rec_efficiency = mean(record['pce']['PowerConversionEfficiency']['value'])
+        relative_efficiency = rec_efficiency / baseline_efficiency
+        normalized_data = {'value': relative_efficiency, 'component_name': classification, 'std_component': std_component}
+        record['pce']['PowerConversionEfficiency']['normalized'] = normalized_data
+
+    return records
 

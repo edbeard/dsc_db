@@ -112,8 +112,6 @@ class TestRunPerovskites(unittest.TestCase):
                                 'value': [756.0]}}}
         self.do_contextual_document_merging(text, ElectronTransportLayer, expected)
 
-
-
     def test_multiple_params_from_caption(self):
         caption = "Device parameters for MAPbI3 solar cells prepared on an identical TiO2 ETL and capped with a spiro-MeOTAD HTL."
         expected = {'etl': {'ElectronTransportLayer': {'contextual': 'table_caption',

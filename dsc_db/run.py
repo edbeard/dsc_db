@@ -20,7 +20,7 @@ from chemdataextractor.model.units.unit import UnitType
 from dsc_db.model import PhotovoltaicRecord
 from dsc_db.data import all_dyes, blacklist_headings, redox_couples
 from dsc_db.smiles import add_smiles
-from dsc_db.calculate import calculate_metrics, calculate_relative_metrics, round_to_sig_figs
+from dsc_db.calculate import calculate_metrics, calculate_relative_metrics, calculate_relative_metrics_perovskite
 import sigfig
 
 # Properties to be merged from contextual sentences
@@ -383,7 +383,10 @@ def get_table_records(doc, record_type, active_area_record=None, model_field_dic
                 records.append(serialized_record)
 
         # Add calculation of standardised properties
-        records = calculate_relative_metrics(records)
+        if record_type == 'PhotovoltaicCell':
+            records = calculate_relative_metrics(records)
+        elif record_type == 'PerovskiteSolarCell':
+            records = calculate_relative_metrics_perovskite(records)
 
         for record in records:
             table_records.append((record, table))
