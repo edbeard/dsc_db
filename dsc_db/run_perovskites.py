@@ -16,13 +16,15 @@ from chemdataextractor.doc import Document, Table
 from chemdataextractor.model.pv_model import PerovskiteSolarCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, SentenceDyeLoading, SentenceSemiconductor
 from chemdataextractor.model import Compound
 
-from dsc_db.run import get_table_records, get_filtered_elements, add_contextual_info, get_active_area
+from dsc_db.run import get_table_records, get_filtered_elements, add_contextual_info, get_active_area, add_calculated_properties
 from dsc_db.model import PhotovoltaicRecord, PerovskiteRecord
 from dsc_db.data import  blacklist_headings, all_perovskites, all_htls, all_etls
 from dsc_db.smiles import add_smiles
 
 perovskite_properties = [
-    ('SimulatedSolarLightIntensity', 'solar_simulator')
+    ('SimulatedSolarLightIntensity', 'solar_simulator'),
+    ('Substrate', 'substrate'),
+    ('ActiveArea', 'active_area')
 ]
 
 peroskite_material_properties = [
@@ -96,7 +98,7 @@ def create_pdb_from_file(doc):
     # Apply sentence parsers for contextual information (Irradiance etc)
     pv_records = add_contextual_info(pv_records, filtered_elements, perovskite_properties)
 
-    # Add chemical data from distributor of common dyes
+    # Add chemical data from distributor of common perovskite materials, and from review papers
     pv_records = add_distributor_info(pv_records)
 
     # Add SMILES through PubChem and ChemSpider where not added by distributor
@@ -104,6 +106,9 @@ def create_pdb_from_file(doc):
 
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
+
+    # Merge calculated properties
+    pv_records = add_calculated_properties(pv_records)
 
     # print the output after dyes removed...
     # for pv_record in pv_records:

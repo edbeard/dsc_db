@@ -6,9 +6,9 @@ from shutil import copy
 from dsc_db.classify import classify_document
 from chemdataextractor import Document
 
-root_dir = '/home/edward/pv/webscraping/rsc/articles/dscs/dye%20sensitized%20solar%20cell'
-output_path = '/home/edward/pv/extractions/dsc_rsc_filtered'
-output_table_path = '/home/edward/pv/extractions/dsc_rsc_filtered_tables' # Path to papers after removing results without tables
+root_dir = '/home/edward/pv/webscraping/elsevier/articles/dye%20sensitized%20solar%20cell_250220'
+output_path = '/home/edward/pv/extractions/dsc_elsevier_filtered'
+output_table_path = '/home/edward/pv/extractions/dsc_elsevier_filtered_tables' # Path to papers after removing results without tables
 
 
 if __name__ == '__main__':

@@ -155,9 +155,11 @@ class PhotovoltaicRecord(object):
 
 class PerovskiteRecord(PhotovoltaicRecord):
 
-    _fields = ['jsc', 'voc', 'pce', 'ff', 'ref', 'perovskite', 'etl', 'htl',
+    _fields = ['jsc', 'isc', 'voc', 'pce', 'ff', 'ref', 'perovskite', 'etl', 'htl',
                'counter_electrode', 'active_area', 'solar_simulator', 'substrate',
-               'charge_transfer_resistance', 'series_resistance', 'exposure_time']
+               'charge_transfer_resistance', 'series_resistance', 'exposure_time', 'specific_charge_transfer_resistance',
+                'specific_series_resistance', 'exposure_time', 'table_row_categories', 'calculated_properties',
+               'pin', 'pmax']
 
     def __init__(self, records, table=None):
         # Initialize exisiting records

@@ -67,18 +67,18 @@ def create_dsscdb_from_file(doc):
     # Create PhotovoltaicRecord object
     pv_records = [PhotovoltaicRecord(record, table) for record, table in table_records]
 
-    print('Printing the results after table extraction only')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # print('Printing the results after table extraction only')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # When no Dye field is present, search contextually for it
     pv_records = add_dye_information(pv_records, filtered_elements)
 
     # print(str(pv_records))
 
-    print('Printing the PV records after adding dyes contextually:')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # print('Printing the PV records after adding dyes contextually:')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Get the compound records for the next stage
     doc_records = [record.serialize() for record in doc.records]
@@ -109,9 +109,9 @@ def create_dsscdb_from_file(doc):
             record._substitute_compound('dye', 'Dye', compound_records)
 
     # print the output before dyes removed...
-    print('Printing output after the contextual Dye information is added...')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # print('Printing output after the contextual Dye information is added...')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Contextual merging of dyes complete, filtering out results without dyes
     if not debug:
@@ -120,9 +120,9 @@ def create_dsscdb_from_file(doc):
 
     # Apply sentence parsers for contextual information (Irradiance etc)
     pv_records = add_contextual_info(pv_records, filtered_elements, dsc_properties)
-    print('Printing output after contextual info is added from the caption and document body...')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # print('Printing output after contextual info is added from the caption and document body...')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
 
     # Add chemical data from distributor of common dyes
@@ -130,9 +130,9 @@ def create_dsscdb_from_file(doc):
 
     # Add SMILES through PubChem and ChemSpider where not added by distributor
     pv_records = add_smiles(pv_records)
-    print('Printing output after smiles are added ...')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # print('Printing output after smiles are added ...')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Merge calculated properties
     pv_records = add_calculated_properties(pv_records)
