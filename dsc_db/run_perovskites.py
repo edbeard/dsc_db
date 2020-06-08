@@ -28,7 +28,7 @@ perovskite_properties = [
 ]
 
 peroskite_material_properties = [
-    ('Perovskite', 'perovskite'),
+    ('SentencePerovskite', 'perovskite'),
     ('HoleTransportLayer', 'htl'),
     ('ElectronTransportLayer', 'etl')
 ]

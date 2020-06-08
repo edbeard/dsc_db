@@ -21,7 +21,6 @@ from dsc_db.model import PhotovoltaicRecord
 from dsc_db.data import all_dyes, blacklist_headings, redox_couples
 from dsc_db.smiles import add_smiles
 from dsc_db.calculate import calculate_metrics, calculate_relative_metrics, calculate_relative_metrics_perovskite
-import sigfig
 
 # Properties to be merged from contextual sentences
 dsc_properties = [('RedoxCouple', 'redox_couple'),
