@@ -487,12 +487,16 @@ all_etls = {
 'ITO/Al2O3' :{ 'labels':['ITO/Al2O3'],	 'structure': 'core-shell', 'name': 'indium tin oxide / aluminium oxide'},
 'ITO/V2O5' 	:{ 'labels':['ITO/V2O5'],	'structure': 'core-shell', 'name': 'indium tin oxide / vanadium(V) oxide'},
 'ITO/TiO2' 	:{ 'labels':['ITO/TiO2'], 'structure': 'core-shell', 'name': 'indium tin oxide / titanium dioxide'},
-'AZO':{ 'labels':	['aluminum doped zinc oxide', 'AZO'], 'name': 'aluminium doped zinc oxide'},
+'AZO':{ 'labels':	['aluminum doped zinc oxide', 'AZO', 'ZnO:Al'], 'name': 'aluminium doped zinc oxide'},
 'HfO2':{ 	'labels':	['hafnium(IV) oxide', 'HfO2'], 'name':' hafnium(IV) oxide'},
-'PEI/TiO2':{ 	'labels':	['polyethyleneimine / titanium dioxide', 'PEI/TiO2'], 'structure' : 'polyethyleneimine (PEI) thin layer on Titanium dioxide',
+'PEI/TiO2':{ 	'labels':	['polyethyleneimine / titanium dioxide', 'PEI/TiO2'], 'structure' : 'polyethyleneimine (PEI) thin layer on titanium dioxide',
                 'name': 'polyethyleneimine / titanium dioxide '},
 'PEI/ZnO' :	{'labels':	['polyethyleneimine / zinc oxide', 'PEI/ZnO' ] ,'structure': 'polyethyleneimine (PEI) thin layer on zinc oxide',
-                'name': 'polyethyleneimine / zinc oxide'}
+                'name': 'polyethyleneimine / zinc oxide'},
+'Al2O3': {'labels':	['aluminium oxide ', 'Al2O3' ] ,
+                'name': 'aluminium oxide'},
+'ZSO': {'labels':	['Zn2SnO4 ', 'Al2O3', 'zinc stannate' ] ,
+                'name': 'aluminium oxide'}
 }
 
 # List of disallowed tags for section headings

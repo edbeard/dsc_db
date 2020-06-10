@@ -2,7 +2,7 @@
 .. codeauthor: Ed Beard <ed.beard94@gmail.com>
 """
 import unittest
-from dsc_db.run_perovskites import add_contextual_info, PerovskiteRecord, peroskite_material_properties, add_distributor_info
+from dsc_db.run_perovskites import add_contextual_info, PerovskiteRecord, peroskite_material_properties, add_distributor_info, enhance_common_values
 
 from chemdataextractor.doc.text import Caption, Paragraph
 from chemdataextractor.doc import Document
@@ -205,5 +205,32 @@ class TestRunPerovskites(unittest.TestCase):
         pv_records = add_distributor_info(pv_records)
         self.assertEqual(pv_records[0].etl, expected)
 
+    def test_enhance_common_values_etl_1(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'etl': {'ElectronTransportLayer': {'contextual': 'document', 'raw_value': 'Zirconium Dioxide'}}
+        }
+        expected = {'ElectronTransportLayer': {'contextual': 'document',
+                            'raw_value': 'Zirconium Dioxide'},
+                             'labels': ['zirconium dioxide', 'ZrO2'],
+                             'name': 'zirconium dioxide'}
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = enhance_common_values(pv_records)
+        self.assertEqual(expected, pv_records[0].etl)
 
+    def test_enhance_common_values_etl_2(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'etl': {'ElectronTransportLayer': {'contextual': 'document', 'raw_value': 'WO3 / TiO2'}}
+        }
+        expected = {'ElectronTransportLayer': {'contextual': 'document',
+                            'raw_value': 'WO3 / TiO2'},
+                     'labels': ['WO3/TiO2'],
+                     'name': 'tungsten trioxide / titanium dioxide',
+                     'structure': ['WO3/TiO2']}
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = enhance_common_values(pv_records)
+        self.assertEqual(expected, pv_records[0].etl)
 

@@ -161,6 +161,29 @@ def add_smiles(pv_records):
     pass
 
 
+def enhance_common_values(pv_records):
+    """
+    The Perovskite equivalent of add_distributor_info.
+    Function adds extra useful information about perovskite properties (the perovskite material, the ETM and HTM) when
+    possible.
+    """
+
+    # First add the ETL information
+
+    for key, etl in all_etls.items():
+        for pv_record in pv_records:
+            if pv_record.etl:
+                if pv_record.etl['ElectronTransportLayer'].get('raw_value') is not None:
+                    if pv_record.etl['ElectronTransportLayer'].get('raw_value').replace(' / ', '/') in etl['labels'] or \
+                        pv_record.etl['ElectronTransportLayer'].get('raw_value').lower() in etl['labels']:
+                        pv_record.etl['name'] = all_etls[key]['name']
+                        pv_record.etl['labels'] = all_etls[key]['labels']
+                        if 'structure' in all_etls[key].keys():
+                            pv_record.etl['structure'] = all_etls[key]['labels']
+
+    return pv_records
+
+
 if __name__ == '__main__':
 
     import cProfile, pstats, io
