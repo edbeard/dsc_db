@@ -406,7 +406,8 @@ solaronix_htls = {
                    "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
                    'C81H68N4O8',
                    'Spiro-MeOTAD',
-                   'N7′-octakis(4-methoxyphenyl)-9,9′-spirobi[9H-fluorene]-2,2′,7,7′-tetramine'
+                   'N7′-octakis(4-methoxyphenyl)-9,9′-spirobi[9H-fluorene]-2,2′,7,7′-tetramine',
+                   'pp-Spiro-OMeTAD'
                    ],
         'name': "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
         'smiles': "COC1=CC=C(C=C1)N(C2=CC=C(C=C2)OC)C3=CC4=C(C=C3)C5=C(C46C7=C(C=CC(=C7)N(C8=CC=C(C=C8)OC)C9=CC=C(C=C9)OC)C1=C6C=C(C=C1)N(C1=CC=C(C=C1)OC)C1=CC=C(C=C1)OC)C=C(C=C5)N(C1=CC=C(C=C1)OC)C1=CC=C(C=C1)OC"
@@ -446,7 +447,8 @@ sigma_aldrich_htls = {
         'labels': ['X59',
                    'Spiro[9H-fluorene-9,9′-[9H]xanthene]-2,7-diamine',
                    "N,N,N′,N′-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9′-xanthene]-2,7-diamine",
-                   "2-N,2-N,7-N,7-N-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9'-xanthene]-2,7-diamine"
+                   "2-N,2-N,7-N,7-N-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9'-xanthene]-2,7-diamine",
+                   "N′,N′,N′′,N′′-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9′-xanthene]−2,7-diamine"
                    'C53H42N2O5'
                    ],
         'name': "2-N,2-N,7-N,7-N-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9'-xanthene]-2,7-diamine",
@@ -463,7 +465,369 @@ sigma_aldrich_htls = {
     },
 }
 
-all_htls = {**solaronix_htls, **sigma_aldrich_htls}
+review_paper_htls = {
+
+    'PTAA': {
+        'labels': [
+            "PTAA",
+            "poly[bis(4-phenyl)(2,4,6-trimethylphenyl)amine]",
+            "polytriarylamine"
+            ],
+        "name":'poly[bis(4-phenyl)(2,4,6-trimethylphenyl)amine]',
+        "smiles": ""
+    },
+
+    '4-Ethyl-N-(4-ethylphenyl)aniline': {
+        'labels': [
+            "4-Ethyl-N-(4-ethylphenyl)aniline"
+        ],
+        "name": '4-Ethyl-N-(4-ethylphenyl)aniline',
+        "smiles": "CCc1ccc(Nc2ccc(CC)cc2)cc1"
+    },
+
+    'N1-(4-(dimethylamino)phenyl)-N4,N4-dimethylbenzene-1,4-diamine': {
+        'labels': [
+            "N1-(4-(dimethylamino)phenyl)-N4,N4-dimethylbenzene-1,4-diamine"
+        ],
+        "name": 'N1-(4-(dimethylamino)phenyl)-N4,N4-dimethylbenzene-1,4-diamine',
+        "smiles": "CN(C)c1ccc(Nc2ccc(cc2)N(C)C)cc1"
+    },
+
+    'bis(4-methylthiophenyl)amine': {
+        'labels': [
+            "bis(4-methylthiophenyl)amine"
+        ],
+        "name": 'bis(4-methylthiophenyl)amine',
+        "smiles": "Cc1csc(Nc2scc(C)c2)c1"
+    },
+
+    'mp-SFX-3PA': {
+        'labels': [
+            "mp-SFX-3PA"
+        ],
+        "name": 'mp-SFX-3PA',
+        "smiles": ""
+    },
+    'mm-SFX-3PA': {
+        'labels': [
+            "mm-SFX-3PA"
+        ],
+        "name": 'mm-SFX-3PA',
+        "smiles": ""
+    },
+    'mp-SFX-2PA': {
+        'labels': [
+            "mp-SFX-2PA"
+        ],
+        "name": 'mp-SFX-2PA',
+        "smiles": ""
+    },
+    'mm-SFX-2PA': {
+        'labels': [
+            "mm-SFX-2PA"
+        ],
+        "name": 'mm-SFX-2PA',
+        "smiles": ""
+    },
+    'FDT': {
+        'labels': [
+            "FDT",
+            "2′,7′-bis(bis(4-methoxyphenyl)amino)spiro[cyclopenta[2,1-b:3,4-b′]dithiophene-4,9′-fluorene]"
+        ],
+        "name": '2′,7′-bis(bis(4-methoxyphenyl)amino)spiro[cyclopenta[2,1-b:3,4-b′]dithiophene-4,9′-fluorene]',
+        "smiles": "COc1ccc(cc1)N(c2ccc(OC)cc2)c3ccc4c5ccc(cc5C6(c7ccsc7c8sccc68)c4c3)N(c9ccc(OC)cc9)c%10ccc(OC)cc%10"
+    },
+    'X60': {
+        'labels': [
+            "X60",
+            "N2,N2,N2',N2',N7,N7,N7',N7'-octakis(4-methoxyphenyl)spiro[fluorene-9,9'- xanthene]-2,2',7,7'-tetraamine"
+        ],
+        "name": "N2,N2,N2',N2',N7,N7,N7',N7'-octakis(4-methoxyphenyl)spiro[fluorene-9,9'- xanthene]-2,2',7,7'-tetraamine",
+        "smiles": "COc1ccc(cc1)N(c2ccc(OC)cc2)c3ccc4c5ccc(cc5C6(c7ccsc7c8sccc68)c4c3)N(c9ccc(OC)cc9)c%10ccc(OC)cc%10"
+    },
+    'Spiro-S': {
+        'labels': [
+            "Spiro-S",
+            "2,2′,7,7′-tetrakis[N,N-bis(p-methylsulfanylphenyl)amino]-9,9′-spirobifluorene"
+        ],
+        "name": "2,2′,7,7′-tetrakis[N,N-bis(p-methylsulfanylphenyl)amino]-9,9′-spirobifluorene",
+        "smiles": "CSc1ccc(cc1)N(c2ccc(SC)cc2)c3ccc4c5ccc(cc5C6(c4c3)c7cc(ccc7c8ccc(cc68)N(c9ccc(SC)cc9)c%10ccc(SC)cc%10)N(c%11ccc(SC)cc%11)c%12ccc(SC)cc%12)N(c%13ccc(SC)cc%13)c%14ccc(SC)cc%14"
+    },
+    'Spiro-N': {
+        'labels': [
+            "Spiro-N",
+            "2,2′,7,7′-tetrakis[N,N-bis(p-N,N-dimethylaminophenyl)amino]-9,9′-spirobifluorene"
+        ],
+        "name": "2,2′,7,7′-tetrakis[N,N-bis(p-N,N-dimethylaminophenyl)amino]-9,9′-spirobifluorene",
+        "smiles": "CN(C)c1ccc(cc1)N(c2ccc(cc2)N(C)C)c3ccc4c5ccc(cc5C6(c4c3)c7cc(ccc7c8ccc(cc68)N(c9ccc(cc9)N(C)C)c%10ccc(cc%10)N(C)C)N(c%11ccc(cc%11)N(C)C)c%12ccc(cc%12)N(C)C)N(c%13ccc(cc%13)N(C)C)c%14ccc(cc%14)N(C)C"
+    },
+    'Spiro-E': {
+        'labels': [
+            "Spiro-E",
+            "2,2′,7,7′-tetrakis[N,N-bis(p-ethylphenyl)amino]-9,9′-spirobifluorene"
+        ],
+        "name": "2,2′,7,7′-tetrakis[N,N-bis(p-ethylphenyl)amino]-9,9′-spirobifluorene",
+        "smiles": "CCc1ccc(cc1)N(c2ccc(CC)cc2)c3ccc4c5ccc(cc5C6(c4c3)c7cc(ccc7c8ccc(cc68)N(c9ccc(CC)cc9)c%10ccc(CC)cc%10)N(c%11ccc(CC)cc%11)c%12ccc(CC)cc%12)N(c%13ccc(CC)cc%13)c%14ccc(CC)cc%14"
+    },
+    'P3HT': {
+        'labels': [
+            "P3HT",
+            "Poly(3-hexylthiophene-2,5-diyl)"
+        ],
+        "name": "Poly(3-hexylthiophene-2,5-diyl)",
+        "smiles": ""
+    },
+    'PCBTDPP': {
+        'labels': [
+            "PCBTDPP",
+            "Poly[N-90-heptadecanyl-2,7carbazole-alt-3,6-bis(thiophen-5-yl)-2,5-dioctyl-2,5-dihydropyrrolo[3,4]pyrrole-1,4-dione]"
+        ],
+        "name": "Poly[N-90-heptadecanyl-2,7carbazole-alt-3,6-bis(thiophen-5-yl)-2,5-dioctyl-2,5-dihydropyrrolo[3,4]pyrrole-1,4-dione]",
+        "smiles": ""
+    },
+    'PCPDTBT': {
+        'labels': [
+            "PCPDTBT",
+            "Poly[2,6-(4,4-bis-(2-ethylhexyl)-4H-cyclopenta [2,1-b;3,4-b′]dithiophene)-alt-4,7(2,1,3-benzothiadiazole)]"
+        ],
+        "name": "Poly[2,6-(4,4-bis-(2-ethylhexyl)-4H-cyclopenta [2,1-b;3,4-b′]dithiophene)-alt-4,7(2,1,3-benzothiadiazole)]",
+        "smiles": ""
+    },
+    'PDI': {
+        'labels': [
+            "PDI",
+            "N,N′-dialkylperylenediimide"
+        ],
+        "name": "N,N′-dialkylperylenediimide",
+        "smiles": ""
+    },
+    'TPD': {
+        'labels': [
+            "TPD",
+            "N,N′-bis(3-methylphenyl)-N,N′-diphenylbenzidine"
+        ],
+        "name": "N,N′-bis(3-methylphenyl)-N,N′-diphenylbenzidine",
+        "smiles": "Cc1cccc(c1)N(c2ccccc2)c3ccc(cc3)c4ccc(cc4)N(c5ccccc5)c6cccc(C)c6"
+    },
+    'pm-spiro-OMeTAD': {
+        'labels': [
+            "pm-spiro-OMeTAD",
+            "N2 ,N2’,N7 ,N7’-tetrakis(3-methoxyphenyl)-N2 ,N2’,N7 ,N7’-tetrakis(4- methoxyphenyl)-9,9’-spirobi[fluorene]-2,2’,7,7’-tetraamine",
+        ],
+        "name": "N2 ,N2’,N7 ,N7’-tetrakis(3-methoxyphenyl)-N2 ,N2’,N7 ,N7’-tetrakis(4- methoxyphenyl)-9,9’-spirobi[fluorene]-2,2’,7,7’-tetraamine",
+        "smiles": "COc1ccc(cc1)N(c2cccc(OC)c2)c3ccc4c5ccc(cc5C6(c4c3)c7cc(ccc7c8ccc(cc68)N(c9ccc(OC)cc9)c%10cccc(OC)c%10)N(c%11ccc(OC)cc%11)c%12cccc(OC)c%12)N(c%13ccc(OC)cc%13)c%14cccc(OC)c%14"
+    },
+    'po-spiro-OMeTAD': {
+        'labels': [
+            "po-spiro-OMeTAD",
+            "N2,N2’,N7 ,N7’-tetrakis(2-methoxyphenyl)-N2,N2’,N7,N7’-tetrakis(4- methoxyphenyl)-9,9’-spirobi[fluorene]-2,2’,7,7’-tetraamine"
+
+        ],
+        "name": "N2,N2’,N7 ,N7’-tetrakis(2-methoxyphenyl)-N2,N2’,N7,N7’-tetrakis(4- methoxyphenyl)-9,9’-spirobi[fluorene]-2,2’,7,7’-tetraamine",
+        "smiles": "COc1ccc(cc1)N(c2ccc3c4ccc(cc4C5(c3c2)c6cc(ccc6c7ccc(cc57)N(c8ccc(OC)cc8)c9ccccc9OC)N(c%10ccc(OC)cc%10)c%11ccccc%11OC)N(c%12ccc(OC)cc%12)c%13ccccc%13OC)c%14ccccc%14OC"
+    },
+    'PPyra‐XA': {
+        'labels': [
+            "PPyra‐XA",
+        ],
+        "name": "PPyra‐XA",
+        "smiles": ""
+    },
+    'PPyra‐TXA': {
+        'labels': [
+            "PPyra‐TXA",
+        ],
+        "name": "PPyra‐TXA",
+        "smiles": ""
+    },
+    'PPyra‐ACD': {
+        'labels': [
+            "PPyra‐ACD",
+        ],
+        "name": "PPyra‐ACD",
+        "smiles": ""
+    },
+    'WY-1': {
+        'labels': [
+            "WY-1",
+        ],
+        "name": "WY-1",
+        "smiles": ""
+    },
+    'WY-2': {
+        'labels': [
+            "WY-2",
+        ],
+        "name": "WY-2",
+        "smiles": ""
+    },
+    'WY-3': {
+        'labels': [
+            "WY-3",
+        ],
+        "name": "WY-3",
+        "smiles": ""
+    },
+    'CBP': {
+        'labels': [
+            "CBP",
+            "4,4-N,N′-dicarbazole-1,1′-biphenyl"
+        ],
+        "name": "4,4-N,N′-dicarbazole-1,1′-biphenyl",
+        "smiles": "C1=CC=C2C(=C1)C3=CC=CC=C3N2C4=CC=C(C=C4)C5=CC=C(C=C5)N6C7=CC=CC=C7C8=CC=CC=C86"
+    },
+    'pyrene': {
+        'labels': [
+            "pyrene",
+        ],
+        "name": "pyrene",
+        "smiles": "c1cc2ccc3cccc4ccc(c1)c2c34"
+    },
+    'TPE': {
+        'labels': [
+            "TPE",
+            "1,1,2,2-tetraphenylethene"
+        ],
+        "name": "1,1,2,2-tetraphenylethene",
+        "smiles": "c1ccc(cc1)C(c2ccccc2)=C(c3ccccc3)c4ccccc4"
+    },
+    'bifluorenylidene': {
+        'labels': [
+            "bifluorenylidene",
+        ],
+        "name": "bifluorenylidene",
+        "smiles": "c1ccc2c(c1)C=C3C2=CC=CC3=C4C=CC=C5c6ccccc6C=C45"
+    },
+    'CuSCN': {
+        'labels': [
+            "CuSCN",
+            "Copper(I) thiocyanate"
+        ],
+        "name": "Copper(I) thiocyanate",
+        "smiles": "[Cu]SC#N"
+    },
+    'TIPS-P': {
+        'labels': [
+            "TIPS-pentacene",
+            "TIPS-P",
+            "6,13-bis(triisopropylsilylethynyl) pentacene"
+        ],
+        "name": "6,13-bis(triisopropylsilylethynyl) pentacene",
+        "smiles": "CC(C)[Si](C#Cc1c2cc3ccccc3cc2c(C#C[Si](C(C)C)(C(C)C)C(C)C)c4cc5ccccc5cc14)(C(C)C)C(C)C"
+    },
+    'KR216': {
+        'labels': [
+            "KR216",
+            "4,4′‐dimethoxydiphenylamine‐substituted 9,9′‐bifluorenylidene"
+        ],
+        "name": "4,4′‐dimethoxydiphenylamine‐substituted 9,9′‐bifluorenylidene",
+        "smiles": ""
+    },
+    'H11': {
+        'labels': [
+            "H11",
+            "N2,N2,N2',N2',N7,N7,N7',N7'-octakis(4-methoxyphenyl)-9H,9'H-[9,9'-bifluorene]-2,2',7,7'- tetraamine"
+        ],
+        "name": "N2,N2,N2',N2',N7,N7,N7',N7'-octakis(4-methoxyphenyl)-9H,9'H-[9,9'-bifluorene]-2,2',7,7'- tetraamine",
+        "smiles": "COc1ccc(cc1)N(c2ccc(OC)cc2)c3ccc4c(c3)C(C5c6cc(ccc6c7ccc(cc57)N(c8ccc(OC)cc8)c9ccc(OC)cc9)N(c%10ccc(OC)cc%10)c%11ccc(OC)cc%11)c%12cc(ccc4%12)N(c%13ccc(OC)cc%13)c%14ccc(OC)cc%14"
+    },
+    'H12': {
+        'labels': [
+            "H12",
+            "N2,N2,N2',N2',N7,N7,N7',N7'-octakis(4-methoxyphenyl)-[9,9'-bifluorenylidene]-2,2',7,7'- tetraamine"
+        ],
+        "name": "N2,N2,N2',N2',N7,N7,N7',N7'-octakis(4-methoxyphenyl)-[9,9'-bifluorenylidene]-2,2',7,7'- tetraamine",
+        "smiles": "COc1ccc(cc1)N(c2ccc(OC)cc2)c3ccc4c5ccc(cc5C(c4c3)=C6c7cc(ccc7c8ccc(cc68)N(c9ccc(OC)cc9)c%10ccc(OC)cc%10)N(c%11ccc(OC)cc%11)c%12ccc(OC)cc%12)N(c%13ccc(OC)cc%13)c%14ccc(OC)cc%14"
+    },
+    '1,3-Bis(2-(octyloxy)benzo[5,6][1,4]oxazino[2,3,4-kl]phenoxazin-3-yl)azulene': {
+        'labels': [
+            "1,3-Bis(2-(octyloxy)benzo[5,6][1,4]oxazino[2,3,4-kl]phenoxazin-3-yl)azulene"
+        ],
+        "name": "1,3-Bis(2-(octyloxy)benzo[5,6][1,4]oxazino[2,3,4-kl]phenoxazin-3-yl)azulene",
+        "smiles": "CCCCCCCCOc1cc2N3c4ccccc4Oc5cccc(Oc2cc1c6cc(c7cc8Oc9cccc%10Oc%11ccccc%11N(c8cc7OCCCCCCCC)c9%10)c%12cccccc6%12)c35"
+    },
+    '5,7-Bis(2-(octyloxy)benzo[5,6][1,4]oxazino[2,3,4-kl]phenoxazin-3-yl)azulene': {
+        'labels': [
+            "5,7-Bis(2-(octyloxy)benzo[5,6][1,4]oxazino[2,3,4-kl]phenoxazin-3-yl)azulene"
+        ],
+        "name": "5,7-Bis(2-(octyloxy)benzo[5,6][1,4]oxazino[2,3,4-kl]phenoxazin-3-yl)azulene",
+        "smiles": "CCCCCCCCOc1cc2N3c4ccccc4Oc5cccc(Oc2cc1c6cc7cccc7cc(c6)c8cc9Oc%10cccc%11Oc%12ccccc%12N(c9cc8OCCCCCCCC)c%10%11)c35"
+    },
+    '3,3´,5,5´-Tetrakis(2-(octyloxy)benzo[5,6][1,4]oxazino[2,3,4-kl]phenoxazin-3-yl)-1,1´-biphenyl': {
+        'labels': [
+            "3,3´,5,5´-Tetrakis(2-(octyloxy)benzo[5,6][1,4]oxazino[2,3,4-kl]phenoxazin-3-yl)-1,1´-biphenyl"
+        ],
+        "name": "3,3´,5,5´-Tetrakis(2-(octyloxy)benzo[5,6][1,4]oxazino[2,3,4-kl]phenoxazin-3-yl)-1,1´-biphenyl",
+        "smiles": "CCCCCCCCOc1cc2N3c4ccccc4Oc5cccc(Oc2cc1c6cc(cc(c6)c7cc8Oc9cccc%10Oc%11ccccc%11N(c8cc7OCCCCCCCC)c9%10)c%12cc(cc(c%12)c%13cc%14Oc%15cccc%16Oc%17ccccc%17N(c%14cc%13OCCCCCCCC)c%15%16)c%18cc%19Oc%20cccc%21Oc%22ccccc%22N(c%19cc%18OCCCCCCCC)c%20%21)c35"
+    },
+    'di-TPA': {
+        'labels': [
+            "di-TPA",
+            "N,N,N'',N''-tetrakis(4-methoxyphenyl)-[1,1':4',1''-terphenyl]-4,4''-diamine"
+        ],
+        "name": "N,N,N'',N''-tetrakis(4-methoxyphenyl)-[1,1':4',1''-terphenyl]-4,4''-diamine",
+        "smiles": ""
+    },
+    'tri-TPA': {
+        'labels': [
+            "tri-TPA",
+            "4,7,12-tris-[4-amino-[N,N-di-(4-methoxyphenyl)]-phenyl]-[2,2]paracyclophane"
+        ],
+        "name": "4,7,12-tris-[4-amino-[N,N-di-(4-methoxyphenyl)]-phenyl]-[2,2]paracyclophane",
+        "smiles": ""
+    },
+    'tetra-TPA': {
+        'labels': [
+            "tetra-TPA",
+            "4,7,12,15-tetrakis-[4-amino-[N,N-di-(4-methoxyphenyl)]-phenyl]-[2,2]paracyclophane",
+            "PCP-TPA"
+        ],
+        "name": "4,7,12,15-tetrakis-[4-amino-[N,N-di-(4-methoxyphenyl)]-phenyl]-[2,2]paracyclophane",
+        "smiles": ""
+    },
+    'TAE-1': {
+        'labels': [
+            "TAE-1",
+            "tetra{4-[N,N-(4,4′-dimethoxydiphenylamino)]phenyl}ethene"
+        ],
+        "name": "tetra{4-[N,N-(4,4′-dimethoxydiphenylamino)]phenyl}ethene",
+        "smiles": ""
+    },
+    'V852': {
+        'labels': [
+            "V852",
+            "9,9',9''-(benzene-1,3,5-triyltrimethylylidene)tris[N,N,N',N'-tetrakis(4-methoxyphenyl)-9Hfluorene-2,7-diamine]"
+        ],
+        "name": "9,9',9''-(benzene-1,3,5-triyltrimethylylidene)tris[N,N,N',N'-tetrakis(4-methoxyphenyl)-9Hfluorene-2,7-diamine]",
+        "smiles": ""
+    },
+    'V859': {
+        'labels': [
+            "V859",
+            "9,9'-(benzene-1,2-diyldimethylylidene)bis[N,N,N',N'-tetrakis(4-methoxyphenyl)-9H-fluorene-2,7-diamine]"
+        ],
+        "name": "9,9'-(benzene-1,2-diyldimethylylidene)bis[N,N,N',N'-tetrakis(4-methoxyphenyl)-9H-fluorene-2,7-diamine]",
+        "smiles": ""
+    },
+    'V862': {
+        'labels': [
+            "V862",
+            "9,9'-(thiene-2,5-diyldimethylylidene)bis[N,N,N',N'-tetrakis(4-methoxyphenyl)-9H-fluorene-2,7-diamine]"
+        ],
+        "name": "9,9'-(thiene-2,5-diyldimethylylidene)bis[N,N,N',N'-tetrakis(4-methoxyphenyl)-9H-fluorene-2,7-diamine]",
+        "smiles": ""
+    },
+    'PETMP': {
+        'labels': [
+            "PETMP",
+            "pentaerythritol tetrakis(3-mercaptopropionate)"
+        ],
+        "name": "pentaerythritol tetrakis(3-mercaptopropionate)",
+        "smiles": "OCC(CO)(CO)CO.OC(=O)CCS.OC(=O)CCS.OC(=O)CCS.OC(=O)CCS"
+    }
+}
+
+all_htls = {**solaronix_htls, **sigma_aldrich_htls, **review_paper_htls}
 
 all_etls = {
     'TiO2': { 'labels': [ 'titanium dioxide', 'TiO2'], 'name': 'titanium dioxide' },
@@ -472,7 +836,6 @@ all_etls = {
 'SiO2': { 'labels':	['silicon dioxide', 'SiO2'], 'name': 'silicon dioxide'},
 'NiO': { 'labels':	['nickel oxide', 'NiO'], 'name':'nickel oxide'},
 'ZrO2': {	'labels':['zirconium dioxide', 'ZrO2'], 'name': 'zirconium dioxide'},
-'PTAA': {	'labels':['poly(triarylamine)', 'PTAA'], 'name':'poly(triarylamine)'},
 'PCBM' :{'labels': ['phenyl-C61-butyric acid methyl ester', 'PCBM'], 'name':'phenyl-C61-butyric acid methyl ester'},
 'm-TiO2':{ 'labels':	['m-TiO2', 'mesoporous titanium dioxide'], 'structure': 'mesoporous', 'name':'titanium dioxide'},
 'c-TiO2' :{'labels':	['c-TiO2', 'compact titanium dioxide' ], 'structure': 'compact', 'name': 'titanium dioxide'},

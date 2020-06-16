@@ -100,6 +100,18 @@ class TestRunPerovskites(unittest.TestCase):
                                                    'value': [756.0]}}}
         self.do_contextual_table_caption_merging(caption, HoleTransportLayer, expected)
 
+    def test_add_contextual_htc_from_document_2(self):
+        caption = "Device parameters for MAPbI3 solar cells prepared on an identical TiO2 ETL and capped with a Spiro-S HTL."
+        expected = {'htl': {'HoleTransportLayer': {'contextual': 'table_caption',
+                                                   'raw_value': 'Spiro-S',
+                                                   'specifier': 'HTL'}},
+                    'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                   'raw_value': '756',
+                                                   'specifier': 'Voc',
+                                                   'units': '(10^-3.0) * Volt^(1.0)',
+                                                   'value': [756.0]}}}
+        self.do_contextual_table_caption_merging(caption, HoleTransportLayer, expected)
+
     def test_add_contextual_etc_from_document(self):
         text = "The device used c-TiO2 in the electron transport layer."
         expected = {'etl': {'ElectronTransportLayer': {'contextual': 'document',
@@ -234,3 +246,36 @@ class TestRunPerovskites(unittest.TestCase):
         pv_records = enhance_common_values(pv_records)
         self.assertEqual(expected, pv_records[0].etl)
 
+    def test_enhance_common_values_htl_1(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'htl': {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'Spiro-S'}}
+        }
+        expected = {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'Spiro-S'},
+            'labels': ['Spiro-S',
+                    '2,2′,7,7′-tetrakis[N,N-bis(p-methylsulfanylphenyl)amino]-9,9′-spirobifluorene'],
+            'name': '2,2′,7,7′-tetrakis[N,N-bis(p-methylsulfanylphenyl)amino]-9,9′-spirobifluorene',
+            'smiles': 'CSc1ccc(cc1)N(c2ccc(SC)cc2)c3ccc4c5ccc(cc5C6(c4c3)c7cc(ccc7c8ccc(cc68)N(c9ccc(SC)cc9)c%10ccc(SC)cc%10)N(c%11ccc(SC)cc%11)c%12ccc(SC)cc%12)N(c%13ccc(SC)cc%13)c%14ccc(SC)cc%14'}
+
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = enhance_common_values(pv_records)
+        self.assertEqual(expected, pv_records[0].htl)
+
+    def test_enhance_common_values_htl_2(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'htl': {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'X59'}}
+        }
+        expected = {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'X59'},
+                        'labels': ['X59',
+                                'Spiro[9H-fluorene-9,9′-[9H]xanthene]-2,7-diamine',
+                                'N,N,N′,N′-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9′-xanthene]-2,7-diamine',
+                                "2-N,2-N,7-N,7-N-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9'-xanthene]-2,7-diamine",
+                                'N′,N′,N′′,N′′-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9′-xanthene]−2,7-diamineC53H42N2O5'],
+                        'name': "2-N,2-N,7-N,7-N-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9'-xanthene]-2,7-diamine",
+                        'smiles': 'COC1=CC=C(C=C1)N(C2=CC=C(C=C2)OC)C3=CC4=C(C=C3)C5=C(C46C7=CC=CC=C7OC8=CC=CC=C68)C=C(C=C5)N(C9=CC=C(C=C9)OC)C1=CC=C(C=C1)OC'}
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = enhance_common_values(pv_records)
+        self.assertEqual(expected, pv_records[0].htl)

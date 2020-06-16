@@ -174,12 +174,27 @@ def enhance_common_values(pv_records):
         for pv_record in pv_records:
             if pv_record.etl:
                 if pv_record.etl['ElectronTransportLayer'].get('raw_value') is not None:
-                    if pv_record.etl['ElectronTransportLayer'].get('raw_value').replace(' / ', '/') in etl['labels'] or \
+                    if pv_record.etl['ElectronTransportLayer'].get('raw_value').replace(' / ', '/').replace(' - ', '-') in etl['labels'] or \
                         pv_record.etl['ElectronTransportLayer'].get('raw_value').lower() in etl['labels']:
                         pv_record.etl['name'] = all_etls[key]['name']
                         pv_record.etl['labels'] = all_etls[key]['labels']
                         if 'structure' in all_etls[key].keys():
                             pv_record.etl['structure'] = all_etls[key]['labels']
+
+    # Then add the HTl information...
+    for key, htl in all_htls.items():
+        for pv_record in pv_records:
+            if pv_record.htl:
+                if pv_record.htl['HoleTransportLayer'].get('raw_value') is not None:
+                    if 'Spiro-S' in htl['labels'] :
+                        print('on the htl')
+                    if pv_record.htl['HoleTransportLayer'].get('raw_value').replace(' / ', '/').replace(' - ', '-') in htl['labels']:
+
+                        pv_record.htl['name'] = all_htls[key]['name']
+                        pv_record.htl['labels'] = all_htls[key]['labels']
+                        pv_record.htl['smiles'] = all_htls[key]['smiles']
+
+
 
     return pv_records
 
