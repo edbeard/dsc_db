@@ -869,7 +869,7 @@ common_quantum_dot_materials = [
 
 # Lists of key terms for classification of different PV types...
 psc_indicators = [
-    'perovskite', 'perovskites', 'psc', 'pscs', 'spiro ometad'
+    'perovskite', 'perovskites', 'psc', 'pscs', 'spiro ometad', 'pedot'
 ]
 
 qdsc_indicators = [

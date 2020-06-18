@@ -72,7 +72,7 @@ def classify_document(doc):
         result = get_most_frequent(abstract)
 
     if not result:
-        result = 'dsc'
+        result = 'psc'
 
     return result
 

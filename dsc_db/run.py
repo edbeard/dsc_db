@@ -288,7 +288,7 @@ def add_distributor_info(pv_records):
             if pv_record.dye:
                 for pv_dye in pv_record.dye['Dye']:
                     if pv_dye.get('raw_value') in dye['labels'] and pv_dye.get('raw_value') is not None:
-                        pv_dye['smiles'] = all_dyes[key]['smiles']
+                        pv_dye['smiles'] = {'value':  all_dyes[key]['smiles'], 'context':'dict'}
                         pv_dye['name'] = all_dyes[key]['name']
                         pv_dye['labels'] = all_dyes[key]['labels']
 

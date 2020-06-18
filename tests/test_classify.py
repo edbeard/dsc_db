@@ -38,15 +38,6 @@ class TestClassification(unittest.TestCase):
         classification = get_most_frequent(title)
         self.assertEqual(classification, 'dsc')
 
-    def test_classification_defaults_to_dsc(self):
-        title = Title('Observing the latest developments in D S Cs).')
-        abstract = Paragraph('This is an abstract describing that describes the specific experiment but doesn\'t explicitly'
-                             ' mention the kind of solar cell.')
-        first_heading = Heading('1. Intro')
-        doc = Document(title, abstract, first_heading)
-        classification = classify_document(doc)
-        self.assertEqual(classification, 'dsc')
-
     def test_classification_from_abstract_rsc(self):
 
         title = Title('This is a dummy title that reveals zilch about the paper.')

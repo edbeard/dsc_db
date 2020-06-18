@@ -225,7 +225,7 @@ class TestRun(unittest.TestCase):
                   '(OC-6-32)-[[2,2´:6´,2´´-terpyridine]-4,4´,4´´-tricarboxylato(3-)-κN1,κN1´,κN1´´]tris(thiocyanato-κN)ruthenate(4-) '
                   '(2:2:1)',
           'raw_value': 'N719',
-          'smiles': '[Ru++].CCCC[N+](CCCC)(CCCC)CCCC.CCCC[N+](CCCC)(CCCC)CCCC.OC(=O)c1ccnc(c1)c2cc(ccn2)C([O-])=O.OC(=O)c3ccnc(c3)c4cc(ccn4)C([O-])=O.[N-]=C=S.[N-]=C=S'}]}
+          'smiles': {'context':'dict', 'value' : '[Ru++].CCCC[N+](CCCC)(CCCC)CCCC.CCCC[N+](CCCC)(CCCC)CCCC.OC(=O)c1ccnc(c1)c2cc(ccn2)C([O-])=O.OC(=O)c3ccnc(c3)c4cc(ccn4)C([O-])=O.[N-]=C=S.[N-]=C=S'}}]}
         pv_records = [PhotovoltaicRecord(pv_input, Table(Caption('')))]
         pv_records = add_distributor_info(pv_records)
         self.assertEqual(expected, pv_records[0].dye)
