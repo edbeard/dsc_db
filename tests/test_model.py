@@ -81,7 +81,7 @@ class TestModel(unittest.TestCase):
             'series_resistance': None,
             'exposure_time': None,
             'table_row_categories': None,
-            'calculated_properties': None
+            'derived_properties': None
         }
 
         record = PhotovoltaicRecord(input)
@@ -151,7 +151,7 @@ class TestModel(unittest.TestCase):
             'series_resistance': None,
             'exposure_time': None,
             'table_row_categories': None,
-            'calculated_properties': None
+            'derived_properties': None
         }
 
         record = PhotovoltaicRecord(input)

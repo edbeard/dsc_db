@@ -33,7 +33,7 @@ test_records_pt = [{'voc': {'OpenCircuitVoltage': {'raw_value': '22.22', 'raw_un
                       'jsc': {'ShortCircuitCurrentDensity': {'raw_value': '11.11', 'raw_units': '(mAcm−2)', 'value': [11.11], 'units': '(10^1.0) * Ampere^(1.0)  Meter^(-2.0)',
                                                              'specifier': 'Jsc', 'std_units': 'Ampere^(1.0)  Meter^(-2.0)', 'std_value': [111.1]}},
                       'counter_electrode': {'CounterElectrode': {'specifier': 'CE', 'raw_value': 'Novel electrode'}},
-                      'calculated_properties': {'solar_simulator': {'value': [1851.5], 'units': 'WattPerMeterSquared^(1.0)'}},
+                      'derived_properties': {'solar_simulator': {'value': [1851.5], 'units': 'WattPerMeterSquared^(1.0)'}},
                       'table_row_categories': 'Pt'},
 
                       {'voc': {'OpenCircuitVoltage': {'raw_value': '66.66', 'raw_units': '(V)', 'value': [66.66],
@@ -45,10 +45,10 @@ test_records_pt = [{'voc': {'OpenCircuitVoltage': {'raw_value': '22.22', 'raw_un
                                                               'value': [55.55], 'units': '(10^1.0) * Ampere^(1.0)  Meter^(-2.0)',
                                                               'specifier': 'Jsc', 'std_units': 'Ampere^(1.0)  Meter^(-2.0)', 'std_value': [555.5]}},
                        'counter_electrode': {'CounterElectrode': {'specifier': 'CE', 'raw_value': ' Pt '}},
-                       'calculated_properties': {'solar_simulator': {'value': [32400.9], 'units': 'WattPerMeterSquared^(1.0)'}},
+                       'derived_properties': {'solar_simulator': {'value': [32400.9], 'units': 'WattPerMeterSquared^(1.0)'}},
                        'table_row_categories': 'Novel electrode'}]
 
-test_records_n719 = [{'calculated_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
+test_records_n719 = [{'derived_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
                                                                        'value': [1851.5]}},
                          'dye': {'Dye': {'raw_value': 'N719', 'specifier': 'Dye'}},
                          'ff': {'FillFactor': {'raw_value': '33.33',
@@ -74,7 +74,7 @@ test_records_n719 = [{'calculated_properties': {'solar_simulator': {'units': 'Wa
                                                         'std_value': [22.22],
                                                         'units': 'Volt^(1.0)',
                                                         'value': [22.22]}}},
-                        {'calculated_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
+                        {'derived_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
                                                                        'value': [32400.9]}},
                          'dye': {'Dye': {'raw_value': 'Novel dye', 'specifier': 'Dye'}},
                          'ff': {'FillFactor': {'raw_value': '77.77',
@@ -101,7 +101,7 @@ test_records_n719 = [{'calculated_properties': {'solar_simulator': {'units': 'Wa
                                                         'units': 'Volt^(1.0)',
                                                         'value': [66.66]}}}]
 
-test_records_tio2 = [{'calculated_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
+test_records_tio2 = [{'derived_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
                                                'value': [1851.5]}},
                          'ff': {'FillFactor': {'raw_value': '33.33',
                                                'specifier': 'FF',
@@ -128,7 +128,7 @@ test_records_tio2 = [{'calculated_properties': {'solar_simulator': {'units': 'Wa
                                                         'std_value': [22.22],
                                                         'units': 'Volt^(1.0)',
                                                         'value': [22.22]}}},
-                        {'calculated_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
+                        {'derived_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
                                                                        'value': [32400.9]}},
                          'ff': {'FillFactor': {'raw_value': '77.77',
                                                'specifier': 'FF',
@@ -157,7 +157,7 @@ test_records_tio2 = [{'calculated_properties': {'solar_simulator': {'units': 'Wa
                                                         'value': [66.66]}}}
                         ]
 
-test_records_perovskite = [{'calculated_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
+test_records_perovskite = [{'derived_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
                                                'value': [1851.5]}},
                          'ff': {'FillFactor': {'raw_value': '33.33',
                                                'specifier': 'FF',
@@ -184,7 +184,7 @@ test_records_perovskite = [{'calculated_properties': {'solar_simulator': {'units
                                                         'std_value': [22.22],
                                                         'units': 'Volt^(1.0)',
                                                         'value': [22.22]}}},
-                           {'calculated_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
+                           {'derived_properties': {'solar_simulator': {'units': 'WattPerMeterSquared^(1.0)',
                                                                           'value': [32400.9]}},
                             'ff': {'FillFactor': {'raw_value': '77.77',
                                                   'specifier': 'FF',
@@ -225,7 +225,7 @@ class TestCalculate(unittest.TestCase):
         input_record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
         output_record = calculate_irradiance(input_record)
         expected = 999.0
-        irradiance = output_record.calculated_properties['solar_simulator'].value
+        irradiance = output_record.derived_properties['solar_simulator'].value
         self.assertEqual(irradiance[0], expected)
 
     def test_calculate_irradiance_no_unit_jsc(self):
@@ -233,7 +233,7 @@ class TestCalculate(unittest.TestCase):
         jsc = ShortCircuitCurrentDensity(value=[15.49])
         input_record2 = PhotovoltaicCell(voc=voc, jsc=jsc)
         output_record2 = calculate_irradiance(input_record2)
-        self.assertFalse(output_record2.calculated_properties)
+        self.assertFalse(output_record2.derived_properties)
 
     def test_calculate_irradaince_ff_with_unit(self):
         voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
@@ -243,7 +243,7 @@ class TestCalculate(unittest.TestCase):
         input_record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
         output_record = calculate_irradiance(input_record)
         expected = 3.0
-        irradiance = output_record.calculated_properties['solar_simulator'].value
+        irradiance = output_record.derived_properties['solar_simulator'].value
         self.assertEqual(irradiance[0], expected)
 
     def test_calculate_irradiance_ff_too_large(self):
@@ -254,12 +254,12 @@ class TestCalculate(unittest.TestCase):
         input_record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
         output_record = calculate_irradiance(input_record)
         expected = 720
-        irradiance = output_record.calculated_properties['solar_simulator'].value
+        irradiance = output_record.derived_properties['solar_simulator'].value
         self.assertEqual(irradiance[0], expected)
 
     def test_calculate_irradiance_only_isc(self):
         """
-        Testing that the value of jsc calculated from isc is used in the absence of an extracted jsc value
+        Testing that the value of jsc derived from isc is used in the absence of an extracted jsc value
         """
 
         voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
@@ -279,7 +279,7 @@ class TestCalculate(unittest.TestCase):
 
         output_record = calculate_metrics(input_record, active_area_record)
         expected = 117.
-        irradiance = output_record.calculated_properties['solar_simulator'].value
+        irradiance = output_record.derived_properties['solar_simulator'].value
         self.assertEqual(irradiance[0], expected)
 
 
@@ -295,7 +295,7 @@ class TestCalculate(unittest.TestCase):
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(isc=isc)
         output_record = calculate_current_density(input_record, active_area_record)
-        jsc = output_record.calculated_properties['jsc'].value
+        jsc = output_record.derived_properties['jsc'].value
         expected = 25.0
         self.assertEqual(jsc[0], expected)
 
@@ -311,8 +311,8 @@ class TestCalculate(unittest.TestCase):
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(jsc=jsc)
         output_record = calculate_current(input_record, active_area_record)
-        isc = output_record.calculated_properties['isc'].value
-        isc_error = output_record.calculated_properties['isc'].error
+        isc = output_record.derived_properties['isc'].value
+        isc_error = output_record.derived_properties['isc'].error
         expected_val = 0.0040
         expected_err = 0.0002
         self.assertEqual(isc[0], expected_val)
@@ -330,8 +330,8 @@ class TestCalculate(unittest.TestCase):
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(charge_transfer_resistance=rct)
         output_record = calculate_specific_resistance_rct(input_record, active_area_record)
-        sp_rct = output_record.calculated_properties['specific_charge_transfer_resistance'].value
-        sp_rct_error = output_record.calculated_properties['specific_charge_transfer_resistance'].error
+        sp_rct = output_record.derived_properties['specific_charge_transfer_resistance'].value
+        sp_rct_error = output_record.derived_properties['specific_charge_transfer_resistance'].error
         expected_val = 0.00040
         expected_err = 0.00002
         self.assertEqual(sp_rct[0], expected_val)
@@ -349,8 +349,8 @@ class TestCalculate(unittest.TestCase):
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(series_resistance=rs)
         output_record = calculate_specific_resistance_rs(input_record, active_area_record)
-        sp_rs = output_record.calculated_properties['specific_series_resistance'].value
-        sp_rs_error = output_record.calculated_properties['specific_series_resistance'].error
+        sp_rs = output_record.derived_properties['specific_series_resistance'].value
+        sp_rs_error = output_record.derived_properties['specific_series_resistance'].error
         expected_val = 0.000205
         expected_err = 0.000008
         self.assertEqual(sp_rs[0], expected_val)
@@ -368,8 +368,8 @@ class TestCalculate(unittest.TestCase):
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(specific_charge_transfer_resistance=sp_rct)
         output_record = calculate_resistance_rct(input_record, active_area_record)
-        rct = output_record.calculated_properties['charge_transfer_resistance'].value
-        rct_error = output_record.calculated_properties['charge_transfer_resistance'].error
+        rct = output_record.derived_properties['charge_transfer_resistance'].value
+        rct_error = output_record.derived_properties['charge_transfer_resistance'].error
         expected_val = 20.4
         expected_err = 0.9
         self.assertEqual(rct[0], expected_val)
@@ -387,8 +387,8 @@ class TestCalculate(unittest.TestCase):
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(specific_series_resistance=sp_rs)
         output_record = calculate_resistance_rs(input_record, active_area_record)
-        rs = output_record.calculated_properties['series_resistance'].value
-        rs_error = output_record.calculated_properties['series_resistance'].error
+        rs = output_record.derived_properties['series_resistance'].value
+        rs_error = output_record.derived_properties['series_resistance'].error
         expected_val = 30.0
         expected_err = 1
         self.assertEqual(rs[0], expected_val)
@@ -406,16 +406,16 @@ class TestCalculate(unittest.TestCase):
                 'value': [0.26]}}
         input_record = PhotovoltaicCell(solar_simulator=solar_simulator)
         output_record = calculate_power_in(input_record, active_area_record)
-        pin = output_record.calculated_properties['pin'].value
-        pin_error = output_record.calculated_properties['pin'].error
+        pin = output_record.derived_properties['pin'].value
+        pin_error = output_record.derived_properties['pin'].error
         expected_val = 0.026
         expected_err = 0.001
         self.assertEqual(pin[0], expected_val)
         self.assertEqual(pin_error, expected_err)
 
-    def test_calculate_pin_calculated_solar_simulator(self):
+    def test_calculate_pin_derived_solar_simulator(self):
         """
-        Testing that the value of jsc calculated from isc is used in the absence of an extracted jsc value
+        Testing that the value of jsc derived from isc is used in the absence of an extracted jsc value
         """
 
         voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
@@ -435,7 +435,7 @@ class TestCalculate(unittest.TestCase):
 
         output_record = calculate_metrics(input_record, active_area_record)
         expected = 0.0187
-        pin = output_record.calculated_properties['pin'].value
+        pin = output_record.derived_properties['pin'].value
         self.assertEqual(pin[0], expected)
 
     def test_calculate_pmax_extracted_from_document(self):
@@ -445,14 +445,14 @@ class TestCalculate(unittest.TestCase):
 
         input_record = PhotovoltaicCell(pin=pin, pce=pce)
         output_record = calculate_power_max(input_record)
-        pmax = output_record.calculated_properties['pmax'].value
-        pmax_error = output_record.calculated_properties['pmax'].error
+        pmax = output_record.derived_properties['pmax'].value
+        pmax_error = output_record.derived_properties['pmax'].error
         expected_val = 77.8
         expected_err = 0.8
         self.assertEqual(pmax[0], expected_val)
         self.assertEqual(pmax_error, expected_err)
 
-    def test_calculate_pmax_calculated_pin(self):
+    def test_calculate_pmax_derived_pin(self):
 
         solar_simulator = SimulatedSolarLightIntensity(value=[1000], units=WattPerMeterSquared(), raw_value='1000')
         active_area_record = {'ActiveArea': {'contextual': 'document',
@@ -467,8 +467,8 @@ class TestCalculate(unittest.TestCase):
         pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
         input_record = PhotovoltaicCell(pce=pce, solar_simulator=solar_simulator)
         output_record = calculate_metrics(input_record, active_area_record)
-        pmax = output_record.calculated_properties['pmax'].value
-        pmax_error = output_record.calculated_properties['pmax'].error
+        pmax = output_record.derived_properties['pmax'].value
+        pmax_error = output_record.derived_properties['pmax'].error
         expected_val = 0.00202
         expected_err = 8e-05
         self.assertEqual(pmax[0], expected_val)
@@ -598,14 +598,14 @@ class TestCalculate(unittest.TestCase):
         pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
         record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
 
-        calculated_error1 = calc_error_quantity(record, 'voc')
-        self.assertEqual(calculated_error1, 0.0001)
-        calculated_error2 = calc_error_quantity(record, 'jsc')
-        self.assertEqual(calculated_error2, 0.1)
-        calculated_error3 = calc_error_quantity(record, 'ff')
-        self.assertEqual(calculated_error3, 0.001)
-        calculated_error4 = calc_error_quantity(record, 'pce')
-        self.assertEqual(calculated_error4, 0.0001)
+        derived_error1 = calc_error_quantity(record, 'voc')
+        self.assertEqual(derived_error1, 0.0001)
+        derived_error2 = calc_error_quantity(record, 'jsc')
+        self.assertEqual(derived_error2, 0.1)
+        derived_error3 = calc_error_quantity(record, 'ff')
+        self.assertEqual(derived_error3, 0.001)
+        derived_error4 = calc_error_quantity(record, 'pce')
+        self.assertEqual(derived_error4, 0.0001)
 
     def test_calc_quantity_error_from_sig_figs_ranged_quantity(self):
 
@@ -613,10 +613,10 @@ class TestCalculate(unittest.TestCase):
         jsc = ShortCircuitCurrentDensity(value=[15.5, 16.04], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.5—16.04')
         record = PhotovoltaicCell(voc=voc, jsc=jsc)
 
-        calculated_error1 = calc_error_quantity(record, 'voc')
-        self.assertEqual(calculated_error1, 0.001)
-        calculated_error2 = calc_error_quantity(record, 'jsc')
-        self.assertEqual(calculated_error2, 1)
+        derived_error1 = calc_error_quantity(record, 'voc')
+        self.assertEqual(derived_error1, 0.001)
+        derived_error2 = calc_error_quantity(record, 'jsc')
+        self.assertEqual(derived_error2, 1)
 
     def test_calc_quantity_error_from_sig_figs_negative_quantity(self):
         voc = OpenCircuitVoltage(value=[-756.0], units=Volt(magnitude=-3.), raw_value='-756.0')
@@ -624,10 +624,10 @@ class TestCalculate(unittest.TestCase):
 
         record = PhotovoltaicCell(voc=voc, jsc=jsc)
 
-        calculated_error1 = calc_error_quantity(record, 'voc')
-        self.assertEqual(calculated_error1, 0.0001)
-        calculated_error2 = calc_error_quantity(record, 'jsc')
-        self.assertEqual(calculated_error2, 1)
+        derived_error1 = calc_error_quantity(record, 'voc')
+        self.assertEqual(derived_error1, 0.0001)
+        derived_error2 = calc_error_quantity(record, 'jsc')
+        self.assertEqual(derived_error2, 1)
 
     def test_calc_irradiance_error(self):
 
@@ -638,7 +638,7 @@ class TestCalculate(unittest.TestCase):
         record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
 
         updated_record = calculate_irradiance(record)
-        output = updated_record.calculated_properties['solar_simulator']
+        output = updated_record.derived_properties['solar_simulator']
         self.assertEqual(output.value, [999.0])
         self.assertEqual(output.error, 2.0)
 
@@ -650,7 +650,7 @@ class TestCalculate(unittest.TestCase):
         record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
 
         updated_record = calculate_irradiance(record)
-        output = updated_record.calculated_properties['solar_simulator']
+        output = updated_record.derived_properties['solar_simulator']
         self.assertEqual(output.value, [1000.0])
         self.assertEqual(output.error, 60.0)
         # self.assertEqual(irradiance[0], expected)

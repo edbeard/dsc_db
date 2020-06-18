@@ -24,7 +24,7 @@ hyphens = '-‐‑⁃‒–—―'
 
 def calculate_metrics(record, active_area_record):
     """
-    Calculate values of properties where possible
+    Derive values of properties where possible
     :param records: List of PhotovoltaicCell object records
 
     """
@@ -46,7 +46,7 @@ def calculate_metrics(record, active_area_record):
     record = calculate_irradiance(record)
 
     if active_area_record is not None:
-        # Attempt to calculated power in and power max
+        # Attempt to derived power in and power max
         try:
             record = calculate_power_in(record, active_area_record)
             # record = calculate_power_max(record)
@@ -66,16 +66,16 @@ def calculate_power_in(record, active_area_record):
     """
 
     new_record = copy.deepcopy(record)
-    if record.solar_simulator or 'solar_simulator' in record.calculated_properties.keys():
+    if record.solar_simulator or 'solar_simulator' in record.derived_properties.keys():
         solar_simulator = None
         # Use extracted solar_simulator value if possible
         if record.solar_simulator:
             if all([record.solar_simulator.value, record.solar_simulator.units]):
                 solar_simulator = record.solar_simulator.units.convert_value_to_standard(mean(record.solar_simulator.value))
 
-        # Otherwise, try to get calculated property
-        if 'solar_simulator' in record.calculated_properties.keys() and solar_simulator is None:
-            ss_obj = record.calculated_properties['solar_simulator']
+        # Otherwise, try to get derived property
+        if 'solar_simulator' in record.derived_properties.keys() and solar_simulator is None:
+            ss_obj = record.derived_properties['solar_simulator']
             solar_simulator = ss_obj.units.convert_value_to_standard(mean(ss_obj.value))
 
         if solar_simulator is not None:
@@ -86,7 +86,7 @@ def calculate_power_in(record, active_area_record):
             pin = round_to_sig_figs(pin, pin_err)
 
             pin_record = PowerIn(value=[pin], units=Watt(), error=pin_err)
-            new_record.set_calculated_properties('pin', pin_record)
+            new_record.set_derived_properties('pin', pin_record)
 
     return new_record
 
@@ -99,16 +99,16 @@ def calculate_power_max(record):
     """
 
     new_record = copy.deepcopy(record)
-    if record.pce and (record.pin or 'pin' in record.calculated_properties.keys()):
+    if record.pce and (record.pin or 'pin' in record.derived_properties.keys()):
         pin = None
         # Use extracted solar_simulator value if possible
         if record.pin:
             if all([record.pin.value, record.pin.units]):
                 pin = record.pin.units.convert_value_to_standard(mean(record.pin.value))
 
-        # Otherwise, try to get calculated property
-        if 'pin' in record.calculated_properties.keys() and pin is None:
-            pin_obj = record.calculated_properties['pin']
+        # Otherwise, try to get derived property
+        if 'pin' in record.derived_properties.keys() and pin is None:
+            pin_obj = record.derived_properties['pin']
             pin = pin_obj.units.convert_value_to_standard(mean(pin_obj.value))
 
         if pin is not None and record.pce.value:
@@ -128,7 +128,7 @@ def calculate_power_max(record):
             pmax = round_to_sig_figs(pmax, pmax_err)
 
             pmax_record = PowerMax(value=[pmax], units=Watt(), error=pmax_err)
-            new_record.set_calculated_properties('pmax', pmax_record)
+            new_record.set_derived_properties('pmax', pmax_record)
 
     return new_record
 
@@ -150,7 +150,7 @@ def calculate_specific_resistance_rct(record, active_area_record):
             sp_rct = round_to_sig_figs(sp_rct, sp_rct_err)
 
             sp_rct_record = SpecificChargeTransferResistance(value=[sp_rct], units=(Ohm() * MetersSquaredAreaUnit()), error=sp_rct_err)
-            new_record.set_calculated_properties('specific_charge_transfer_resistance', sp_rct_record)
+            new_record.set_derived_properties('specific_charge_transfer_resistance', sp_rct_record)
 
     return new_record
 
@@ -172,7 +172,7 @@ def calculate_specific_resistance_rs(record, active_area_record):
             sp_rs = round_to_sig_figs(sp_rs, sp_rs_err)
 
             sp_rs_record = SpecificSeriesResistance(value=[sp_rs], units=(Ohm() * MetersSquaredAreaUnit()), error=sp_rs_err)
-            new_record.set_calculated_properties('specific_series_resistance', sp_rs_record)
+            new_record.set_derived_properties('specific_series_resistance', sp_rs_record)
 
     return new_record
 
@@ -195,7 +195,7 @@ def calculate_resistance_rct(record, active_area_record):
             rct = round_to_sig_figs(rct, rct_err)
 
             rct_record = ChargeTransferResistance(value=[rct], units=Ohm(), error=rct_err)
-            new_record.set_calculated_properties('charge_transfer_resistance', rct_record)
+            new_record.set_derived_properties('charge_transfer_resistance', rct_record)
 
     return new_record
 
@@ -217,7 +217,7 @@ def calculate_resistance_rs(record, active_area_record):
             rs = round_to_sig_figs(rs, rs_err)
 
             rs_record = SeriesResistance(value=[rs], units=Ohm(), error=rs_err)
-            new_record.set_calculated_properties('series_resistance', rs_record)
+            new_record.set_derived_properties('series_resistance', rs_record)
 
     return new_record
 
@@ -240,7 +240,7 @@ def calculate_current_density(record, active_area_record):
             jsc = round_to_sig_figs(jsc, jsc_err)
 
             short_circuit_current_density = ShortCircuitCurrentDensity(value=[jsc], units=AmpPerMeterSquared(), error=jsc_err)
-            new_record.set_calculated_properties('jsc', short_circuit_current_density)
+            new_record.set_derived_properties('jsc', short_circuit_current_density)
 
     return new_record
 
@@ -263,7 +263,7 @@ def calculate_current(record, active_area_record):
             isc = round_to_sig_figs(isc, isc_err)
 
             short_circuit_current = ShortCircuitCurrent(value=[isc], units=Ampere(), error=isc_err)
-            new_record.set_calculated_properties('isc', short_circuit_current)
+            new_record.set_derived_properties('isc', short_circuit_current)
 
     return new_record
 
@@ -276,7 +276,7 @@ def calculate_irradiance(record):
     """
     new_record = copy.deepcopy(record)
     try:
-        if all([record.voc, record.ff, record.pce]) and (record.jsc or 'jsc' in record.calculated_properties.keys()):
+        if all([record.voc, record.ff, record.pce]) and (record.jsc or 'jsc' in record.derived_properties.keys()):
             if all([record.voc.value, record.voc.units, record.ff.value, record.pce.value]):
                 jsc = None
                 # Use extracted jsc value if possible
@@ -284,9 +284,9 @@ def calculate_irradiance(record):
                     if all([record.jsc.value, record.jsc.units]):
                         jsc = record.jsc.units.convert_value_to_standard(mean(record.jsc.value))
 
-                # Otherwise, try to get calculated property
-                if 'jsc' in record.calculated_properties.keys() and jsc is None:
-                    jsc_obj = record.calculated_properties['jsc']
+                # Otherwise, try to get derived property
+                if 'jsc' in record.derived_properties.keys() and jsc is None:
+                    jsc_obj = record.derived_properties['jsc']
                     jsc = jsc_obj.units.convert_value_to_standard(mean(jsc_obj.value))
 
                 if jsc is not None:
@@ -318,7 +318,7 @@ def calculate_irradiance(record):
                     irr = round_to_sig_figs(irr, irr_err)
 
                     solar_sim = SimulatedSolarLightIntensity(value=[irr], units=WattPerMeterSquared(), error=irr_err)
-                    new_record.set_calculated_properties('solar_simulator', solar_sim)
+                    new_record.set_derived_properties('solar_simulator', solar_sim)
     except:
         print('Unsupported raw value format, could not calculate the solar_simulator')
 
@@ -370,7 +370,7 @@ def calculate_resistance_error(record, aa_record, input_r, active_area, output_r
 
 def calculate_irradiance_error(record, voc, jsc, ff, pce, irr):
     """
-    Estimate the accuracy of the calculated data.
+    Estimate the accuracy of the derived data.
     """
 
     # Estimate the errors based on significant figure information
@@ -388,7 +388,7 @@ def calculate_irradiance_error(record, voc, jsc, ff, pce, irr):
 
 def calculate_jsc_error(record, aa_record, isc, active_area, jsc):
     """
-    Estimate the accuracy of the calculated data.
+    Estimate the accuracy of the derived data.
     """
 
     isc_error = calc_error_quantity(record, 'isc')
@@ -402,7 +402,7 @@ def calculate_jsc_error(record, aa_record, isc, active_area, jsc):
 
 def calculate_isc_error(record, aa_record, jsc, active_area, isc):
     """
-    Estimate the accuracy of the calculated data.
+    Estimate the accuracy of the derived data.
     """
 
     jsc_error = calc_error_quantity(record, 'jsc')
@@ -452,14 +452,14 @@ def calc_error_quantity(record, field):
     If not available, this is done by looking at the significant figures
     """
 
-    potentially_calculated_fields = ['jsc', 'solar_simulator', 'pin']
+    potentially_derived_fields = ['jsc', 'solar_simulator', 'pin']
 
-    # Choose the calculated property for jsc if required
-    if field in potentially_calculated_fields:
+    # Choose the derived property for jsc if required
+    if field in potentially_derived_fields:
         if getattr(record, field) is not None:
             rec = getattr(record, field)
-        elif field in record.calculated_properties.keys():
-            rec = record.calculated_properties[field]
+        elif field in record.derived_properties.keys():
+            rec = record.derived_properties[field]
     else:
         rec = getattr(record, field)
 
@@ -551,7 +551,7 @@ def calculate_relative_metrics(records):
     vary across experiment, so this provides a baseline to compare the values from the particular experiment to.
 
     This function will attempt to determine whether the independent variable is one that can be standardized. If it is,
-    and the standard comparison is also present, the value is calculated.
+    and the standard comparison is also present, the value is derived.
     """
 
     # Start by classifying the table
@@ -570,7 +570,7 @@ def calculate_relative_metrics_perovskite(records):
     vary across experiment, so this provides a baseline to compare the values from the particular experiment to.
 
     This function will attempt to determine whether the independent variable is one that can be standardized. If it is,
-    and the standard comparison is also present, the value is calculated.    """
+    and the standard comparison is also present, the value is derived.    """
 
     #start by classifying the table
     classification, relative_record = classify_table_perovskite(records)

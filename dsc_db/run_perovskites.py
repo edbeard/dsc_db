@@ -16,7 +16,7 @@ from chemdataextractor.doc import Document
 from chemdataextractor.model.pv_model import PerovskiteSolarCell
 from chemdataextractor.model import Compound
 
-from dsc_db.run import get_table_records, get_filtered_elements, add_contextual_info, get_active_area, add_calculated_properties
+from dsc_db.run import get_table_records, get_filtered_elements, add_contextual_info, get_active_area, add_derived_properties
 from dsc_db.model import PerovskiteRecord
 from dsc_db.data import  all_htls, all_etls, perovskite_abbreviations
 from dsc_db.smiles import add_smiles_perovskite_htl
@@ -106,8 +106,8 @@ def create_pdb_from_file(doc):
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
 
-    # Merge calculated properties
-    pv_records = add_calculated_properties(pv_records)
+    # Merge derived properties
+    pv_records = add_derived_properties(pv_records)
 
     # print the output after dyes removed...
     # for pv_record in pv_records:

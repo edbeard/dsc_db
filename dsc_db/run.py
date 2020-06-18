@@ -133,9 +133,9 @@ def create_dsscdb_from_file(doc):
     # for pv_record in pv_records:
     #     pp.pprint(pv_record.serialize())
 
-    # Merge calculated properties
-    pv_records = add_calculated_properties(pv_records)
-    # print('Printing output after extra properties are calculated...')
+    # Merge derived properties
+    pv_records = add_derived_properties(pv_records)
+    # print('Printing output after extra properties are derived...')
     # for pv_record in pv_records:
     #     pp.pprint(pv_record.serialize())
 
@@ -168,28 +168,28 @@ def get_active_area(filtered_elements):
             return active_area_records[0]
 
 
-def add_calculated_properties(pv_records):
+def add_derived_properties(pv_records):
     """
-    Uses the calculated_properties field to add data
+    Uses the derived_properties field to add data
     """
     for pv_record in pv_records:
-        if pv_record.calculated_properties is not None:
+        if pv_record.derived_properties is not None:
 
             # Writing a general method for this:
             for field, model in calc_properties_to_add.items():
-                if field in pv_record.calculated_properties.keys():
+                if field in pv_record.derived_properties.keys():
                     if getattr(pv_record, field) is not None:
                         calc_dict = getattr(pv_record, field)
-                        calc_dict[model]['calculated_value'] = pv_record.calculated_properties[field]['value']
+                        calc_dict[model]['derived_value'] = pv_record.derived_properties[field]['value']
                         setattr(pv_record, field, calc_dict)
                     else:
-                        setattr(pv_record, field, {model: {'calculated_value': pv_record.calculated_properties[field]['value']}})
+                        setattr(pv_record, field, {model: {'derived_value': pv_record.derived_properties[field]['value']}})
                         calc_dict = getattr(pv_record, field)
 
-                    calc_dict[model]['calculated_units'] = pv_record.calculated_properties[field]['units']
+                    calc_dict[model]['derived_units'] = pv_record.derived_properties[field]['units']
                     setattr(pv_record, field, calc_dict)
 
-                    calc_dict[model]['calculated_error'] = pv_record.calculated_properties[field]['error']
+                    calc_dict[model]['derived_error'] = pv_record.derived_properties[field]['error']
                     setattr(pv_record, field, calc_dict)
 
     return pv_records
@@ -347,7 +347,7 @@ def get_table_records(doc, record_type, active_area_record=None, model_field_dic
         :param chemdataextractor.Document doc : Document used to extract
         :param record_type : the name of the model of record to target
         :param active_area_record: The contextual records containing active area data (if applicable)
-        :param model_field_dict: Dict of field-model pairs for properties being calculated.
+        :param model_field_dict: Dict of field-model pairs for properties being derived.
 
         :return Tuple(pv_record, chemdataextractor.table) tables_record : All Photovoltaic records
 
@@ -366,16 +366,16 @@ def get_table_records(doc, record_type, active_area_record=None, model_field_dic
                 record = get_standardized_values(record)
                 serialized_record = record.serialize()[record_type]
 
-                # Add calculated properties to the pv_records
+                # Add derived properties to the pv_records
                 record = calculate_metrics(record, active_area_record)
-                if record.calculated_properties:
-                    serialized_record['calculated_properties'] = {}
-                for key, data in record.calculated_properties.items():
+                if record.derived_properties:
+                    serialized_record['derived_properties'] = {}
+                for key, data in record.derived_properties.items():
                     serialized_data = data.serialize()
                     calc_props = {'value': serialized_data[model_field_dict[key]]['value'],
                                   'units': serialized_data[model_field_dict[key]]['units'],
                                   'error': serialized_data[model_field_dict[key]]['error']}
-                    serialized_record['calculated_properties'][key] = calc_props
+                    serialized_record['derived_properties'][key] = calc_props
 
                 serialized_record['table_row_categories'] = record.table_row_categories
 
