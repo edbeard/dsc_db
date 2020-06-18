@@ -4,7 +4,7 @@
 
 import unittest
 
-from dsc_db.model import PhotovoltaicRecord
+from dsc_db.model import PhotovoltaicRecord, PerovskiteRecord
 from pprint import pprint
 
 from chemdataextractor import Document
@@ -186,6 +186,34 @@ class TestModel(unittest.TestCase):
         pv_record._substitute_compound('counter_electrode', 'CounterElectrode', compound_records)
         self.assertEqual(pv_record.serialize(), expected)
 
+    def test_substitute_abbreviations_perov_htl(self):
+        input = {'htl': {'HoleTransportLayer': {'raw_value': 'PTAA',
+                                                    'specifier': 'HTL'}}}
+        doc = Document('poly(triarylamine) (PTAA) ')
+        expected = {'htl': {'HoleTransportLayer': {'abbreviations': [['poly(triarylamine)']],
+                                'raw_value': 'PTAA',
+                                'specifier': 'HTL'}}}
+
+        pv_record = PerovskiteRecord(input, None)
+        pv_record._substitute_definitions('htl', 'HoleTransportLayer', doc)
+        self.assertEqual(pv_record.serialize(), expected)
+
+    def test_substitute_compound_perov_htl(self):
+        input = {'htl': {'HoleTransportLayer': {'raw_value': 'poly(triarylamine)',
+                                                    'specifier': 'HTL'}}}
+        expected = {'htl': {'HoleTransportLayer': {'compound': {'names': ['poly(triarylamine)']},
+                                'raw_value': 'poly(triarylamine)',
+                                'specifier': 'HTL'}}}
+
+        doc = Document('poly(triarylamine).')
+        doc.add_models([PhotovoltaicCell, Compound])
+
+        doc_records = [record.serialize() for record in doc.records]
+        compound_records = [record['Compound'] for record in doc_records if 'Compound' in record.keys()]
+
+        pv_record = PerovskiteRecord(input, None)
+        pv_record._substitute_compound('htl', 'HoleTransportLayer', compound_records)
+        self.assertEqual(pv_record.serialize(), expected)
 
 if __name__ == '__main__':
     unittest.main()

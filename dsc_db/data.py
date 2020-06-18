@@ -382,21 +382,6 @@ redox_couples = {
 
 #### Common Perovskite Materials ####
 
-## Perovskite Materials
-all_perovskites = {
-    'CH3NH3PbI3' : {
-        'labels': ['Methanaminium triiodoplumbate(1-)',
-                   'CH3NH3PbI3',
-                   'CH6I3NPb',
-                   'methylammonium lead triiodide'
-                   ],
-        'formula': "CH3NH3PbI3",
-        'name': 'methylammonium lead triiodide'
-
-    }
-}
-
-
 ## Hole Transport Materials
 
 solaronix_htls = {
@@ -860,6 +845,16 @@ all_etls = {
                 'name': 'aluminium oxide'},
 'ZSO': {'labels':	['Zn2SnO4 ', 'Al2O3', 'zinc stannate' ] ,
                 'name': 'aluminium oxide'}
+}
+
+# Common perovskite abbreviations
+
+perovskite_abbreviations = {
+    'MA' : 'CH3NH3',
+    'BA': 'C4H11N',
+    'FA':'CH5N2',
+    'PEA': 'C8H11N',
+    'EDA': 'C2H8N2'
 }
 
 # List of disallowed tags for section headings

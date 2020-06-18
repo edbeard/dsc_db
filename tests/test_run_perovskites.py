@@ -2,12 +2,14 @@
 .. codeauthor: Ed Beard <ed.beard94@gmail.com>
 """
 import unittest
-from dsc_db.run_perovskites import add_contextual_info, PerovskiteRecord, peroskite_material_properties, add_distributor_info, enhance_common_values
+from dsc_db.run_perovskites import add_contextual_info, PerovskiteRecord, peroskite_material_properties, \
+    enhance_common_values, get_filtered_elements
 
 from chemdataextractor.doc.text import Caption, Paragraph
 from chemdataextractor.doc import Document
 from chemdataextractor.doc.table import Table
 from chemdataextractor.model.pv_model import Perovskite, HoleTransportLayer, ElectronTransportLayer, PerovskiteSolarCell, SentencePerovskite
+from chemdataextractor.model import Compound
 
 
 class TestRunPerovskites(unittest.TestCase):
@@ -142,27 +144,22 @@ class TestRunPerovskites(unittest.TestCase):
 
     ### Testing the addition of information for common Perovskites
 
-    def test_add_distributer_info_perovskite(self):
+    def test_enhance_common_values_perovskite(self):
         pv_input = {
             'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
                                            'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
-            'perovskite': {'Perovskite': {'contextual': 'document', 'raw_value': 'methylammonium lead triiodide'}}
+            'perovskite': {'Perovskite': {'contextual': 'document', 'raw_value': 'MAPbCl3'}}
         }
 
         expected = {'Perovskite': {'contextual': 'document',
-                'formula': 'CH3NH3PbI3',
-                'labels': ['Methanaminium triiodoplumbate(1-)',
-                            'CH3NH3PbI3',
-                           'CH6I3NPb',
-                           'methylammonium lead triiodide'],
-                'name': 'methylammonium lead triiodide',
-                'raw_value': 'methylammonium lead triiodide'}}
+                'formula': 'CH3NH3PbCl3',
+                'raw_value': 'MAPbCl3'}}
 
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
-        pv_records = add_distributor_info(pv_records)
+        pv_records = enhance_common_values(pv_records)
         self.assertEqual(pv_records[0].perovskite, expected)
 
-    def test_add_distributer_info_hole_transporting_layer(self):
+    def test_enhance_common_values_hole_transporting_layer(self):
         pv_input = {
             'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
                                            'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
@@ -177,13 +174,13 @@ class TestRunPerovskites(unittest.TestCase):
                         'name': '9-(2-Ethylhexyl)-N,N,N,N-tetrakis(4-methoxyphenyl)- '
                                 '9H-carbazole-2,7-diamine)',
                         'raw_value': 'EH44',
-                        'smiles': ''}}
+                        'smiles': {'context': 'dict', 'value': ''}}}
 
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
-        pv_records = add_distributor_info(pv_records)
+        pv_records = enhance_common_values(pv_records)
         self.assertEqual(pv_records[0].htl, expected)
 
-    def test_add_distributer_info_electron_transporting_layer(self):
+    def test_enhance_common_values_electron_transporting_layer(self):
         pv_input = {
             'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
                                            'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
@@ -197,10 +194,10 @@ class TestRunPerovskites(unittest.TestCase):
                             'raw_value': 'PCBM'}}
 
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
-        pv_records = add_distributor_info(pv_records)
+        pv_records = enhance_common_values(pv_records)
         self.assertEqual(pv_records[0].etl, expected)
 
-    def test_add_distributer_info_electron_transporting_layer_with_structure_field(self):
+    def test_enhance_common_values_electron_transporting_layer_with_structure_field(self):
         pv_input = {
             'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
                                            'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
@@ -214,7 +211,7 @@ class TestRunPerovskites(unittest.TestCase):
                             'structure': 'compact'}}
 
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
-        pv_records = add_distributor_info(pv_records)
+        pv_records = enhance_common_values(pv_records)
         self.assertEqual(pv_records[0].etl, expected)
 
     def test_enhance_common_values_etl_1(self):
@@ -224,9 +221,9 @@ class TestRunPerovskites(unittest.TestCase):
             'etl': {'ElectronTransportLayer': {'contextual': 'document', 'raw_value': 'Zirconium Dioxide'}}
         }
         expected = {'ElectronTransportLayer': {'contextual': 'document',
-                            'raw_value': 'Zirconium Dioxide'},
+                            'raw_value': 'Zirconium Dioxide',
                              'labels': ['zirconium dioxide', 'ZrO2'],
-                             'name': 'zirconium dioxide'}
+                             'name': 'zirconium dioxide'}}
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
         pv_records = enhance_common_values(pv_records)
         self.assertEqual(expected, pv_records[0].etl)
@@ -238,10 +235,10 @@ class TestRunPerovskites(unittest.TestCase):
             'etl': {'ElectronTransportLayer': {'contextual': 'document', 'raw_value': 'WO3 / TiO2'}}
         }
         expected = {'ElectronTransportLayer': {'contextual': 'document',
-                            'raw_value': 'WO3 / TiO2'},
+                            'raw_value': 'WO3 / TiO2',
                      'labels': ['WO3/TiO2'],
                      'name': 'tungsten trioxide / titanium dioxide',
-                     'structure': ['WO3/TiO2']}
+                     'structure': 'core-shell'}}
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
         pv_records = enhance_common_values(pv_records)
         self.assertEqual(expected, pv_records[0].etl)
@@ -252,11 +249,11 @@ class TestRunPerovskites(unittest.TestCase):
                                            'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
             'htl': {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'Spiro-S'}}
         }
-        expected = {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'Spiro-S'},
+        expected = {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'Spiro-S',
             'labels': ['Spiro-S',
                     '2,2′,7,7′-tetrakis[N,N-bis(p-methylsulfanylphenyl)amino]-9,9′-spirobifluorene'],
             'name': '2,2′,7,7′-tetrakis[N,N-bis(p-methylsulfanylphenyl)amino]-9,9′-spirobifluorene',
-            'smiles': 'CSc1ccc(cc1)N(c2ccc(SC)cc2)c3ccc4c5ccc(cc5C6(c4c3)c7cc(ccc7c8ccc(cc68)N(c9ccc(SC)cc9)c%10ccc(SC)cc%10)N(c%11ccc(SC)cc%11)c%12ccc(SC)cc%12)N(c%13ccc(SC)cc%13)c%14ccc(SC)cc%14'}
+            'smiles': {'context':'dict', 'value':'CSc1ccc(cc1)N(c2ccc(SC)cc2)c3ccc4c5ccc(cc5C6(c4c3)c7cc(ccc7c8ccc(cc68)N(c9ccc(SC)cc9)c%10ccc(SC)cc%10)N(c%11ccc(SC)cc%11)c%12ccc(SC)cc%12)N(c%13ccc(SC)cc%13)c%14ccc(SC)cc%14'}}}
 
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
         pv_records = enhance_common_values(pv_records)
@@ -268,14 +265,53 @@ class TestRunPerovskites(unittest.TestCase):
                                            'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
             'htl': {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'X59'}}
         }
-        expected = {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'X59'},
+        expected = {'HoleTransportLayer': {'contextual': 'document', 'raw_value': 'X59',
                         'labels': ['X59',
                                 'Spiro[9H-fluorene-9,9′-[9H]xanthene]-2,7-diamine',
                                 'N,N,N′,N′-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9′-xanthene]-2,7-diamine',
                                 "2-N,2-N,7-N,7-N-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9'-xanthene]-2,7-diamine",
                                 'N′,N′,N′′,N′′-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9′-xanthene]−2,7-diamineC53H42N2O5'],
                         'name': "2-N,2-N,7-N,7-N-tetrakis(4-methoxyphenyl)spiro[fluorene-9,9'-xanthene]-2,7-diamine",
-                        'smiles': 'COC1=CC=C(C=C1)N(C2=CC=C(C=C2)OC)C3=CC4=C(C=C3)C5=C(C46C7=CC=CC=C7OC8=CC=CC=C68)C=C(C=C5)N(C9=CC=C(C=C9)OC)C1=CC=C(C=C1)OC'}
+                        'smiles': {'context':'dict', 'value':'COC1=CC=C(C=C1)N(C2=CC=C(C=C2)OC)C3=CC4=C(C=C3)C5=C(C46C7=CC=CC=C7OC8=CC=CC=C68)C=C(C=C5)N(C9=CC=C(C=C9)OC)C1=CC=C(C=C1)OC'}}}
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
         pv_records = enhance_common_values(pv_records)
         self.assertEqual(expected, pv_records[0].htl)
+
+    def test_enhance_common_substring_perovskite(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'perovskite': {'Perovskite': {'contextual': 'document', 'raw_value': 'MAPbCl3'}}
+        }
+        expected = {'Perovskite': {'contextual': 'document',
+                'formula': 'CH3NH3PbCl3',
+                'raw_value': 'MAPbCl3'}}
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = enhance_common_values(pv_records)
+        self.assertEqual(expected, pv_records[0].perovskite)
+
+    def test_enhance_common_substring_perovskite_2(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'perovskite': {'Perovskite': {'contextual': 'document', 'raw_value': '(BA)2(MA)n-1PbnI3n+1'}}
+        }
+        expected = {'Perovskite': {'contextual': 'document',
+                'formula': '(C4H11N)2(CH3NH3)n-1PbnI3n+1',
+                'raw_value': '(BA)2(MA)n-1PbnI3n+1'}}
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = enhance_common_values(pv_records)
+        self.assertEqual(expected, pv_records[0].perovskite)
+
+    def test_enhance_common_substring_perovskite_3(self):
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'perovskite': {'Perovskite': {'contextual': 'document', 'raw_value': 'RbPbBr3'}}
+        }
+        expected = {'Perovskite': {'contextual': 'document',
+                'formula': 'RbPbBr3',
+                'raw_value': 'RbPbBr3'}}
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
+        pv_records = enhance_common_values(pv_records)
+        self.assertEqual(expected, pv_records[0].perovskite)

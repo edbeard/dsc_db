@@ -12,14 +12,14 @@ import pprint as pp
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-from chemdataextractor.doc import Document, Table
-from chemdataextractor.model.pv_model import PerovskiteSolarCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, SentenceDyeLoading, SentenceSemiconductor
+from chemdataextractor.doc import Document
+from chemdataextractor.model.pv_model import PerovskiteSolarCell
 from chemdataextractor.model import Compound
 
 from dsc_db.run import get_table_records, get_filtered_elements, add_contextual_info, get_active_area, add_calculated_properties
-from dsc_db.model import PhotovoltaicRecord, PerovskiteRecord
-from dsc_db.data import  blacklist_headings, all_perovskites, all_htls, all_etls
-from dsc_db.smiles import add_smiles
+from dsc_db.model import PerovskiteRecord
+from dsc_db.data import  all_htls, all_etls, perovskite_abbreviations
+from dsc_db.smiles import add_smiles_perovskite_htl
 
 perovskite_properties = [
     ('SimulatedSolarLightIntensity', 'solar_simulator'),
@@ -56,7 +56,6 @@ def create_pdb_from_file(doc):
     # Create PhotovoltaicRecord object
     pv_records = [PerovskiteRecord(record, table) for record, table in table_records]
 
-
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
 
@@ -83,13 +82,13 @@ def create_pdb_from_file(doc):
 
     # Merge other information from inside the document when appropriate
     for record in pv_records:
-        # Substituting in the definitions from the entire document
+        # Substituting in the definitions from the entire document for HTL
         if record.perovskite is not None:
-            record._substitute_definitions('perovskite', 'Perovskite', doc)
+            record._substitute_definitions('htl', 'HoleTransportLayer', doc)
 
         # Substituting the compound names for the perovskite
         if record.perovskite is not None:
-            record._substitute_compound('perovskite', 'Perovskite', compound_records)
+            record._substitute_compound('htl', 'HoleTransportLayer', compound_records)
 
     # Contextual merging of perovskites complete, filtering out results without perovskites
     if not debug:
@@ -99,10 +98,10 @@ def create_pdb_from_file(doc):
     pv_records = add_contextual_info(pv_records, filtered_elements, perovskite_properties)
 
     # Add chemical data from distributor of common perovskite materials, and from review papers
-    pv_records = add_distributor_info(pv_records)
+    pv_records = enhance_common_values(pv_records)
 
     # Add SMILES through PubChem and ChemSpider where not added by distributor
-    pv_records = add_smiles(pv_records)
+    pv_records = add_smiles_perovskite_htl(pv_records)
 
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
@@ -116,42 +115,6 @@ def create_pdb_from_file(doc):
 
     # Output sentence dye records for debugging
     # output_sentence_dyes(doc)
-
-    return pv_records
-
-
-def add_distributor_info(pv_records):
-    """
-    Adds useful information from dictionaries for common values of perovskites, HTLs and ETLs.
-    :param pv_records: List of PhotovoltaicRecords object
-    :return:pv_records: List of PhotovoltaicRecords object with dye information added
-    """
-
-    for pv_record in pv_records:
-        # Add perovskite info
-        if getattr(pv_record, 'perovskite', 'None'):
-            for key, perovskite in all_perovskites.items():
-                if pv_record.perovskite['Perovskite'].get('raw_value') in perovskite['labels'] and getattr(pv_record.perovskite['Perovskite'], 'raw_value', 'None'):
-                    pv_record.perovskite['Perovskite']['formula'] = all_perovskites[key]['formula']
-                    pv_record.perovskite['Perovskite']['name'] = all_perovskites[key]['name']
-                    pv_record.perovskite['Perovskite']['labels'] = all_perovskites[key]['labels']
-
-        # Add info on the hole transport layer
-        if getattr(pv_record, 'htl', 'None'):
-            for key, htl in all_htls.items():
-                if pv_record.htl['HoleTransportLayer'].get('raw_value') in htl['labels'] and getattr(pv_record.htl['HoleTransportLayer'], 'raw_value', 'None'):
-                    pv_record.htl['HoleTransportLayer']['smiles'] = all_htls[key]['smiles']
-                    pv_record.htl['HoleTransportLayer']['name'] = all_htls[key]['name']
-                    pv_record.htl['HoleTransportLayer']['labels'] = all_htls[key]['labels']
-
-        # Add info on the electron transport layer
-        if getattr(pv_record, 'etl', 'None'):
-            for key, etl in all_etls.items():
-                if pv_record.etl['ElectronTransportLayer'].get('raw_value') in etl['labels'] and getattr(pv_record.etl['ElectronTransportLayer'], 'raw_value', 'None'):
-                    if 'structure' in all_etls[key].keys():
-                       pv_record.etl['ElectronTransportLayer']['structure'] = all_etls[key]['structure']
-                    pv_record.etl['ElectronTransportLayer']['name'] = all_etls[key]['name']
-                    pv_record.etl['ElectronTransportLayer']['labels'] = all_etls[key]['labels']
 
     return pv_records
 
@@ -176,25 +139,30 @@ def enhance_common_values(pv_records):
                 if pv_record.etl['ElectronTransportLayer'].get('raw_value') is not None:
                     if pv_record.etl['ElectronTransportLayer'].get('raw_value').replace(' / ', '/').replace(' - ', '-') in etl['labels'] or \
                         pv_record.etl['ElectronTransportLayer'].get('raw_value').lower() in etl['labels']:
-                        pv_record.etl['name'] = all_etls[key]['name']
-                        pv_record.etl['labels'] = all_etls[key]['labels']
+                        pv_record.etl['ElectronTransportLayer']['name'] = all_etls[key]['name']
+                        pv_record.etl['ElectronTransportLayer']['labels'] = all_etls[key]['labels']
                         if 'structure' in all_etls[key].keys():
-                            pv_record.etl['structure'] = all_etls[key]['labels']
+                            pv_record.etl['ElectronTransportLayer']['structure'] = all_etls[key]['structure']
 
     # Then add the HTl information...
     for key, htl in all_htls.items():
         for pv_record in pv_records:
             if pv_record.htl:
                 if pv_record.htl['HoleTransportLayer'].get('raw_value') is not None:
-                    if 'Spiro-S' in htl['labels'] :
-                        print('on the htl')
                     if pv_record.htl['HoleTransportLayer'].get('raw_value').replace(' / ', '/').replace(' - ', '-') in htl['labels']:
+                        pv_record.htl['HoleTransportLayer']['name'] = all_htls[key]['name']
+                        pv_record.htl['HoleTransportLayer']['labels'] = all_htls[key]['labels']
+                        pv_record.htl['HoleTransportLayer']['smiles'] = {'value': all_htls[key]['smiles'], 'context':'dict'}
 
-                        pv_record.htl['name'] = all_htls[key]['name']
-                        pv_record.htl['labels'] = all_htls[key]['labels']
-                        pv_record.htl['smiles'] = all_htls[key]['smiles']
-
-
+    # Then, add the Perovskite information...
+    # Step 2, Do a substitution for the common terms...
+    for pv_record in pv_records:
+        if pv_record.perovskite:
+            if pv_record.perovskite['Perovskite'].get('raw_value') is not None:
+                formula = pv_record.perovskite['Perovskite']['raw_value']
+                for key, val in perovskite_abbreviations.items():
+                    formula = formula.replace(key, val)
+                pv_record.perovskite['Perovskite']['formula'] = formula
 
     return pv_records
 
