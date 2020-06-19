@@ -809,7 +809,31 @@ review_paper_htls = {
         ],
         "name": "pentaerythritol tetrakis(3-mercaptopropionate)",
         "smiles": "OCC(CO)(CO)CO.OC(=O)CCS.OC(=O)CCS.OC(=O)CCS.OC(=O)CCS"
-    }
+    },
+    'PEDOT:PSS': {
+        'labels': [
+            "PEDOT:PSS",
+            "poly(3,4-ethylenedioxythiophene) polystyrene sulfonate"
+        ],
+        "name": "poly(3,4-ethylenedioxythiophene) polystyrene sulfonate",
+        "smiles": ""
+    },
+    'NiO': {
+        'labels': [
+            "NiO",
+            "nickel oxide"
+        ],
+        "name": "nickel oxide",
+        "smiles": ""
+    },
+    'Poly TPD': {
+        'labels': [
+            "poly TPD",
+            "poly(4-butyl-N,N-diphenylaniline)"
+        ],
+        "name": "poly(4-butyl-N,N-diphenylaniline)",
+        "smiles": "CCCCC1=CC=C(C=C1)N(C2=CC=CC=C2)C3=CC=CC=C3"
+    },
 }
 
 all_htls = {**solaronix_htls, **sigma_aldrich_htls, **review_paper_htls}
@@ -822,8 +846,9 @@ all_etls = {
 'NiO': { 'labels':	['nickel oxide', 'NiO'], 'name':'nickel oxide'},
 'ZrO2': {	'labels':['zirconium dioxide', 'ZrO2'], 'name': 'zirconium dioxide'},
 'PCBM' :{'labels': ['phenyl-C61-butyric acid methyl ester', 'PCBM'], 'name':'phenyl-C61-butyric acid methyl ester'},
-'m-TiO2':{ 'labels':	['m-TiO2', 'mesoporous titanium dioxide'], 'structure': 'mesoporous', 'name':'titanium dioxide'},
+'m-TiO2':{ 'labels':	['m-TiO2', 'meso-TiO2', 'mesoporous titanium dioxide'], 'structure': 'mesoporous', 'name':'titanium dioxide'},
 'c-TiO2' :{'labels':	['c-TiO2', 'compact titanium dioxide' ], 'structure': 'compact', 'name': 'titanium dioxide'},
+'c-SnO2' :{'labels':	['c-SnO2', 'compact tin dioxide' ], 'structure': 'compact', 'name': 'tin dioxide'},
 'MgO/TiO2':{ 'labels':['MgO/TiO2'], 'structure': 'core-shell', 'name': 'magnesium oxide / titanium dioxide'},
 'Al2O3/TiO2':{'labels':	[ 'Al2O3/TiO2'],	'structure': 'core-shell', 'name': 'aluminium oxide / titanium dioxide'},
 'ZnO/TiO2': { 'labels':	['ZnO/TiO2'],	'structure': 'core-shell', 'name': 'zinc oxide / titanium dioxide'},
@@ -843,8 +868,10 @@ all_etls = {
                 'name': 'polyethyleneimine / zinc oxide'},
 'Al2O3': {'labels':	['aluminium oxide ', 'Al2O3' ] ,
                 'name': 'aluminium oxide'},
-'ZSO': {'labels':	['Zn2SnO4 ', 'Al2O3', 'zinc stannate' ] ,
-                'name': 'aluminium oxide'}
+'ZSO': {'labels':	['Zn2SnO4 ', 'zinc stannate' ] ,
+                'name': 'zinc stannate'},
+'BCP': {'labels': ['BCP', 'bathocuproine', 'C26H20N2', 'CC3=NC2=C1N=C(C=C(C1=CC=C2C(=C3)C4=CC=CC=C4)C5=CC=CC=C5)C'], 'name': 'bathocuproine'},
+'C60': {'labels': ['C60', 'buckminsterfullerene'], 'name': 'buckminsterfullerene'}
 }
 
 # Common perovskite abbreviations

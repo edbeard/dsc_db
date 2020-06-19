@@ -590,6 +590,83 @@ class TestCalculate(unittest.TestCase):
         self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'perovskite')
         self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'CH3NH3PbI3')
 
+    def test_classify_htl_table(self):
+        test_records = deepcopy(test_records_perovskite)
+        test_records[0]['htl'] = {'HoleTransportLayer':{'raw_value': 'novel_htl'}}
+        test_records[1]['htl'] = {'HoleTransportLayer':{'raw_value': 'Spiro-OMeTAD'}}
+        test_records[0]['perovskite'] = {'Perovskite': {'raw_value': 'CH3NH3PbI3', 'specifier': 'perovskite'}}
+        records = calculate_relative_metrics_perovskite(test_records)
+        self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'htl')
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'Spiro-OMeTAD')
+
+    def test_classify_htl_table_2(self):
+        test_records = deepcopy(test_records_perovskite)
+        test_records[0]['htl'] = {'HoleTransportLayer':{'raw_value': 'novel_htl'}}
+        test_records[1]['htl'] = {'HoleTransportLayer':{'raw_value': 'PEDOT:PSS'}}
+        test_records[0]['perovskite'] = {'Perovskite': {'raw_value': 'CH3NH3PbI3', 'specifier': 'perovskite'}}
+        records = calculate_relative_metrics_perovskite(test_records)
+        self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'htl')
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'PEDOT:PSS')
+
+    def test_classify_htl_table_3(self):
+        test_records = deepcopy(test_records_perovskite)
+        test_records[0]['htl'] = {'HoleTransportLayer': {'raw_value': 'novel_htl'}}
+        test_records[1]['htl'] = {'HoleTransportLayer': {'raw_value': 'PTAA'}}
+        test_records[0]['perovskite'] = {'Perovskite': {'raw_value': 'CH3NH3PbI3', 'specifier': 'perovskite'}}
+        records = calculate_relative_metrics_perovskite(test_records)
+        self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'htl')
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'PTAA')
+
+    def test_classify_etl_table(self):
+        test_records = deepcopy(test_records_perovskite)
+        test_records[0]['etl'] = {'ElectronTransportLayer':{'raw_value': 'novel_etl'}}
+        test_records[1]['etl'] = {'ElectronTransportLayer':{'raw_value': 'TiO2'}}
+        test_records[0]['perovskite'] = {'Perovskite': {'raw_value': 'CH3NH3PbI3', 'specifier': 'perovskite'}}
+        records = calculate_relative_metrics_perovskite(test_records)
+        self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'etl')
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'TiO2')
+
+    def test_classify_etl_table_2(self):
+        test_records = deepcopy(test_records_perovskite)
+        test_records[0]['etl'] = {'ElectronTransportLayer':{'raw_value': 'novel_etl'}}
+        test_records[1]['etl'] = {'ElectronTransportLayer':{'raw_value': 'ZnO'}}
+        test_records[0]['perovskite'] = {'Perovskite': {'raw_value': 'CH3NH3PbI3', 'specifier': 'perovskite'}}
+        records = calculate_relative_metrics_perovskite(test_records)
+        self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'etl')
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'ZnO')
+
+    def test_classify_counter_electrode_table_1(self):
+        test_records = deepcopy(test_records_perovskite)
+        test_records[0]['counter_electrode'] = {'CounterElectrode':{'raw_value': 'novel_electrode'}}
+        test_records[1]['counter_electrode'] = {'CounterElectrode':{'raw_value': 'Ag'}}
+        test_records[0]['perovskite'] = {'Perovskite': {'raw_value': 'CH3NH3PbI3', 'specifier': 'perovskite'}}
+        records = calculate_relative_metrics_perovskite(test_records)
+        self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'counter_electrode')
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'Ag')
+
+    def test_classify_counter_electrode_table_2(self):
+        test_records = deepcopy(test_records_perovskite)
+        test_records[0]['counter_electrode'] = {'CounterElectrode':{'raw_value': 'novel_electrode'}}
+        test_records[1]['counter_electrode'] = {'CounterElectrode':{'raw_value': 'Au'}}
+        test_records[0]['perovskite'] = {'Perovskite': {'raw_value': 'CH3NH3PbI3', 'specifier': 'perovskite'}}
+        records = calculate_relative_metrics_perovskite(test_records)
+        self.assertEqual(records[0]['pce']['PowerConversionEfficiency']['normalized']['value'], 0.5)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['value'], 1.0)
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['component_name'], 'counter_electrode')
+        self.assertEqual(records[1]['pce']['PowerConversionEfficiency']['normalized']['std_component'], 'Au')
+
     def test_calc_quantity_error_from_sig_figs(self):
 
         voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')

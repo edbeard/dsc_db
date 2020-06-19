@@ -605,9 +605,19 @@ def classify_table_perovskite(records):
     Classify the perovskite table by looking at the variables
     """
 
-    # Test for counter electrode
-    classification, ref_record = do_classification(records, 'perovskite', 'Perovskite', 'CH3NH3PbI3')
-    # TODO - Add list of other useful relative variables here...
+    class_tuples = [('perovskite', 'Perovskite', 'CH3NH3PbI3'),
+                    ('htl', 'HoleTransportLayer', 'Spiro-OMeTAD'),
+                    ('htl', 'HoleTransportLayer', 'PEDOT:PSS'),
+                    ('htl', 'HoleTransportLayer', 'PTAA'),
+                    ('etl', 'ElectronTransportLayer', 'TiO2'),
+                    ('etl', 'ElectronTransportLayer', 'ZnO'),
+                    ('counter_electrode', 'CounterElectrode', 'Ag'),
+                    ('counter_electrode', 'CounterElectrode', 'Au')]
+
+    for field, model, val in class_tuples:
+        classification, ref_record = do_classification(records, field, model, val)
+        if classification != 'None':
+            break
 
     return classification, ref_record
 
@@ -675,10 +685,25 @@ def calculate_relative_efficiencies_perovskite(records, pt_record, classificatio
     """
 
     # Determine the standard component
-    # TODO: Expand this to account for all properties that could benefit from relative metrics 
-    #    (this may become apparent after testing)
     if classification == 'perovskite':
         std_component = 'CH3NH3PbI3'
+    elif classification == 'htl':
+        if pt_record['htl']['HoleTransportLayer']['raw_value'].replace(' ', '') == 'PEDOT:PSS':
+            std_component = 'PEDOT:PSS'
+        elif pt_record['htl']['HoleTransportLayer']['raw_value'].replace(' ', '') == 'PTAA':
+            std_component = 'PTAA'
+        else:
+            std_component = 'Spiro-OMeTAD'
+    elif classification == 'etl':
+        if pt_record['etl']['ElectronTransportLayer']['raw_value'].replace(' ', '') == 'TiO2':
+            std_component = 'TiO2'
+        else:
+            std_component = 'ZnO'
+    elif classification == 'counter_electrode':
+        if pt_record['counter_electrode']['CounterElectrode']['raw_value'].replace(' ', '') == 'Ag':
+            std_component = 'Ag'
+        else:
+            std_component = 'Au'
     else:
         raise Exception
 
