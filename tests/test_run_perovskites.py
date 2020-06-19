@@ -64,11 +64,22 @@ class TestRunPerovskites(unittest.TestCase):
                                 'value': [756.0]}}}
         self.do_contextual_table_caption_merging(caption, SentencePerovskite, expected)
 
-
     def test_add_contextual_perovskite_from_document(self):
         sentence = 'CH3NH3PbI3 perovskite films were vacuum-deposited by heating CH3NH3I and PbI2 (Sigma, 99.999%) powder in two individual crucibles with the growth conditions of PbI2 rate at 0.75 Å s−1 and CH3NH3I pressure at 5 × 10−5 Torr.'
         expected = {'perovskite': {'SentencePerovskite': {'contextual': 'document',
                                'raw_value': 'CH3NH3PbI3',
+                               'specifier': 'perovskite'}},
+        'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+        self.do_contextual_document_merging(sentence, SentencePerovskite, expected)
+
+    def test_add_contextual_perovskite_from_document_2(self):
+        sentence = 'On exposure to light, charge carriers are generated in the MAPbI3 perovskite photoactive layer, and electrons and holes are subsequently extracted and collected by their respective contacts, ETL and HTL.'
+        expected = {'perovskite': {'SentencePerovskite': {'contextual': 'document',
+                               'raw_value': 'MAPbI3',
                                'specifier': 'perovskite'}},
         'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
                                 'raw_value': '756',

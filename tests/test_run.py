@@ -7,7 +7,7 @@ import unittest
 from dsc_db.model import PhotovoltaicRecord
 from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, \
     add_contextual_info, get_filtered_elements, dsc_properties, get_standardized_values, get_standardized_values_single_property, \
-    merge_redox_couples, get_active_area
+    merge_redox_couples, get_active_area, get_most_common
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
@@ -604,3 +604,21 @@ class TestRun(unittest.TestCase):
                 'units': '(10^-4.0) * Meter^(2.0)',
                 'value': [0.26]}}
         self.assertEqual(out, expected)
+
+    def test_get_most_common(self):
+        sentence_values = ['PbI2', 'MAPbI3', 'MAPbI3', 'MAPbI3' ,'MAPbI3', 'MAPbI3', 'MAPbI3', 'PbI2', 'PbI2', 'false_positive']
+        occurrences, value = get_most_common(sentence_values)
+        self.assertEqual(occurrences, 6)
+        self.assertEqual(value, 'MAPbI3')
+
+    def test_get_most_common_draw_that_isnt_highest(self):
+        sentence_values = ['PbI2', 'MAPbI3', 'MAPbI3', 'MAPbI3', 'PbI2', 'PbI2', 'false_positive', 'false_positive', 'false_positive', 'false_positive']
+        occurrences, value = get_most_common(sentence_values)
+        self.assertEqual(occurrences, 4)
+        self.assertEqual(value, 'false_positive')
+
+    def test_get_most_common_draw_that_is_highest(self):
+        sentence_values = ['PbI2', 'MAPbI3', 'MAPbI3', 'MAPbI3', 'PbI2', 'PbI2', 'false_positive']
+        occurrences, value = get_most_common(sentence_values)
+        self.assertEqual(occurrences, 0)
+        self.assertEqual(value, '')

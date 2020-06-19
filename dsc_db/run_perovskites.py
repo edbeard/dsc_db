@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 from chemdataextractor.doc import Document
-from chemdataextractor.model.pv_model import PerovskiteSolarCell
+from chemdataextractor.model.pv_model import PerovskiteSolarCell, SentencePerovskite
 from chemdataextractor.model import Compound
 
 from dsc_db.run import get_table_records, get_filtered_elements, add_contextual_info, get_active_area, add_derived_properties
@@ -41,7 +41,7 @@ def create_pdb_from_file(doc):
     """
 
     # Only add the photovoltaiccell and Compound models to the document
-    doc.add_models([PerovskiteSolarCell, Compound])  # Substrate, SentenceSemiconductor, DyeLoading])
+    doc.add_models([PerovskiteSolarCell, Compound, SentencePerovskite])  # Substrate, SentenceSemiconductor, DyeLoading])
 
     filtered_elements = get_filtered_elements(doc) # Get the relevant filtered elements for merging
 
@@ -56,12 +56,14 @@ def create_pdb_from_file(doc):
     # Create PhotovoltaicRecord object
     pv_records = [PerovskiteRecord(record, table) for record, table in table_records]
 
+    print('After initial table extraction:')
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
 
     # And contextual information from perovskites
     pv_records = add_contextual_info(pv_records, filtered_elements, peroskite_material_properties)
 
+    print('After adding contextual information from perovskites:')
     for pv_record in pv_records:
         pp.pprint(pv_record.serialize())
 
@@ -79,6 +81,10 @@ def create_pdb_from_file(doc):
             all([getattr(pv_record, 'jsc', False), getattr(pv_record, 'ff', False)]) or
             all([getattr(pv_record, 'jsc', False), getattr(pv_record, 'pce', False)]) or
             all([getattr(pv_record, 'ff', False), getattr(pv_record, 'pce', False)])) ]
+
+    print('After filtering out results without the 4 main properties:')
+    for pv_record in pv_records:
+        pp.pprint(pv_record.serialize())
 
     # Merge other information from inside the document when appropriate
     for record in pv_records:

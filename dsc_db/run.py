@@ -267,13 +267,51 @@ def add_contextual_info(pv_records, filtered_elements, properties):
                     except:
                         sentence_values = [rec[parser]['raw_value'] for rec in records_for_this_field]
                         # print(sentence_records[0][parser])
-                    if sentence_values:
+
+                    if field == 'perovskite' and sentence_values:
+                        occurrences, value = get_most_common(sentence_values)
+                        if occurrences != 0:
+                            records_with_this_value = [rec for rec in records_for_this_field if rec[parser]['raw_value'] == value]
+                            records_with_this_value[0][parser]['contextual'] = 'document'
+                            new_record = {'Perovskite': records_with_this_value[0][parser]}
+                            setattr(pv_record, field, new_record)
+
+                    elif sentence_values:
                         all_equal = sentence_values.count(sentence_values[0]) == len(sentence_values)
                         if all_equal:
                             records_for_this_field[0][parser]['contextual'] = 'document'
                             setattr(pv_record, field, records_for_this_field[0])
 
     return pv_records
+
+
+def get_most_common(values):
+    """
+    Gets the most common element in a list. Returns nothing if it doesn't exist
+    """
+    highest = 0
+    highest_value = ''
+    already_seen = []
+    draw = False
+
+    for val in values:
+        if val in already_seen:
+            pass
+        else:
+            already_seen.append(val)
+            frequency = values.count(val)
+            if frequency == highest:
+                draw = True
+            elif frequency > highest:
+                highest = frequency
+                highest_value = val
+                draw = False
+
+    if draw:
+        return 0, ''
+
+    return highest, highest_value
+
 
 
 def add_distributor_info(pv_records):
