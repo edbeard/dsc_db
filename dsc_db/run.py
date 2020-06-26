@@ -464,9 +464,9 @@ def get_standardized_values(record):
                 sub_record.std_units = sub_record.units.dimensions.standard_units
 
                 # Standardize the value information
-                std_value = [sub_record.units.convert_value_to_standard(val) for val in sub_record.value]
+                std_value = [sub_record.units.convert_value_to_standard(abs(val)) for val in sub_record.value]
                 if getattr(sub_record, 'exponent', None) is not None and getattr(sub_record, 'exponent', None) != []:
-                    std_value = [value * pow(10, int(sub_record.exponent[0])) for value in std_value]
+                    std_value = [abs(value) * pow(10, int(sub_record.exponent[0])) for value in std_value]
                 sub_record.std_value = std_value
 
                 # Standardize the error information if present

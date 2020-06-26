@@ -751,3 +751,29 @@ class TestCalculate(unittest.TestCase):
         self.assertEqual(round_to_sig_figs(irr6, err6), exp6)
         self.assertEqual(round_to_sig_figs(irr7, err7), exp7)
         self.assertEqual(round_to_sig_figs(irr8, err8), exp8)
+
+    def test_percentage_quantities_conversion_ff_and_pce(self):
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0', error=5.)
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49', error= 1)
+        ff = FillFactor(value=[0.664], units=Percent(powers=1), raw_value='0.664', raw_units='%)')
+        pce = PowerConversionEfficiency(value=[0.05], units=Percent(powers=1), raw_value='0.05', raw_units='(%)')
+        print(pce.raw_units)
+        record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
+
+        updated_record = calculate_irradiance(record)
+        output = updated_record.derived_properties['solar_simulator']
+        self.assertEqual(output.value, [1600.0])
+        self.assertEqual(output.error, 300.0)
+
+    def test_percentage_quantities_conversion_ff_and_pce_without_units(self):
+        voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0', error=5.)
+        jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49', error= 1)
+        ff = FillFactor(value=[0.664], units=Percent(powers=1), raw_value='0.664')
+        pce = PowerConversionEfficiency(value=[0.05], units=Percent(powers=1), raw_value='0.05', raw_units='(%)')
+        print(pce.raw_units)
+        record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
+
+        updated_record = calculate_irradiance(record)
+        output = updated_record.derived_properties['solar_simulator']
+        self.assertEqual(output.value, [160000.0])
+        self.assertEqual(output.error, 300.0)

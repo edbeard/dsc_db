@@ -89,11 +89,11 @@ def create_pdb_from_file(doc):
     # Merge other information from inside the document when appropriate
     for record in pv_records:
         # Substituting in the definitions from the entire document for HTL
-        if record.perovskite is not None:
+        if record.htl is not None:
             record._substitute_definitions('htl', 'HoleTransportLayer', doc)
 
         # Substituting the compound names for the perovskite
-        if record.perovskite is not None:
+        if record.htl is not None:
             record._substitute_compound('htl', 'HoleTransportLayer', compound_records)
 
     # Contextual merging of perovskites complete, filtering out results without perovskites
@@ -164,11 +164,18 @@ def enhance_common_values(pv_records):
     # Step 2, Do a substitution for the common terms...
     for pv_record in pv_records:
         if pv_record.perovskite:
-            if pv_record.perovskite['Perovskite'].get('raw_value') is not None:
-                formula = pv_record.perovskite['Perovskite']['raw_value']
+            if 'Perovskite' in pv_record.perovskite.keys():
+                if pv_record.perovskite['Perovskite'].get('raw_value') is not None:
+                    formula = pv_record.perovskite['Perovskite']['raw_value']
+                    for key, val in perovskite_abbreviations.items():
+                        formula = formula.replace(key, val)
+                    pv_record.perovskite['Perovskite']['formula'] = formula
+
+            elif 'SentencePerovskite' in pv_record.perovskite.keys():
+                formula = pv_record.perovskite['SentencePerovskite']['raw_value']
                 for key, val in perovskite_abbreviations.items():
                     formula = formula.replace(key, val)
-                pv_record.perovskite['Perovskite']['formula'] = formula
+                pv_record.perovskite['SentencePerovskite']['formula'] = formula
 
     return pv_records
 

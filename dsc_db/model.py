@@ -116,39 +116,44 @@ class PhotovoltaicRecord(object):
         """
 
         field = getattr(self, fieldstr)
+        try:
 
-        # Substitute values (different for list attributes)
-        for compound in compound_records:
+            # Substitute values (different for list attributes)
+            for compound in compound_records:
 
-            # Check for matches to the chemical name
-            if 'names' in compound.keys():
-                names = compound['names']
+                # Check for matches to the chemical name
+                if 'names' in compound.keys():
+                    names = compound['names']
 
-                # Check when the field is a list
-                if type(field[model]) == list:
-                    for i, model_inst in enumerate(field[model]):
-                        if 'raw_value' in model_inst.keys():
-                            if model_inst['raw_value'] in names and 'compound' not in field.keys():
-                                field[model][i].update({'compound': compound})
-                # Check when the field is a single value
-                elif 'raw_value' in field[model]:
-                    if 'compound' not in field.keys() and field[model]['raw_value'] in names:
-                        field[model].update({'compound': compound})
+                    # Check when the field is a list
+                    if type(field[model]) == list:
+                        for i, model_inst in enumerate(field[model]):
+                            if 'raw_value' in model_inst.keys():
+                                if model_inst['raw_value'] in names and 'compound' not in field.keys():
+                                    field[model][i].update({'compound': compound})
+                    # Check when the field is a single value
+                    elif 'raw_value' in field[model]:
+                        if 'compound' not in field.keys() and field[model]['raw_value'] in names:
+                            field[model].update({'compound': compound})
 
-            # Check for matches to the chemical label
-            if 'labels' in compound.keys():
-                labels = compound['labels']
+                # Check for matches to the chemical label
+                if 'labels' in compound.keys():
+                    labels = compound['labels']
 
-                # Check when the field is a list
-                if type(field[model]) == list:
-                    for i, model_inst in enumerate(field[model]):
-                        if 'raw_value' in model_inst.keys():
-                            if model_inst['raw_value'] in labels and 'compound' not in field.keys():
-                                field[model][i].update({'compound': compound})
-                # Check when the field is a single value
-                elif 'raw_value' in field[model]:
-                    if 'compound' not in field.keys() and field[model]['raw_value'] in labels:
-                        field[model].update({'compound': compound})
+                    # Check when the field is a list
+                    if type(field[model]) == list:
+                        for i, model_inst in enumerate(field[model]):
+                            if 'raw_value' in model_inst.keys():
+                                if model_inst['raw_value'] in labels and 'compound' not in field.keys():
+                                    field[model][i].update({'compound': compound})
+                    # Check when the field is a single value
+                    elif 'raw_value' in field[model]:
+                        if 'compound' not in field.keys() and field[model]['raw_value'] in labels:
+                            field[model].update({'compound': compound})
+        except Exception as e:
+            print('The field is: %s' % field)
+            print('The model is: %s' % model)
+            print('The nested quantity is: %s' % field[model])
 
         setattr(self, fieldstr, field)
 

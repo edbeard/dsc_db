@@ -114,7 +114,8 @@ def calculate_power_max(record):
         if pin is not None and record.pce.value:
             # Calculate PCE (use the unit where given)
             pce_mean = mean(record.pce.value)
-            if isinstance(record.pce.units, Percent):
+            # if isinstance(record.pce.units, Percent):
+            if getattr(record.pce, 'raw_units', None) is not None and '%' in record.pce.raw_units:
                 pce = pce_mean / 100
 
             # If decimal is larger than Shockley-Queisser limit, assume it is a percentage
@@ -282,18 +283,18 @@ def calculate_irradiance(record):
                 # Use extracted jsc value if possible
                 if record.jsc:
                     if all([record.jsc.value, record.jsc.units]):
-                        jsc = record.jsc.units.convert_value_to_standard(mean(record.jsc.value))
+                        jsc = record.jsc.units.convert_value_to_standard(mean([abs(val) for val in record.jsc.value]))
 
                 # Otherwise, try to get derived property
                 if 'jsc' in record.derived_properties.keys() and jsc is None:
                     jsc_obj = record.derived_properties['jsc']
-                    jsc = jsc_obj.units.convert_value_to_standard(mean(jsc_obj.value))
+                    jsc = jsc_obj.units.convert_value_to_standard(mean([abs(val) for val in jsc_obj.value]))
 
                 if jsc is not None:
-                    voc = record.voc.units.convert_value_to_standard(mean(record.voc.value))
+                    voc = record.voc.units.convert_value_to_standard(mean([abs(val) for val in record.voc.value]))
 
                     ff_mean = mean(record.ff.value)
-                    if isinstance(record.ff.units, Percent):
+                    if getattr(record.ff, 'raw_units', None) is not None and '%' in record.ff.raw_units:
                         ff = ff_mean / 100
                     else:
                         # If FF > 1, assume it is a percentage
@@ -304,7 +305,7 @@ def calculate_irradiance(record):
 
                     # Calculate PCE (use the unit where given)
                     pce_mean = mean(record.pce.value)
-                    if isinstance(record.pce.units, Percent):
+                    if getattr(record.pce, 'raw_units', None) is not None and '%' in record.pce.raw_units:
                         pce = pce_mean / 100
 
                     # If decimal is larger than Shockley-Queisser limit, assume it is a percentage
@@ -319,8 +320,9 @@ def calculate_irradiance(record):
 
                     solar_sim = SimulatedSolarLightIntensity(value=[irr], units=WattPerMeterSquared(), error=irr_err)
                     new_record.set_derived_properties('solar_simulator', solar_sim)
-    except:
+    except Exception as e:
         print('Unsupported raw value format, could not calculate the solar_simulator')
+        print(e)
 
     return new_record
 
@@ -471,12 +473,16 @@ def calc_error_quantity(record, field):
                  'series_resistance', 'specific_series_resistance', 'solar_simulator', 'pin', 'pmax']:
         prop_calc_error = rec.units.convert_value_to_standard(prop_calc_raw_error)
     elif field == 'ff':
-        if mean(record.ff.value) > 1 or isinstance(record.ff.units, Percent):
+        if getattr(record.ff, 'raw_units', None) is not None and '%' in record.ff.raw_units:
+            prop_calc_error = prop_calc_raw_error / 100
+        elif mean(record.ff.value) > 1:
             prop_calc_error = prop_calc_raw_error / 100
         else:
             prop_calc_error = prop_calc_raw_error
     elif field == 'pce':
-        if isinstance(record.pce.units, Percent) or mean(record.pce.value) > 0.34:
+        if getattr(record.pce, 'raw_units', None) is not None and '%' in record.pce.raw_units:
+            prop_calc_error = prop_calc_raw_error / 100
+        elif mean(record.pce.value) > 0.34:
             prop_calc_error = prop_calc_raw_error / 100
         else:
             prop_calc_error = prop_calc_raw_error
