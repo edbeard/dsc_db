@@ -63,6 +63,7 @@ class TestModel(unittest.TestCase):
                                                             'Meter^(-2.0)',
                                                    'value': [15.49]}},
             'dye': None,
+            'derived_properties': None,
             'ref': None,
             'isc': None,
             'pin': None,
@@ -81,7 +82,6 @@ class TestModel(unittest.TestCase):
             'series_resistance': None,
             'exposure_time': None,
             'table_row_categories': None,
-            'derived_properties': None
         }
 
         record = PhotovoltaicRecord(input)
@@ -214,6 +214,27 @@ class TestModel(unittest.TestCase):
         pv_record = PerovskiteRecord(input, None)
         pv_record._substitute_compound('htl', 'HoleTransportLayer', compound_records)
         self.assertEqual(pv_record.serialize(), expected)
+
+    def test_set_derived_solar_simulator(self):
+        ss1 = {'solar_simulator': {'SimulatedSolarLightIntensity': {'raw_value': '100', 'raw_units': 'mWcm−2', 'value': [100.0],
+                                          'std_value': [1000.0000000000001],
+                                          'units': '(10^1.0) * Meter^(-2.0)  Watt^(1.0)',
+                                          'std_units': 'Meter^(-2.0)  Watt^(1.0)', 'specifier': 'illumination',
+                                          'spectra': 'AM 1.5', 'contextual': 'document'}}}
+        ss2 = {'solar_simulator':{ 'SimulatedSolarLightIntensity': {'raw_value': '100', 'raw_units': 'mWcm−2', 'value': [100.0],
+                                          'std_value': [1000.0000000000001],
+                                          'units': '(10^1.0) * Meter^(-2.0)  Watt^(1.0)',
+                                          'std_units': 'Meter^(-2.0)  Watt^(1.0)', 'specifier': 'illumination',
+                                          'spectra': 'AM 1.5', 'contextual': 'document'}}}
+               # 'derived_properties': {'solar_simulator': {'value': [1851.5], 'units': 'WattPerMeterSquared^(1.0)'}},
+
+        pv_cell_1 = PhotovoltaicRecord(ss1)
+        pv_cell_2 = PhotovoltaicRecord(ss2)
+
+        pv_cell_1.set_solar_simulator(5,'volt',3)
+        self.assertEqual(pv_cell_1.solar_simulator['SimulatedSolarLightIntensity']['derived_value'], 5)
+        self.assertFalse('derived_value' in pv_cell_2.solar_simulator['SimulatedSolarLightIntensity'].keys())
+
 
 if __name__ == '__main__':
     unittest.main()

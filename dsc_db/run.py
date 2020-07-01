@@ -7,6 +7,7 @@ Valid results must include a dye and at least one photovoltaic property
 
 import logging
 import pprint as pp
+from copy import deepcopy
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -258,7 +259,10 @@ def add_contextual_info(pv_records, filtered_elements, properties):
                     all_equal = caption_values.count(caption_values[0]) == len(caption_values)
                     if all_equal:
                         caption_records[0][parser]['contextual'] = 'table_caption'
-                        setattr(pv_record, field, caption_records[0])
+                        caption_record_copy = deepcopy(caption_records[0])
+                        if field == 'perovskite':
+                            caption_record_copy = {'Perovskite': caption_record_copy[parser]}
+                        setattr(pv_record, field, caption_record_copy)
                 else:
                     # Otherwise, extract from the filtered elements
                     records_for_this_field = sentence_records[i]
@@ -274,13 +278,15 @@ def add_contextual_info(pv_records, filtered_elements, properties):
                             records_with_this_value = [rec for rec in records_for_this_field if rec[parser]['raw_value'] == value]
                             records_with_this_value[0][parser]['contextual'] = 'document'
                             new_record = {'Perovskite': records_with_this_value[0][parser]}
-                            setattr(pv_record, field, new_record)
+                            new_record_copy = deepcopy(new_record)
+                            setattr(pv_record, field, new_record_copy)
 
                     elif sentence_values:
                         all_equal = sentence_values.count(sentence_values[0]) == len(sentence_values)
                         if all_equal:
                             records_for_this_field[0][parser]['contextual'] = 'document'
-                            setattr(pv_record, field, records_for_this_field[0])
+                            record_for_this_field_copy = deepcopy(records_for_this_field[0])
+                            setattr(pv_record, field, record_for_this_field_copy)
 
     return pv_records
 

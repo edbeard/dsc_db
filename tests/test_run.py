@@ -7,7 +7,7 @@ import unittest
 from dsc_db.model import PhotovoltaicRecord
 from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, \
     add_contextual_info, get_filtered_elements, dsc_properties, get_standardized_values, get_standardized_values_single_property, \
-    merge_redox_couples, get_active_area, get_most_common
+    merge_redox_couples, get_active_area, get_most_common, add_derived_properties, get_table_records, create_dsscdb_from_file
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
@@ -622,3 +622,59 @@ class TestRun(unittest.TestCase):
         occurrences, value = get_most_common(sentence_values)
         self.assertEqual(occurrences, 0)
         self.assertEqual(value, '')
+
+    def test_add_derived_properties(self):
+        ss1 = {'solar_simulator': {'SimulatedSolarLightIntensity': {'raw_value': '100', 'raw_units': 'mWcm−2', 'value': [100.0],
+                                          'std_value': [1000.0000000000001],
+                                          'units': '(10^1.0) * Meter^(-2.0)  Watt^(1.0)',
+                                          'std_units': 'Meter^(-2.0)  Watt^(1.0)', 'specifier': 'illumination',
+                                          'spectra': 'AM 1.5', 'contextual': 'document'}}}
+        ss2 = {'solar_simulator':{ 'SimulatedSolarLightIntensity': {'raw_value': '100', 'raw_units': 'mWcm−2', 'value': [100.0],
+                                          'std_value': [1000.0000000000001],
+                                          'units': '(10^1.0) * Meter^(-2.0)  Watt^(1.0)',
+                                          'std_units': 'Meter^(-2.0)  Watt^(1.0)', 'specifier': 'illumination',
+                                          'spectra': 'AM 1.5', 'contextual': 'document'}},
+               'derived_properties': {'solar_simulator': {'value': [1000.5], 'units': 'WattPerMeterSquared^(1.0)', 'error': 100.0}}
+               }
+
+        ss3 = {'solar_simulator':{ 'SimulatedSolarLightIntensity': {'raw_value': '100', 'raw_units': 'mWcm−2', 'value': [100.0],
+                                          'std_value': [1000.0000000000001],
+                                          'units': '(10^1.0) * Meter^(-2.0)  Watt^(1.0)',
+                                          'std_units': 'Meter^(-2.0)  Watt^(1.0)', 'specifier': 'illumination',
+                                          'spectra': 'AM 1.5', 'contextual': 'document'}},
+               'derived_properties': {'solar_simulator': {'value': [1000.5], 'units': 'WattPerMeterSquared^(1.0)', 'error': 90.0}}
+               }
+               # 'derived_properties': {'solar_simulator': {'value': [1851.5], 'units': 'WattPerMeterSquared^(1.0)'}},
+
+        pv_cell_1 = PhotovoltaicRecord(ss1)
+        pv_cell_2 = PhotovoltaicRecord(ss2)
+        pv_cell_3 = PhotovoltaicRecord(ss3)
+        pv_records = [pv_cell_1, pv_cell_2, pv_cell_3]
+        props = add_derived_properties(pv_records)
+        self.assertTrue('derived_value' not in props[0].solar_simulator['SimulatedSolarLightIntensity'].keys())
+        self.assertEqual([1000.5], props[1].solar_simulator['SimulatedSolarLightIntensity']['derived_value'])
+        self.assertEqual(90.0, props[2].solar_simulator['SimulatedSolarLightIntensity']['derived_error'])
+
+    def test_add_derived_props_from_table(self):
+        """ Test the case where dye is specified in the caption"""
+        table_input = [['CE',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Pt', '11.11', '22.22', '33.33', '44.44'],
+                       ['other', '55.55', '66.66', '77.77', '88.88']]
+        input_table = Table(caption=Caption('Photovoltaic parameters for cells with the sensitizer N719.'), table_data=table_input)
+        doc = Document('Null', input_table)
+        doc.add_models([PhotovoltaicCell, Compound, SentenceDye, CommonSentenceDye])
+        active_area_record = {}
+        table_records = get_table_records(doc, 'PhotovoltaicCell', active_area_record)
+        pv_records = [PhotovoltaicRecord(record, table) for record, table in table_records]
+        pv_records = add_derived_properties(pv_records)
+
+        self.assertEqual(pv_records[0].solar_simulator['SimulatedSolarLightIntensity']['derived_value'], [1851.0])
+        self.assertEqual(pv_records[1].solar_simulator['SimulatedSolarLightIntensity']['derived_value'], [32401.0])
+
+    def test_add_derived_props_from_doc(self):
+        table_input = [['CE',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE'], ['Pt', '11.11', '22.22', '33.33', '44.44'],
+                       ['other', '55.55', '66.66', '77.77', '88.88']]
+        input_table = Table(caption=Caption('Photovoltaic parameters for cells with the sensitizer N719.'), table_data=table_input)
+        doc = Document('Solar simulator found to be 100 mWcm-2. The dye used was N719.', input_table)
+        pv_records = create_dsscdb_from_file(doc)
+        self.assertEqual(pv_records[0].solar_simulator['SimulatedSolarLightIntensity']['derived_value'], [1851.0])
+        self.assertEqual(pv_records[1].solar_simulator['SimulatedSolarLightIntensity']['derived_value'], [32401.0])

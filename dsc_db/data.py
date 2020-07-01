@@ -388,6 +388,7 @@ solaronix_htls = {
 
     'Spiro-OMeTAD': {
         'labels': ['Spiro-OMeTAD',
+                   'SpiroOMeTAD',
                    "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
                    'C81H68N4O8',
                    'Spiro-MeOTAD',

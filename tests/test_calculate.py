@@ -238,8 +238,8 @@ class TestCalculate(unittest.TestCase):
     def test_calculate_irradaince_ff_with_unit(self):
         voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0')
         jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49')
-        ff = FillFactor(value=[0.2], raw_value='0.2', units=Percent())
-        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78')
+        ff = FillFactor(value=[0.2], raw_value='0.2', units=Percent(), raw_units='(%)')
+        pce = PowerConversionEfficiency(value=[7.78], units=Percent(), raw_value='7.78', raw_units='(%)')
         input_record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
         output_record = calculate_irradiance(input_record)
         expected = 3.0
@@ -768,12 +768,12 @@ class TestCalculate(unittest.TestCase):
     def test_percentage_quantities_conversion_ff_and_pce_without_units(self):
         voc = OpenCircuitVoltage(value=[756.0], units=Volt(magnitude=-3.), raw_value='756.0', error=5.)
         jsc = ShortCircuitCurrentDensity(value=[15.49], units=AmpPerMeterSquared(magnitude=1.), raw_value='15.49', error= 1)
-        ff = FillFactor(value=[0.664], units=Percent(powers=1), raw_value='0.664')
-        pce = PowerConversionEfficiency(value=[0.05], units=Percent(powers=1), raw_value='0.05', raw_units='(%)')
+        ff = FillFactor(value=[0.664], raw_value='0.664')
+        pce = PowerConversionEfficiency(value=[0.05], raw_value='0.05', raw_units='(%)')
         print(pce.raw_units)
         record = PhotovoltaicCell(voc=voc, jsc=jsc, ff=ff, pce=pce)
 
         updated_record = calculate_irradiance(record)
         output = updated_record.derived_properties['solar_simulator']
         self.assertEqual(output.value, [160000.0])
-        self.assertEqual(output.error, 300.0)
+        self.assertEqual(output.error, 30000.0)
