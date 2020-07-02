@@ -13,7 +13,7 @@ class PhotovoltaicRecord(object):
 
     """
     _fields = ['jsc', 'isc', 'voc', 'pce', 'ff', 'dye', 'ref', 'redox_couple', 'dye_loading', 'counter_electrode',
-               'semiconductor', 'active_area', 'solar_simulator', 'electrolyte', 'substrate',
+               'semiconductor', 'semiconductor_thickness', 'active_area', 'solar_simulator', 'electrolyte', 'substrate',
                'charge_transfer_resistance', 'series_resistance', 'specific_charge_transfer_resistance',
                'specific_series_resistance', 'exposure_time', 'table_row_categories', 'derived_properties', 'pin', 'pmax']
 

@@ -19,7 +19,7 @@ from chemdataextractor.model import Compound, ListType, FloatType
 from chemdataextractor.model.units.unit import UnitType
 
 from dsc_db.model import PhotovoltaicRecord
-from dsc_db.data import all_dyes, blacklist_headings, redox_couples
+from dsc_db.data import all_dyes, blacklist_headings, redox_couples, common_semiconductors
 from dsc_db.smiles import add_smiles
 from dsc_db.calculate import calculate_metrics, calculate_relative_metrics, calculate_relative_metrics_perovskite
 
@@ -27,6 +27,7 @@ from dsc_db.calculate import calculate_metrics, calculate_relative_metrics, calc
 dsc_properties = [('RedoxCouple', 'redox_couple'),
     ('SimulatedSolarLightIntensity', 'solar_simulator'),
               ('Semiconductor', 'semiconductor'),
+                  ('SemiconductorThickness', 'semiconductor_thickness'),
               ('SentenceDyeLoading', 'dye_loading'),
               ('Substrate', 'substrate'),
                 ('ActiveArea', 'active_area')]
@@ -128,6 +129,9 @@ def create_dsscdb_from_file(doc):
     # Add chemical data from distributor of common dyes
     pv_records = add_distributor_info(pv_records)
 
+    # Enhance semiconductor data
+    pv_records = enhance_semiconductor_data(pv_records)
+
     # Add SMILES through PubChem and ChemSpider where not added by distributor
     pv_records = add_smiles(pv_records)
     # print('Printing output after smiles are added ...')
@@ -146,6 +150,19 @@ def create_dsscdb_from_file(doc):
 
     # Output sentence dye records for debugging
     # output_sentence_dyes(doc)
+
+    return pv_records
+
+
+def enhance_semiconductor_data(pv_records):
+    """
+    Enhance cases where the semiconductor thickness was detected but the semiconductor field wasn't.
+    """
+
+    for pv_record in pv_records:
+        if pv_record.semiconductor is None and pv_record.semiconductor_thickness is not None:
+            if pv_record.semiconductor_thickness['SemiconductorThickness']['specifier'] in common_semiconductors:
+                pv_record.semiconductor = {'Semiconductor': {'specifier':'', 'raw_value': pv_record.semiconductor_thickness['SemiconductorThickness']['specifier'] }}
 
     return pv_records
 
@@ -250,6 +267,7 @@ def add_contextual_info(pv_records, filtered_elements, properties):
 
                 # Then, count the occurrences. If there is only one result, merge (as we can assume this applies to all the
                 # results in the table.
+
                 try:
                     caption_values = [rec[parser]['value'] for rec in caption_records]
                 except:
@@ -257,7 +275,19 @@ def add_contextual_info(pv_records, filtered_elements, properties):
 
                 if caption_values:
                     all_equal = caption_values.count(caption_values[0]) == len(caption_values)
-                    if all_equal:
+                    if field == 'semiconductor_thickness' and not all_equal:
+                        try:
+                            occurrences, value = get_most_common(caption_values)
+                            if occurrences != 0:
+                                most_common_records = [rec for rec in caption_records if
+                                                       rec[parser]['value'] == value]
+
+                                most_common_records[0][parser]['contextual'] = 'document'
+                                most_common_record_copy = deepcopy(most_common_records[0])
+                                setattr(pv_record, field, most_common_record_copy)
+                        except:
+                            pass
+                    elif all_equal:
                         caption_records[0][parser]['contextual'] = 'table_caption'
                         caption_record_copy = deepcopy(caption_records[0])
                         if field == 'perovskite':
@@ -283,7 +313,19 @@ def add_contextual_info(pv_records, filtered_elements, properties):
 
                     elif sentence_values:
                         all_equal = sentence_values.count(sentence_values[0]) == len(sentence_values)
-                        if all_equal:
+                        if field == 'semiconductor_thickness' and not all_equal:
+                            try:
+                                occurrences, value = get_most_common(sentence_values)
+                                if occurrences != 0:
+                                    most_common_records = [rec for rec in records_for_this_field if
+                                                               rec[parser]['value'] == value]
+
+                                    most_common_records[0][parser]['contextual'] = 'document'
+                                    most_common_record_copy = deepcopy(most_common_records[0])
+                                    setattr(pv_record, field, most_common_record_copy)
+                            except:
+                                pass
+                        elif all_equal:
                             records_for_this_field[0][parser]['contextual'] = 'document'
                             record_for_this_field_copy = deepcopy(records_for_this_field[0])
                             setattr(pv_record, field, record_for_this_field_copy)

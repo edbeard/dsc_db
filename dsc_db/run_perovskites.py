@@ -168,13 +168,13 @@ def enhance_common_values(pv_records):
                 if pv_record.perovskite['Perovskite'].get('raw_value') is not None:
                     formula = pv_record.perovskite['Perovskite']['raw_value']
                     for key, val in perovskite_abbreviations.items():
-                        formula = formula.replace(key, val)
+                        formula = formula.replace(key, '(' + val + ')')
                     pv_record.perovskite['Perovskite']['formula'] = formula
 
             elif 'SentencePerovskite' in pv_record.perovskite.keys():
                 formula = pv_record.perovskite['SentencePerovskite']['raw_value']
                 for key, val in perovskite_abbreviations.items():
-                    formula = formula.replace(key, val)
+                    formula = formula.replace(key, '(' + val + ')')
                 pv_record.perovskite['SentencePerovskite']['formula'] = formula
 
     return pv_records

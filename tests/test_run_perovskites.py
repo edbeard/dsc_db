@@ -163,7 +163,7 @@ class TestRunPerovskites(unittest.TestCase):
         }
 
         expected = {'Perovskite': {'contextual': 'document',
-                'formula': 'CH3NH3PbCl3',
+                'formula': '(CH3NH3)PbCl3',
                 'raw_value': 'MAPbCl3'}}
 
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
@@ -295,7 +295,7 @@ class TestRunPerovskites(unittest.TestCase):
             'perovskite': {'Perovskite': {'contextual': 'document', 'raw_value': 'MAPbCl3'}}
         }
         expected = {'Perovskite': {'contextual': 'document',
-                'formula': 'CH3NH3PbCl3',
+                'formula': '(CH3NH3)PbCl3',
                 'raw_value': 'MAPbCl3'}}
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
         pv_records = enhance_common_values(pv_records)
@@ -308,7 +308,7 @@ class TestRunPerovskites(unittest.TestCase):
             'perovskite': {'Perovskite': {'contextual': 'document', 'raw_value': '(BA)2(MA)n-1PbnI3n+1'}}
         }
         expected = {'Perovskite': {'contextual': 'document',
-                'formula': '(C4H11N)2(CH3NH3)n-1PbnI3n+1',
+                'formula': '((C4H11N))2((CH3NH3))n-1PbnI3n+1',
                 'raw_value': '(BA)2(MA)n-1PbnI3n+1'}}
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
         pv_records = enhance_common_values(pv_records)

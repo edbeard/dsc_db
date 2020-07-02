@@ -7,14 +7,15 @@ import unittest
 from dsc_db.model import PhotovoltaicRecord
 from dsc_db.run import add_dye_information, add_contextual_dye_from_document_by_multiplicity, add_distributor_info, \
     add_contextual_info, get_filtered_elements, dsc_properties, get_standardized_values, get_standardized_values_single_property, \
-    merge_redox_couples, get_active_area, get_most_common, add_derived_properties, get_table_records, create_dsscdb_from_file
+    merge_redox_couples, get_active_area, get_most_common, add_derived_properties, get_table_records, create_dsscdb_from_file, \
+    enhance_semiconductor_data
 
 from chemdataextractor import Document
 from chemdataextractor.model import Compound
 from chemdataextractor.model.units import Volt
 from chemdataextractor.model.units.current_density import AmpPerMeterSquared
 from chemdataextractor.model.units.substance_amount_density import MolPerMeterSquared
-from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading, OpenCircuitVoltage, ShortCircuitCurrentDensity, ActiveArea, RedoxCouple
+from chemdataextractor.model.pv_model import PhotovoltaicCell, SentenceDye, CommonSentenceDye, SimulatedSolarLightIntensity, Substrate, Semiconductor, DyeLoading, SentenceDyeLoading, OpenCircuitVoltage, ShortCircuitCurrentDensity, ActiveArea, RedoxCouple, SemiconductorThickness
 from chemdataextractor.doc import Table, Caption, Paragraph, Heading, Sentence
 
 
@@ -345,13 +346,6 @@ class TestRun(unittest.TestCase):
         model = Semiconductor
         expected = {'semiconductor': {'Semiconductor': {'raw_value': 'TiO2',
                                      'specifier': 'photoanode',
-                                     'thickness': {'SemiconductorThickness': {'raw_units': 'μm',
-                                                                              'raw_value': '12',
-                                                                              'specifier': 'photoanode',
-                                                                              'units': '(10^-6.0) '
-                                                                                       '* '
-                                                                                       'Meter^(1.0)',
-                                                                              'value': [12.0]}},
                                       'contextual': 'table_caption'}},
                      'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
                                                     'raw_value': '756',
@@ -361,24 +355,56 @@ class TestRun(unittest.TestCase):
 
         self.do_contextual_table_caption_merging(caption, model, expected)
 
+    def test_contextual_semiconductor_thickness_merged_from_table_caption(self):
+        caption = 'Photovoltaic parameters of the DSSCs sensitized with P1, P2 and P3 with 12 μm TiO2 photoanode'
+        model = SemiconductorThickness
+        expected = {'semiconductor_thickness': {'SemiconductorThickness': {'contextual': 'table_caption',
+                                                        'raw_units': 'μm',
+                                                        'raw_value': '12',
+                                                        'specifier': 'TiO2',
+                                                        'std_units': 'Meter^(1.0)',
+                                                        'std_value': [1.2e-05],
+                                                        'units': '(10^-6.0) * '
+                                                                 'Meter^(1.0)',
+                                                        'value': [12.0]}},
+                         'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                        'raw_value': '756',
+                                                        'specifier': 'Voc',
+                                                        'units': '(10^-3.0) * Volt^(1.0)',
+                                                        'value': [756.0]}}}
+
+        self.do_contextual_table_caption_merging(caption, model, expected)
+
     def test_contextual_semiconductor_merged_from_document(self):
         text = 'The overall power conversion efficiencies (PCEs) of DSSCs based on these dyes lay in the range 2.46–3.9% using a 12 μm thick TiO2 photoanode.'
         model = Semiconductor
         expected = {'semiconductor': {'Semiconductor': {'contextual': 'document',
                                      'raw_value': 'TiO2',
-                                     'specifier': 'photoanode',
-                                     'thickness': {'SemiconductorThickness': {'raw_units': 'μm',
-                                                                              'raw_value': '12',
-                                                                              'specifier': 'thick',
-                                                                              'units': '(10^-6.0) '
-                                                                                       '* '
-                                                                                       'Meter^(1.0)',
-                                                                              'value': [12.0]}}}},
-                                     'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
-                                                                    'raw_value': '756',
-                                                                    'specifier': 'Voc',
-                                                                    'units': '(10^-3.0) * Volt^(1.0)',
-                                                                    'value': [756.0]}}}
+                                     'specifier': 'photoanode'}},
+             'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                            'raw_value': '756',
+                                            'specifier': 'Voc',
+                                            'units': '(10^-3.0) * Volt^(1.0)',
+                                            'value': [756.0]}}}
+        self.do_contextual_document_merging(text, model, expected)
+
+    def test_contextual_semiconductor_thickness_merged_from_document(self):
+        text = 'The overall power conversion efficiencies (PCEs) of DSSCs based on these dyes lay in the range 2.46–3.9% using a 12 μm thick TiO2 photoanode.'
+        model = SemiconductorThickness
+        expected = {'semiconductor_thickness': {'SemiconductorThickness': {'contextual': 'document',
+                                                        'raw_units': 'μm',
+                                                        'raw_value': '12',
+                                                        'specifier': 'TiO2',
+                                                        'std_units': 'Meter^(1.0)',
+                                                        'std_value': [1.2e-05],
+                                                        'units': '(10^-6.0) * '
+                                                                 'Meter^(1.0)',
+                                                        'value': [12.0]}},
+                     'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                                    'raw_value': '756',
+                                                    'specifier': 'Voc',
+                                                    'units': '(10^-3.0) * Volt^(1.0)',
+                                                    'value': [756.0]}}}
         self.do_contextual_document_merging(text, model, expected)
 
     def test_contextual_dye_loading_merged_from_table_caption(self):
@@ -678,3 +704,30 @@ class TestRun(unittest.TestCase):
         pv_records = create_dsscdb_from_file(doc)
         self.assertEqual(pv_records[0].solar_simulator['SimulatedSolarLightIntensity']['derived_value'], [1851.0])
         self.assertEqual(pv_records[1].solar_simulator['SimulatedSolarLightIntensity']['derived_value'], [32401.0])
+
+    def test_enhance_semiconductors(self):
+        input = 'The TiO2 had a thickness of 12μm.'
+        doc = Document(input)
+        doc.add_models([Semiconductor, SemiconductorThickness])
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
+        }
+        pv_records = [PhotovoltaicRecord(pv_input, Table(Caption(''), models=[Semiconductor, SemiconductorThickness]))]
+        pv_records = add_contextual_info(pv_records, doc, dsc_properties)
+        pv_records = enhance_semiconductor_data(pv_records)
+        self.assertEqual(pv_records[0].serialize(), {'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc', 'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}, 'semiconductor': {'Semiconductor': {'specifier': '', 'raw_value': 'TiO2'}}, 'semiconductor_thickness': {'SemiconductorThickness': {'raw_value': '12', 'raw_units': 'μm', 'value': [12.0], 'std_value': [1.2e-05], 'units': '(10^-6.0) * Meter^(1.0)', 'std_units': 'Meter^(1.0)', 'specifier': 'TiO2', 'contextual': 'document'}}})
+
+    def test_enhance_semiconductors_2(self):
+        input = 'The TiO2 had a thickness of 12μm.'
+        doc = Document(input)
+        doc.add_models([Semiconductor, SemiconductorThickness])
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}},
+            'semiconductor': {'Semiconductor': {'specifier':'anode', 'raw_value': 'TiO2 nanosperes'}}
+        }
+        pv_records = [PhotovoltaicRecord(pv_input, Table(Caption(''), models=[Semiconductor, SemiconductorThickness]))]
+        pv_records = add_contextual_info(pv_records, doc, dsc_properties)
+        pv_records = enhance_semiconductor_data(pv_records)
+        self.assertEqual(pv_records[0].serialize(), {'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc', 'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}, 'semiconductor': {'Semiconductor': {'specifier': 'anode', 'raw_value': 'TiO2 nanosperes'}}, 'semiconductor_thickness': {'SemiconductorThickness': {'raw_value': '12', 'raw_units': 'μm', 'value': [12.0], 'std_value': [1.2e-05], 'units': '(10^-6.0) * Meter^(1.0)', 'std_units': 'Meter^(1.0)', 'specifier': 'TiO2', 'contextual': 'document'}}})

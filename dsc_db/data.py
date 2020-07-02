@@ -5,6 +5,8 @@ Dictionaries of dye information (manually extracted from relevant websites)
 .. codeauthor: Ed Beard <ed.beard94@gmail.com>
 """
 
+common_semiconductors = ['TiO2', 'ZnO', 'NiO', 'Zn2SnO4', 'SnO2']
+
 
 dyenamo_dyes = {
 
