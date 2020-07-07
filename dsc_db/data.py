@@ -913,6 +913,6 @@ dsc_indicators = [
 
 # specific tokens that should be merged together in classification analysis
 token_tuples_to_merge = {
-    ('quantum', 'dot'), ('quantum', 'dots'), ('spiro', 'ometad'), ('dye', 'sensitized'), ('dye', 'sensitised'), ('co', 'sensitization'),
+    ('quantum', 'dot'), ('quantum', 'dots'), ('spiro', 'ometad'), ('spiro', 'meotad'), ('dye', 'sensitized'), ('dye', 'sensitised'), ('co', 'sensitization'),
     ('co', 'sensitisation')
 }

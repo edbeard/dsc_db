@@ -162,16 +162,24 @@ class PerovskiteRecord(PhotovoltaicRecord):
 
     _fields = ['jsc', 'isc', 'voc', 'pce', 'ff', 'ref', 'perovskite', 'etl', 'htl',
                'counter_electrode', 'active_area', 'solar_simulator', 'substrate',
-               'charge_transfer_resistance', 'series_resistance', 'exposure_time', 'specific_charge_transfer_resistance',
-                'specific_series_resistance', 'exposure_time', 'table_row_categories', 'derived_properties',
-               'pin', 'pmax']
+               'charge_transfer_resistance', 'series_resistance', 'specific_charge_transfer_resistance',
+               'specific_series_resistance', 'exposure_time',
+                'table_row_categories', 'derived_properties', 'pin', 'pmax']
 
     def __init__(self, records, table=None):
         # Initialize exisiting records
+        missing_fields = []
         for key, value in six.iteritems(records):
-            setattr(self, key, value)
+            if key in ['series_resistance', 'charge_transfer_resistance', 'specific_series_resistance', 'specific_charge_transfer_resistance' ]:
+                if 'units' not in next(iter(value.values())).keys():
+                    print('No unit extracted for record : %s' % value)
+                    missing_fields.append(key)
+                else:
+                    setattr(self, key, value)
+            else:
+                setattr(self, key, value)
         # Set default values to None
-        missing_fields = [field for field in self._fields if field not in records.keys()]
+        missing_fields += [field for field in self._fields if field not in records.keys()]
         for field in missing_fields:
             setattr(self, field, None)
 
