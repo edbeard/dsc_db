@@ -848,7 +848,7 @@ all_etls = {
 'SiO2': { 'labels':	['silicon dioxide', 'SiO2'], 'name': 'silicon dioxide'},
 'NiO': { 'labels':	['nickel oxide', 'NiO'], 'name':'nickel oxide'},
 'ZrO2': {	'labels':['zirconium dioxide', 'ZrO2'], 'name': 'zirconium dioxide'},
-'PCBM' :{'labels': ['phenyl-C61-butyric acid methyl ester', 'PCBM'], 'name':'phenyl-C61-butyric acid methyl ester'},
+'PCBM' :{'labels': ['phenyl-C61-butyric acid methyl ester', 'PCBM', 'PC60BM', 'PC61BM'], 'name':'phenyl-C61-butyric acid methyl ester'},
 'm-TiO2':{ 'labels':	['m-TiO2', 'meso-TiO2', 'mesoporous titanium dioxide'], 'structure': 'mesoporous', 'name':'titanium dioxide'},
 'c-TiO2' :{'labels':	['c-TiO2', 'compact titanium dioxide' ], 'structure': 'compact', 'name': 'titanium dioxide'},
 'c-SnO2' :{'labels':	['c-SnO2', 'compact tin dioxide' ], 'structure': 'compact', 'name': 'tin dioxide'},

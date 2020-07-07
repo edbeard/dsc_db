@@ -3,12 +3,13 @@
 """
 import unittest
 from dsc_db.run_perovskites import add_contextual_info, PerovskiteRecord, peroskite_material_properties, \
-    enhance_common_values, get_filtered_elements
+    enhance_common_values, get_filtered_elements, perovskite_properties
 
 from chemdataextractor.doc.text import Caption, Paragraph
 from chemdataextractor.doc import Document
 from chemdataextractor.doc.table import Table
-from chemdataextractor.model.pv_model import Perovskite, HoleTransportLayer, ElectronTransportLayer, PerovskiteSolarCell, SentencePerovskite
+from chemdataextractor.model.pv_model import Perovskite, HoleTransportLayer, ElectronTransportLayer, PerovskiteSolarCell, \
+    SentencePerovskite, CounterElectrode
 from chemdataextractor.model import Compound
 
 
@@ -26,7 +27,7 @@ class TestRunPerovskites(unittest.TestCase):
         output = pv_records[0].serialize()
         self.assertEqual(output, expected)
 
-    def do_contextual_document_merging(self, text, model, expected):
+    def do_contextual_document_merging(self, text, model, expected, props=peroskite_material_properties):
         filtered_elements = Paragraph(text)
         doc = Document(filtered_elements)
         doc.add_models([model])
@@ -35,7 +36,7 @@ class TestRunPerovskites(unittest.TestCase):
                                            'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
         }
         pv_records = [PerovskiteRecord(pv_input, Table(Caption(''), models=[model]))]
-        pv_records = add_contextual_info(pv_records, doc, peroskite_material_properties)
+        pv_records = add_contextual_info(pv_records, doc, props)
         output = pv_records[0].serialize()
         self.assertEqual(output, expected)
 
@@ -136,6 +137,37 @@ class TestRunPerovskites(unittest.TestCase):
                                 'units': '(10^-3.0) * Volt^(1.0)',
                                 'value': [756.0]}}}
         self.do_contextual_document_merging(text, ElectronTransportLayer, expected)
+
+    def test_add_contextual_etc_from_document_2(self):
+        text = "Fig. 1c and d show the J–V characteristics of the two (representative) devices fabricated using PC61BM as EELs, before and after light soaking. "
+        expected = {'etl': {'ElectronTransportLayer': {'contextual': 'document',
+                                    'labels': ['phenyl-C61-butyric acid methyl '
+                                               'ester',
+                                               'PCBM',
+                                               'PC60BM',
+                                               'PC61BM'],
+                                    'name': 'phenyl-C61-butyric acid methyl '
+                                            'ester',
+                                    'raw_value': 'PC61BM',
+                                    'specifier': 'EELs'}},
+ 'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+        filtered_elements = Paragraph(text)
+        doc = Document(filtered_elements)
+        doc.add_models([ElectronTransportLayer])
+        pv_input = {
+            'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)', 'raw_value': '756', 'specifier': 'Voc',
+                                           'units': '(10^-3.0) * Volt^(1.0)', 'value': [756.0]}}
+        }
+        pv_records = [PerovskiteRecord(pv_input, Table(Caption(''), models=[ElectronTransportLayer]))]
+        pv_records = add_contextual_info(pv_records, doc, peroskite_material_properties)
+        pv_records = enhance_common_values(pv_records)
+        output = pv_records[0].serialize()
+
+        self.assertEqual(output, expected)
 
     def test_multiple_params_from_caption(self):
         caption = "Device parameters for MAPbI3 solar cells prepared on an identical TiO2 ETL and capped with a spiro-MeOTAD HTL."
@@ -326,3 +358,16 @@ class TestRunPerovskites(unittest.TestCase):
         pv_records = [PerovskiteRecord(pv_input, Table(Caption('')))]
         pv_records = enhance_common_values(pv_records)
         self.assertEqual(expected, pv_records[0].perovskite)
+
+    def test_counter_electrode_extraction(self):
+        sentence = 'Herein, we demonstrated a low temperature solution process to obtain high quality CsPbI2Br films and fabricate devices with a facile n-i-p structure (ITO/SnO2/CsPbI2Br/Spiro-OMeTAD/MoO3/Ag), in which MoO3 was introduced as interfacial layer that led to high efficient charge extraction and suppressed carrier recombination.'
+        expected = {'counter_electrode': {'CounterElectrode': {'contextual': 'document',
+                                            'raw_value': 'Ag',
+                                            'specifier': 'ITO'}},
+        'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                    'raw_value': '756',
+                                    'specifier': 'Voc',
+                                    'units': '(10^-3.0) * Volt^(1.0)',
+                                    'value': [756.0]}}}
+        self.do_contextual_document_merging(sentence, CounterElectrode, expected, props=perovskite_properties)
+

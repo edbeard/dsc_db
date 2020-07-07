@@ -24,7 +24,8 @@ from dsc_db.smiles import add_smiles_perovskite_htl
 perovskite_properties = [
     ('SimulatedSolarLightIntensity', 'solar_simulator'),
     ('Substrate', 'substrate'),
-    ('ActiveArea', 'active_area')
+    ('ActiveArea', 'active_area'),
+    ('CounterElectrode', 'counter_electrode')
 ]
 
 peroskite_material_properties = [
