@@ -6,9 +6,9 @@ from shutil import copy
 from dsc_db.classify import classify_document
 from chemdataextractor import Document
 
-root_dir = '/home/edward/pv/extractions/psc_fscore_eval/input'
-output_path = '/home/edward/pv/extractions/psc_fscore_eval/input_filtered'
-output_table_path = '/home/edward/pv/extractions/psc_fscore_eval/input_filtered_tables' # Path to papers after removing results without tables
+root_dir = '/home/edward/pv/extractions/psc_fscore_extra_eval/input'
+output_path = '/home/edward/pv/extractions/psc_fscore_extra_eval/input_filtered'
+output_table_path = '/home/edward/pv/extractions/psc_fscore_extra_eval/input_filtered_tables' # Path to papers after removing results without tables
 
 
 if __name__ == '__main__':

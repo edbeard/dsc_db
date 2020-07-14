@@ -34,6 +34,13 @@ peroskite_material_properties = [
     ('ElectronTransportLayer', 'etl')
 ]
 
+structural_material_props_minus_perovskite = [
+    ('Substrate', 'substrate'),
+    ('CounterElectrode', 'counter_electrode'),
+    ('HoleTransportLayer', 'htl'),
+    ('ElectronTransportLayer', 'etl')
+]
+
 
 def create_pdb_from_file(doc):
     """
@@ -116,6 +123,9 @@ def create_pdb_from_file(doc):
     # Merge derived properties
     pv_records = add_derived_properties(pv_records)
 
+    # Remove merged material properties that are likely to be incorrect
+    pv_records = filter_contextual_properties_from_reviews(pv_records)
+
     # print the output after dyes removed...
     # for pv_record in pv_records:
     #     pp.pprint(pv_record.serialize())
@@ -129,6 +139,28 @@ def create_pdb_from_file(doc):
 def add_smiles(pv_records):
     # TODO: Add SMILES logic after determining which properties will require it.
     pass
+
+
+def filter_contextual_properties_from_reviews(pv_records):
+    """
+    Filter out contextual material properties for results that contain a 'reference' property.
+    Such records are assumed to be from review papers, where such information is liable to be specific to particular cases.
+
+    These records are still deemed to be useful as all required info can be found in the corresponding record.
+    """
+    for pv_record in pv_records:
+        if getattr(pv_record, 'ref') is not None:
+            if 'value' in pv_record.ref['Reference'].keys():
+
+                # Filter out all document contextual properties that are not the perovskite material
+                for parser, field in structural_material_props_minus_perovskite:
+                    if getattr(pv_record, field) is not None:
+                        pv_field = getattr(pv_record, field)
+                        if 'contextual' in pv_field[parser].keys():
+                            if pv_field[parser]['contextual'] == 'document':
+                                setattr(pv_record, field, None)
+
+    return pv_records
 
 
 def enhance_common_values(pv_records):
@@ -193,9 +225,3 @@ if __name__ == '__main__':
     # Create stream for progiler to write to
     profiling_output = io.StringIO()
     p = pstats.Stats('mainstats', stream=profiling_output)
-
-
-
-
-
-

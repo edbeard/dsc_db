@@ -3,13 +3,13 @@
 """
 import unittest
 from dsc_db.run_perovskites import add_contextual_info, PerovskiteRecord, peroskite_material_properties, \
-    enhance_common_values, get_filtered_elements, perovskite_properties
+    enhance_common_values, get_filtered_elements, perovskite_properties, create_pdb_from_file
 
 from chemdataextractor.doc.text import Caption, Paragraph
 from chemdataextractor.doc import Document
 from chemdataextractor.doc.table import Table
 from chemdataextractor.model.pv_model import Perovskite, HoleTransportLayer, ElectronTransportLayer, PerovskiteSolarCell, \
-    SentencePerovskite, CounterElectrode
+    SentencePerovskite, CounterElectrode, ActiveArea, Substrate
 from chemdataextractor.model import Compound
 
 
@@ -232,7 +232,9 @@ class TestRunPerovskites(unittest.TestCase):
 
         expected = {'ElectronTransportLayer': {'contextual': 'document',
                             'labels': ['phenyl-C61-butyric acid methyl ester',
-                                       'PCBM'],
+                                       'PCBM',
+                                       'PC60BM',
+                                       'PC61BM'],
                             'name': 'phenyl-C61-butyric acid methyl ester',
                             'raw_value': 'PCBM'}}
 
@@ -371,3 +373,110 @@ class TestRunPerovskites(unittest.TestCase):
                                     'value': [756.0]}}}
         self.do_contextual_document_merging(sentence, CounterElectrode, expected, props=perovskite_properties)
 
+    def test_etl_thickness_extraction(self):
+        sentence = ' For the preparation of 60 nm thick compact TiO2 layer, a precursor solution was prepared by adding 1 mL titanium diisopropoxide bis(acetylacetonate) (Sigma–Aldrich) into 39 mL absolute ethanol. '
+        pass
+
+    def test_active_area_extraction(self):
+        sentence = 'The active area of all devices was defined as 0.16 cm2.'
+        expected = {'active_area': {'ActiveArea': {'contextual': 'document',
+                                'raw_units': 'cm2',
+                                'raw_value': '0.16',
+                                'specifier': 'active area',
+                                'std_units': 'Meter^(2.0)',
+                                'std_value': [1.6e-05],
+                                'units': '(10^-4.0) * Meter^(2.0)',
+                                'value': [0.16]}},
+                    'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+        self.do_contextual_document_merging(sentence, ActiveArea, expected, props=perovskite_properties)
+
+    def test_active_area_extraction_2(self):
+        sentence = 'The total active area of the semi-transparent cells is 0.3 cm2'
+        expected = {'active_area': {'ActiveArea': {'contextual': 'document',
+                                'raw_units': 'cm2',
+                                'raw_value': '0.3',
+                                'specifier': 'active area',
+                                'std_units': 'Meter^(2.0)',
+                                'std_value': [3e-05],
+                                'units': '(10^-4.0) * Meter^(2.0)',
+                                'value': [0.3]}},
+                    'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+        self.do_contextual_document_merging(sentence, ActiveArea, expected, props=perovskite_properties)
+
+    def test_substrate_extraction(self):
+        sentence = 'The peak marked “*” was the Indium tin oxide (ITO) substrate.'
+        expected = {'substrate': {'Substrate': {'contextual': 'document',
+                             'raw_value': 'Indium tin oxide',
+                             'specifier': 'substrate'}},
+                'voc': {'OpenCircuitVoltage': {'raw_units': '(mV)',
+                                'raw_value': '756',
+                                'specifier': 'Voc',
+                                'units': '(10^-3.0) * Volt^(1.0)',
+                                'value': [756.0]}}}
+        self.do_contextual_document_merging(sentence, Substrate, expected, props=perovskite_properties)
+
+    def test_reference_contextual_filtering(self):
+        table_input = [['Perovskite',	'Jsc (mA cm−2)', 'Voc (V)', 'FF', 'PCE', 'Ref'], ['MAPbI3', '11.11', '22.22', '33.33', '44.44', '56']]
+        input_table = Table(caption=Caption('Photovoltaic parameters for cells with the HTL Spiro-OMeTAD.'), table_data=table_input)
+        doc = Document('It was found for some of these that the ETL was TiO2. For a specific case there was also a counter electrode, Ag.', input_table)
+        pv_records = create_pdb_from_file(doc)
+        expected = {'derived_properties': {'solar_simulator': {'error': 2.0,
+                                                               'units': 'WattPerMeterSquared^(1.0)',
+                                                               'value': [1851.0]}},
+                    'ff': {'FillFactor': {'raw_value': '33.33',
+                                          'specifier': 'FF',
+                                          'value': [33.33]}},
+                    'htl': {'HoleTransportLayer': {'contextual': 'table_caption',
+                                                   'labels': ['Spiro-OMeTAD',
+                                                              'SpiroOMeTAD',
+                                                              "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
+                                                              'C81H68N4O8',
+                                                              'Spiro-MeOTAD',
+                                                              'N7′-octakis(4-methoxyphenyl)-9,9′-spirobi[9H-fluorene]-2,2′,7,7′-tetramine',
+                                                              'pp-Spiro-OMeTAD'],
+                                                   'name': "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
+                                                   'raw_value': 'Spiro - OMeTAD',
+                                                   'smiles': {'context': 'dict',
+                                                              'value': 'COC1=CC=C(C=C1)N(C2=CC=C(C=C2)OC)C3=CC4=C(C=C3)C5=C(C46C7=C(C=CC(=C7)N(C8=CC=C(C=C8)OC)C9=CC=C(C=C9)OC)C1=C6C=C(C=C1)N(C1=CC=C(C=C1)OC)C1=CC=C(C=C1)OC)C=C(C=C5)N(C1=CC=C(C=C1)OC)C1=CC=C(C=C1)OC'},
+                                                   'specifier': 'HTL'}},
+                    'jsc': {'ShortCircuitCurrentDensity': {'raw_units': '(mAcm−2)',
+                                                           'raw_value': '11.11',
+                                                           'specifier': 'Jsc',
+                                                           'std_units': 'Ampere^(1.0)  '
+                                                                        'Meter^(-2.0)',
+                                                           'std_value': [111.1],
+                                                           'units': '(10^1.0) * Ampere^(1.0)  '
+                                                                    'Meter^(-2.0)',
+                                                           'value': [11.11]}},
+                    'pce': {'PowerConversionEfficiency': {'raw_value': '44.44',
+                                                          'specifier': 'PCE',
+                                                          'value': [44.44]}},
+                    'perovskite': {'Perovskite': {'formula': '(CH3NH3)PbI3',
+                                                  'raw_value': 'MAPbI3',
+                                                  'specifier': 'Perovskite'}},
+                    'ref': {'Reference': {'raw_value': '56', 'specifier': 'Ref', 'value': [56.0]}},
+                    'solar_simulator': {'SimulatedSolarLightIntensity': {'derived_error': 2.0,
+                                                                         'derived_units': 'WattPerMeterSquared^(1.0)',
+                                                                         'derived_value': [1851.0]}},
+                    'table_row_categories': 'MAPbI3',
+                    'voc': {'OpenCircuitVoltage': {'raw_units': '(V)',
+                                                   'raw_value': '22.22',
+                                                   'specifier': 'Voc',
+                                                   'std_units': 'Volt^(1.0)',
+                                                   'std_value': [22.22],
+                                                   'units': 'Volt^(1.0)',
+                                                   'value': [22.22]}}}
+
+        output = pv_records[0].serialize()
+
+        self.assertEqual(expected, output)
+        self.assertFalse('etl' in output.keys())
+        self.assertFalse('counter_electrode' in output.keys())
