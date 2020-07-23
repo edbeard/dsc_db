@@ -64,16 +64,16 @@ def create_pdb_from_file(doc):
     # Create PhotovoltaicRecord object
     pv_records = [PerovskiteRecord(record, table) for record, table in table_records]
 
-    print('After initial table extraction:')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # print('After initial table extraction:')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # And contextual information from perovskites
     pv_records = add_contextual_info(pv_records, filtered_elements, peroskite_material_properties)
 
-    print('After adding contextual information from perovskites:')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # print('After adding contextual information from perovskites:')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Get all compound records for the next stage
     doc_records = [record.serialize() for record in doc.records]
@@ -90,9 +90,9 @@ def create_pdb_from_file(doc):
             all([getattr(pv_record, 'jsc', False), getattr(pv_record, 'pce', False)]) or
             all([getattr(pv_record, 'ff', False), getattr(pv_record, 'pce', False)])) ]
 
-    print('After filtering out results without the 4 main properties:')
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # print('After filtering out results without the 4 main properties:')
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Merge other information from inside the document when appropriate
     for record in pv_records:
@@ -117,8 +117,8 @@ def create_pdb_from_file(doc):
     # Add SMILES through PubChem and ChemSpider where not added by distributor
     pv_records = add_smiles_perovskite_htl(pv_records)
 
-    for pv_record in pv_records:
-        pp.pprint(pv_record.serialize())
+    # for pv_record in pv_records:
+    #     pp.pprint(pv_record.serialize())
 
     # Merge derived properties
     pv_records = add_derived_properties(pv_records)
@@ -188,7 +188,8 @@ def enhance_common_values(pv_records):
         for pv_record in pv_records:
             if pv_record.htl:
                 if pv_record.htl['HoleTransportLayer'].get('raw_value') is not None:
-                    if pv_record.htl['HoleTransportLayer'].get('raw_value').replace(' / ', '/').replace(' - ', '-') in htl['labels']:
+                    labels_lowercase = [label.lower() for label in htl['labels']]
+                    if pv_record.htl['HoleTransportLayer'].get('raw_value').replace(' / ', '/').replace(' - ', '-').replace(' : ', ':').lower() in labels_lowercase:
                         pv_record.htl['HoleTransportLayer']['name'] = all_htls[key]['name']
                         pv_record.htl['HoleTransportLayer']['labels'] = all_htls[key]['labels']
                         pv_record.htl['HoleTransportLayer']['smiles'] = {'value': all_htls[key]['smiles'], 'context':'dict'}

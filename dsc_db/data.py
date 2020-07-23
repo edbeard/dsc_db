@@ -394,6 +394,7 @@ solaronix_htls = {
                    "2,2',7,7'-Tetrakis-(N,N-di-4-methoxyphenylamino)-9,9'-spirobifluorene",
                    'C81H68N4O8',
                    'Spiro-MeOTAD',
+                   'SpiroMeOTAD',
                    'N7′-octakis(4-methoxyphenyl)-9,9′-spirobi[9H-fluorene]-2,2′,7,7′-tetramine',
                    'pp-Spiro-OMeTAD'
                    ],
@@ -563,7 +564,7 @@ review_paper_htls = {
             "Poly(3-hexylthiophene-2,5-diyl)"
         ],
         "name": "Poly(3-hexylthiophene-2,5-diyl)",
-        "smiles": ""
+        "smiles": "CCCCCCC1=C(SC(=C1)C)C"
     },
     'PCBTDPP': {
         'labels': [
